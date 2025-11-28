@@ -21,7 +21,8 @@ import {
   Memory,
   Speed,
   CheckCircle,
-  Error as ErrorIcon
+  Error as ErrorIcon,
+  Computer
 } from '@mui/icons-material';
 import api from '../services/api';
 
