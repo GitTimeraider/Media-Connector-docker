@@ -43,6 +43,7 @@ function Unraid() {
       const interval = setInterval(loadUnraidData, 10000); // Refresh every 10s
       return () => clearInterval(interval);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInstance]);
 
   const loadInstances = async () => {

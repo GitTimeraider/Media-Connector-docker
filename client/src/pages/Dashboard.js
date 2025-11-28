@@ -14,7 +14,6 @@ import {
   Movie,
   MusicNote,
   Book,
-  CloudDownload,
   Warning
 } from '@mui/icons-material';
 import api from '../services/api';
@@ -32,6 +31,7 @@ function Dashboard() {
 
   useEffect(() => {
     loadDashboard();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDashboard = async () => {

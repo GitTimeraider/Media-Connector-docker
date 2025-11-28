@@ -38,6 +38,7 @@ function Sonarr() {
     if (selectedInstance) {
       loadSeries();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInstance]);
 
   const loadInstances = async () => {

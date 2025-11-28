@@ -20,7 +20,6 @@ import {
   ListItem,
   ListItemText,
   ListItemSecondaryAction,
-  Chip,
   CircularProgress
 } from '@mui/material';
 import { Delete, Add, Edit, CheckCircle, Error } from '@mui/icons-material';
@@ -113,7 +112,7 @@ function Settings() {
   const handleTestConnection = async () => {
     try {
       setTestStatus({ loading: true });
-      const result = await api.testService(currentServiceType, formData);
+      await api.testService(currentServiceType, formData);
       setTestStatus({ success: true, message: 'Connection successful!' });
     } catch (error) {
       setTestStatus({ success: false, message: error.message });
@@ -137,7 +136,6 @@ function Settings() {
 
   const ServiceList = ({ serviceType, label }) => {
     const instances = services[serviceType] || [];
-    const config = serviceTypes.find(s => s.type === serviceType);
 
     return (
       <Card sx={{ mb: 2 }}>

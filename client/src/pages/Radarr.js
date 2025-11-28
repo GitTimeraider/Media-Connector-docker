@@ -32,6 +32,7 @@ function Radarr() {
     if (selectedInstance) {
       loadMovies();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInstance]);
 
   const loadInstances = async () => {

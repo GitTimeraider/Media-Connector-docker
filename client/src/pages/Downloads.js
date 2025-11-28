@@ -12,13 +12,12 @@ import {
   Grid,
   IconButton
 } from '@mui/material';
-import { Pause, PlayArrow, Delete } from '@mui/icons-material';
+import { Pause, Delete } from '@mui/icons-material';
 import api from '../services/api';
 
 function Downloads() {
   const [loading, setLoading] = useState(true);
   const [downloads, setDownloads] = useState([]);
-  const [services, setServices] = useState({});
 
   useEffect(() => {
     loadDownloads();
