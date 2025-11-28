@@ -12,7 +12,15 @@ import {
   Alert,
   TextField,
   InputAdornment,
-  Button
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { Search, Add } from '@mui/icons-material';
 import api from '../services/api';
@@ -23,6 +31,10 @@ function Radarr() {
   const [selectedInstance, setSelectedInstance] = useState(null);
   const [movies, setMovies] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchingMovies, setSearchingMovies] = useState(false);
+  const [movieSearchQuery, setMovieSearchQuery] = useState('');
 
   useEffect(() => {
     loadInstances();
@@ -61,6 +73,42 @@ function Radarr() {
     }
   };
 
+  const handleSearchMovies = async (e) => {
+    e.preventDefault();
+    if (!movieSearchQuery.trim()) return;
+    
+    setSearchingMovies(true);
+    try {
+      const results = await api.searchRadarr(selectedInstance, movieSearchQuery);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching movies:', error);
+    } finally {
+      setSearchingMovies(false);
+    }
+  };
+
+  const handleAddMovie = async (movie) => {
+    try {
+      await api.addRadarrMovie(selectedInstance, {
+        title: movie.title,
+        tmdbId: movie.tmdbId,
+        qualityProfileId: 1,
+        rootFolderPath: '/',
+        monitored: true,
+        addOptions: {
+          searchForMovie: true
+        }
+      });
+      alert(`${movie.title} added successfully!`);
+      setAddDialogOpen(false);
+      loadMovies();
+    } catch (error) {
+      console.error('Error adding movie:', error);
+      alert('Failed to add movie');
+    }
+  };
+
   const filteredMovies = movies.filter(movie =>
     movie.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -89,10 +137,60 @@ function Radarr() {
         <Typography variant="h4">
           Movies
         </Typography>
-        <Button variant="contained" startIcon={<Add />}>
+        <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
           Add Movie
         </Button>
       </Box>
+
+      <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>Add Movie</DialogTitle>
+        <DialogContent>
+          <Box component="form" onSubmit={handleSearchMovies} sx={{ mt: 2 }}>
+            <TextField
+              fullWidth
+              placeholder="Search for a movie..."
+              value={movieSearchQuery}
+              onChange={(e) => setMovieSearchQuery(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button type="submit" disabled={searchingMovies}>
+                      {searchingMovies ? <CircularProgress size={20} /> : <Search />}
+                    </Button>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+          
+          <Box sx={{ mt: 3 }}>
+            {searchResults.map((movie) => (
+              <Card key={movie.tmdbId} sx={{ mb: 2 }}>
+                <CardContent>
+                  <Box display="flex" justifyContent="space-between" alignItems="center">
+                    <Box>
+                      <Typography variant="h6">{movie.title}</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {movie.year}
+                      </Typography>
+                    </Box>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={() => handleAddMovie(movie)}
+                    >
+                      Add
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAddDialogOpen(false)}>Cancel</Button>
+        </DialogActions>
+      </Dialog>
 
       <Box mb={3}>
         <TextField

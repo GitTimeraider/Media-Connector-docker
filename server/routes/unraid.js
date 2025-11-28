@@ -14,12 +14,12 @@ router.get('/status/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const headers = instance.apiKey 
-      ? { 'X-API-Key': instance.apiKey }
-      : {};
+    const headers = {
+      'Authorization': `Basic ${Buffer.from(':' + instance.apiKey).toString('base64')}`
+    };
 
-    // Get system stats via Unraid API
-    const response = await axios.get(`${instance.url}/api/v1/system/stats`, {
+    // Get system stats via Unraid webGUI
+    const response = await axios.get(`${instance.url}/plugins/dynamix/include/SystemStats.php`, {
       headers,
       timeout: 10000
     });
@@ -27,7 +27,7 @@ router.get('/status/:instanceId', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Unraid status error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 
@@ -37,12 +37,12 @@ router.get('/docker/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const headers = instance.apiKey 
-      ? { 'X-API-Key': instance.apiKey }
-      : {};
+    const headers = {
+      'Authorization': `Basic ${Buffer.from(':' + instance.apiKey).toString('base64')}`
+    };
 
-    // Get Docker containers via Unraid API
-    const response = await axios.get(`${instance.url}/api/v1/docker/containers`, {
+    // Get Docker containers via Unraid webGUI
+    const response = await axios.get(`${instance.url}/plugins/dynamix.docker.manager/include/UserPrefs.php`, {
       headers,
       timeout: 10000
     });
@@ -50,7 +50,7 @@ router.get('/docker/:instanceId', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Unraid docker error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 
@@ -60,12 +60,12 @@ router.get('/vms/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const headers = instance.apiKey 
-      ? { 'X-API-Key': instance.apiKey }
-      : {};
+    const headers = {
+      'Authorization': `Basic ${Buffer.from(':' + instance.apiKey).toString('base64')}`
+    };
 
-    // Get VMs via Unraid API
-    const response = await axios.get(`${instance.url}/api/v1/vms`, {
+    // Get VMs via Unraid webGUI
+    const response = await axios.get(`${instance.url}/plugins/dynamix.vm.manager/include/VMMachines.php`, {
       headers,
       timeout: 10000
     });
@@ -73,7 +73,7 @@ router.get('/vms/:instanceId', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Unraid VMs error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 
@@ -83,12 +83,12 @@ router.get('/array/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const headers = instance.apiKey 
-      ? { 'X-API-Key': instance.apiKey }
-      : {};
+    const headers = {
+      'Authorization': `Basic ${Buffer.from(':' + instance.apiKey).toString('base64')}`
+    };
 
-    // Get array status via Unraid API
-    const response = await axios.get(`${instance.url}/api/v1/system/array`, {
+    // Get array status via Unraid webGUI
+    const response = await axios.get(`${instance.url}/plugins/dynamix/include/DeviceList.php`, {
       headers,
       timeout: 10000
     });
@@ -96,7 +96,7 @@ router.get('/array/:instanceId', async (req, res) => {
     res.json(response.data);
   } catch (error) {
     console.error('Unraid array error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 
@@ -106,20 +106,20 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const headers = instance.apiKey 
-      ? { 'X-API-Key': instance.apiKey }
-      : {};
+    const headers = {
+      'Authorization': `Basic ${Buffer.from(':' + instance.apiKey).toString('base64')}`
+    };
 
     const { container, action } = req.body;
-    const response = await axios.post(`${instance.url}/api/v1/docker/containers/${container}/${action}`, 
-      {},
-      { headers, timeout: 10000 }
+    const response = await axios.post(`${instance.url}/plugins/dynamix.docker.manager/include/Events.php`, 
+      `action=${action}&container=${container}`,
+      { headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' }, timeout: 10000 }
     );
 
     res.json(response.data);
   } catch (error) {
     console.error('Unraid docker action error:', error.message);
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: error.message, details: error.response?.data });
   }
 });
 

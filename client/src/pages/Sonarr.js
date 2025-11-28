@@ -78,6 +78,28 @@ function Sonarr() {
     }
   };
 
+  const handleAddSeries = async (show) => {
+    try {
+      await api.addSonarrSeries(selectedInstance, {
+        title: show.title,
+        tvdbId: show.tvdbId,
+        qualityProfileId: 1,
+        rootFolderPath: '/',
+        monitored: true,
+        seasonFolder: true,
+        addOptions: {
+          searchForMissingEpisodes: true
+        }
+      });
+      alert(`${show.title} added successfully!`);
+      setSearchOpen(false);
+      loadSeries();
+    } catch (error) {
+      console.error('Error adding series:', error);
+      alert('Failed to add series');
+    }
+  };
+
   if (loading && instances.length === 0) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
@@ -176,15 +198,45 @@ function Sonarr() {
       <Dialog open={searchOpen} onClose={() => setSearchOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Search TV Shows</DialogTitle>
         <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
+          <Box mb={2}>
+            <TextField
+              fullWidth
+              placeholder="Search for TV shows..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Button onClick={handleSearch}>
+                      <Search />
+                    </Button>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+          <Grid container spacing={2}>
             {searchResults.map((result) => (
               <Grid item xs={12} key={result.tvdbId}>
                 <Card>
                   <CardContent>
-                    <Typography variant="h6">{result.title}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {result.overview?.substring(0, 200)}...
-                    </Typography>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Box flexGrow={1}>
+                        <Typography variant="h6">{result.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {result.overview?.substring(0, 200)}...
+                        </Typography>
+                      </Box>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() => handleAddSeries(result)}
+                        sx={{ ml: 2 }}
+                      >
+                        Add
+                      </Button>
+                    </Box>
                   </CardContent>
                 </Card>
               </Grid>

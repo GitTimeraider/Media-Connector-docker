@@ -99,4 +99,19 @@ router.post('/add/:instanceId', async (req, res) => {
   }
 });
 
+router.delete('/queue/:instanceId/:nzoId', async (req, res) => {
+  try {
+    const instances = configManager.getServices('sabnzbd');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const response = await axios.get(`${instance.url}/api`, {
+      params: { mode: 'queue', name: 'delete', value: req.params.nzoId, output: 'json', apikey: instance.apiKey }
+    });
+    res.json(response.data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

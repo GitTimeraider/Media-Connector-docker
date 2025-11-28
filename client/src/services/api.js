@@ -149,6 +149,11 @@ class ApiService {
     return response.data;
   }
 
+  async deleteSabnzbd(instanceId, nzoId) {
+    const response = await this.client.delete(`/sabnzbd/queue/${instanceId}/${nzoId}`);
+    return response.data;
+  }
+
   // qBittorrent endpoints
   async getQbittorrentTorrents(instanceId) {
     const response = await this.client.get(`/qbittorrent/torrents/${instanceId}`);
@@ -157,6 +162,16 @@ class ApiService {
 
   async addToQbittorrent(instanceId, url) {
     const response = await this.client.post(`/qbittorrent/add/${instanceId}`, { url });
+    return response.data;
+  }
+
+  async pauseQbittorrent(instanceId, hash) {
+    const response = await this.client.post(`/qbittorrent/pause/${instanceId}`, { hash });
+    return response.data;
+  }
+
+  async deleteQbittorrent(instanceId, hash) {
+    const response = await this.client.delete(`/qbittorrent/torrents/${instanceId}/${hash}`);
     return response.data;
   }
 

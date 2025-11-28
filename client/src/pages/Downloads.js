@@ -41,7 +41,8 @@ function Downloads() {
                 ...item,
                 service: 'SABnzbd',
                 instanceId: instance.id,
-                instanceName: instance.name
+                instanceName: instance.name,
+                id: item.nzo_id
               })));
             }
           } catch (error) {
@@ -59,7 +60,8 @@ function Downloads() {
               ...item,
               service: 'qBittorrent',
               instanceId: instance.id,
-              instanceName: instance.name
+              instanceName: instance.name,
+              id: item.hash
             })));
           } catch (error) {
             console.error(`Error loading qBittorrent torrents:`, error);
@@ -72,6 +74,36 @@ function Downloads() {
       console.error('Error loading downloads:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePause = async (item) => {
+    try {
+      if (item.service === 'SABnzbd') {
+        await api.pauseSabnzbd(item.instanceId, item.id);
+      } else if (item.service === 'qBittorrent') {
+        await api.pauseQbittorrent(item.instanceId, item.id);
+      }
+      loadDownloads();
+    } catch (error) {
+      console.error('Error pausing download:', error);
+      alert('Failed to pause download');
+    }
+  };
+
+  const handleDelete = async (item) => {
+    if (!window.confirm(`Delete ${item.filename || item.name}?`)) return;
+    
+    try {
+      if (item.service === 'SABnzbd') {
+        await api.deleteSabnzbd(item.instanceId, item.id);
+      } else if (item.service === 'qBittorrent') {
+        await api.deleteQbittorrent(item.instanceId, item.id);
+      }
+      loadDownloads();
+    } catch (error) {
+      console.error('Error deleting download:', error);
+      alert('Failed to delete download');
     }
   };
 
@@ -129,10 +161,10 @@ function Downloads() {
                     </Box>
                   </Box>
                   <Box display="flex" gap={1}>
-                    <IconButton size="small">
+                    <IconButton size="small" onClick={() => handlePause(item)}>
                       <Pause />
                     </IconButton>
-                    <IconButton size="small" color="error">
+                    <IconButton size="small" color="error" onClick={() => handleDelete(item)}>
                       <Delete />
                     </IconButton>
                   </Box>

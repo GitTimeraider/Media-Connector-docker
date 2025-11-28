@@ -32,14 +32,14 @@ function Search() {
 
   const categories = [
     { value: 'all', label: 'All' },
-    { value: '2000', label: 'Movies' },
-    { value: '5000', label: 'TV' },
-    { value: '3000', label: 'Audio' },
-    { value: '7000', label: 'Books' },
-    { value: '1000', label: 'Console' },
-    { value: '4000', label: 'PC' },
-    { value: '6000', label: 'XXX' },
-    { value: '8000', label: 'Other' }
+    { value: '2000', label: 'Movies', subcategories: ['2010', '2020', '2030', '2040', '2045', '2050', '2060'] },
+    { value: '5000', label: 'TV', subcategories: ['5010', '5020', '5030', '5040', '5045', '5050', '5060', '5070', '5080'] },
+    { value: '3000', label: 'Audio', subcategories: ['3010', '3020', '3030', '3040', '3050', '3060'] },
+    { value: '7000', label: 'Books', subcategories: ['7010', '7020', '7030', '7040', '7050', '7060'] },
+    { value: '1000', label: 'Console', subcategories: ['1010', '1020', '1030', '1040', '1050', '1060', '1070', '1080'] },
+    { value: '4000', label: 'PC', subcategories: ['4010', '4020', '4030', '4040', '4050', '4060', '4070'] },
+    { value: '6000', label: 'XXX', subcategories: ['6010', '6020', '6030', '6040', '6050', '6060', '6070'] },
+    { value: '8000', label: 'Other', subcategories: ['8010'] }
   ];
 
   useEffect(() => {
@@ -73,9 +73,14 @@ function Search() {
         query: searchQuery
       };
       
-      // Add categories as comma-separated string if not 'all'
+      // Add categories including all subcategories as comma-separated string
       if (selectedCategory !== 'all') {
-        params.categories = selectedCategory;
+        const category = categories.find(c => c.value === selectedCategory);
+        const categoryIds = [selectedCategory];
+        if (category?.subcategories) {
+          categoryIds.push(...category.subcategories);
+        }
+        params.categories = categoryIds.join(',');
       }
       
       const results = await api.searchProwlarr(prowlarrInstance, params);
