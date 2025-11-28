@@ -17,13 +17,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
 
     - name: Install backend dependencies
-      run: npm ci
+      run: npm install
 
     - name: Install frontend dependencies
-      run: cd client && npm ci
+      run: cd client && npm install
 
     - name: Build frontend
       run: cd client && npm run build
