@@ -18,14 +18,15 @@ router.get('/status/:instanceId', async (req, res) => {
       ? { 'X-API-Key': instance.apiKey }
       : {};
 
-    // Get system stats
-    const response = await axios.get(`${instance.url}/plugins/dynamix/include/SystemStats.php`, {
+    // Get system stats via Unraid API
+    const response = await axios.get(`${instance.url}/api/v1/system/stats`, {
       headers,
       timeout: 10000
     });
 
     res.json(response.data);
   } catch (error) {
+    console.error('Unraid status error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -40,15 +41,15 @@ router.get('/docker/:instanceId', async (req, res) => {
       ? { 'X-API-Key': instance.apiKey }
       : {};
 
-    // Get Docker containers status
-    const response = await axios.get(`${instance.url}/plugins/dynamix.docker.manager/include/DockerClient.php`, {
+    // Get Docker containers via Unraid API
+    const response = await axios.get(`${instance.url}/api/v1/docker/containers`, {
       headers,
-      params: { action: 'list_containers' },
       timeout: 10000
     });
 
     res.json(response.data);
   } catch (error) {
+    console.error('Unraid docker error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -63,14 +64,15 @@ router.get('/vms/:instanceId', async (req, res) => {
       ? { 'X-API-Key': instance.apiKey }
       : {};
 
-    // Get VMs status
-    const response = await axios.get(`${instance.url}/plugins/dynamix.vm.manager/include/VMMachines.php`, {
+    // Get VMs via Unraid API
+    const response = await axios.get(`${instance.url}/api/v1/vms`, {
       headers,
       timeout: 10000
     });
 
     res.json(response.data);
   } catch (error) {
+    console.error('Unraid VMs error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -85,14 +87,15 @@ router.get('/array/:instanceId', async (req, res) => {
       ? { 'X-API-Key': instance.apiKey }
       : {};
 
-    // Get array status
-    const response = await axios.get(`${instance.url}/plugins/dynamix/include/ArrayStatus.php`, {
+    // Get array status via Unraid API
+    const response = await axios.get(`${instance.url}/api/v1/system/array`, {
       headers,
       timeout: 10000
     });
 
     res.json(response.data);
   } catch (error) {
+    console.error('Unraid array error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -108,13 +111,14 @@ router.post('/docker/action/:instanceId', async (req, res) => {
       : {};
 
     const { container, action } = req.body;
-    const response = await axios.post(`${instance.url}/plugins/dynamix.docker.manager/include/DockerClient.php`, 
-      { container, action },
+    const response = await axios.post(`${instance.url}/api/v1/docker/containers/${container}/${action}`, 
+      {},
       { headers, timeout: 10000 }
     );
 
     res.json(response.data);
   } catch (error) {
+    console.error('Unraid docker action error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });

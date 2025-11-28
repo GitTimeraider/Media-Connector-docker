@@ -144,9 +144,25 @@ class ApiService {
     return response.data;
   }
 
+  async addToSabnzbd(instanceId, url) {
+    const response = await this.client.post(`/sabnzbd/add/${instanceId}`, { url });
+    return response.data;
+  }
+
   // qBittorrent endpoints
   async getQbittorrentTorrents(instanceId) {
     const response = await this.client.get(`/qbittorrent/torrents/${instanceId}`);
+    return response.data;
+  }
+
+  async addToQbittorrent(instanceId, url) {
+    const response = await this.client.post(`/qbittorrent/add/${instanceId}`, { url });
+    return response.data;
+  }
+
+  // Deluge endpoints
+  async addToDeluge(instanceId, url) {
+    const response = await this.client.post(`/deluge/add/${instanceId}`, { url });
     return response.data;
   }
 

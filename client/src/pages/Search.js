@@ -69,16 +69,51 @@ function Search() {
 
     setSearching(true);
     try {
-      const results = await api.searchProwlarr(prowlarrInstance, {
-        query: searchQuery,
-        categories: selectedCategory === 'all' ? undefined : [selectedCategory]
-      });
+      const params = {
+        query: searchQuery
+      };
+      
+      // Add categories as comma-separated string if not 'all'
+      if (selectedCategory !== 'all') {
+        params.categories = selectedCategory;
+      }
+      
+      const results = await api.searchProwlarr(prowlarrInstance, params);
       setSearchResults(Array.isArray(results) ? results : []);
     } catch (error) {
       console.error('Error searching:', error);
       setSearchResults([]);
     } finally {
       setSearching(false);
+    }
+  };
+
+  const handleDownload = async (result) => {
+    try {
+      const services = await api.getServices();
+      const protocol = result.protocol || (result.downloadUrl?.includes('magnet:') ? 'torrent' : 'usenet');
+      
+      if (protocol === 'usenet' && services.sabnzbd?.length > 0) {
+        // Download via SABnzbd
+        await api.addToSabnzbd(services.sabnzbd[0].id, result.downloadUrl);
+        alert('Added to SABnzbd!');
+      } else if (protocol === 'torrent') {
+        // Try qBittorrent first, then Deluge
+        if (services.qbittorrent?.length > 0) {
+          await api.addToQbittorrent(services.qbittorrent[0].id, result.downloadUrl);
+          alert('Added to qBittorrent!');
+        } else if (services.deluge?.length > 0) {
+          await api.addToDeluge(services.deluge[0].id, result.downloadUrl);
+          alert('Added to Deluge!');
+        } else {
+          alert('No torrent client configured!');
+        }
+      } else if (protocol === 'usenet') {
+        alert('No Usenet client configured!');
+      }
+    } catch (error) {
+      console.error('Error downloading:', error);
+      alert('Failed to add download: ' + error.message);
     }
   };
 
@@ -170,32 +205,45 @@ function Search() {
                   </Typography>
                   <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Chip label={result.indexer} size="small" color="primary" />
+                    <Chip 
+                      label={result.protocol === 'torrent' ? 'Torrent' : 'Usenet'} 
+                      size="small" 
+                      color={result.protocol === 'torrent' ? 'success' : 'info'}
+                    />
                     <Chip label={formatBytes(result.size)} size="small" />
-                    {result.seeders !== undefined && (
-                      <Chip label={`Seeders: ${result.seeders}`} size="small" color="success" />
+                    {result.seeders !== undefined && result.seeders > 0 && (
+                      <Chip label={`↑ ${result.seeders}`} size="small" color="success" />
                     )}
                     {result.leechers !== undefined && (
-                      <Chip label={`Leechers: ${result.leechers}`} size="small" />
+                      <Chip label={`↓ ${result.leechers}`} size="small" />
                     )}
                     {result.publishDate && (
                       <Chip label={new Date(result.publishDate).toLocaleDateString()} size="small" />
                     )}
                   </Box>
-                  {result.downloadUrl && (
-                    <Typography variant="body2" color="text.secondary" sx={{ wordBreak: 'break-all' }}>
-                      {result.downloadUrl}
+                  {result.infoUrl && (
+                    <Typography variant="body2" color="text.secondary" noWrap>
+                      Source: {result.infoUrl}
                     </Typography>
                   )}
                 </CardContent>
                 <CardActions>
                   <Button
                     size="small"
+                    variant="contained"
                     startIcon={<Download />}
+                    onClick={() => handleDownload(result)}
+                    disabled={!result.downloadUrl}
+                  >
+                    Add to Client
+                  </Button>
+                  <Button
+                    size="small"
                     href={result.downloadUrl}
                     target="_blank"
                     disabled={!result.downloadUrl}
                   >
-                    Download
+                    Manual Download
                   </Button>
                 </CardActions>
               </Card>
