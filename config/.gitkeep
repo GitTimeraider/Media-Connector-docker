@@ -1,0 +1,18 @@
+{
+  "services": {
+    "sonarr": [],
+    "radarr": [],
+    "lidarr": [],
+    "readarr": [],
+    "sabnzbd": [],
+    "nzbget": [],
+    "qbittorrent": [],
+    "transmission": [],
+    "deluge": [],
+    "overseerr": [],
+    "tautulli": [],
+    "prowlarr": [],
+    "jackett": [],
+    "unraid": []
+  }
+}

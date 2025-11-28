@@ -1,0 +1,33 @@
+{
+  "name": "media-connector",
+  "version": "1.0.0",
+  "description": "Web-based media server manager - nzb360 alternative",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "start": "node server/index.js",
+    "install-all": "npm install && cd client && npm install"
+  },
+  "keywords": ["media", "sonarr", "radarr", "sabnzbd", "torrent", "usenet"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "body-parser": "^1.20.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "ws": "^8.16.0",
+    "node-schedule": "^2.1.1",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "concurrently": "^8.2.2"
+  }
+}
