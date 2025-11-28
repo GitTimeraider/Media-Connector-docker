@@ -3,14 +3,14 @@ const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('tautulli');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('tautulli');
   res.json(instances);
 });
 
 router.get('/activity/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('tautulli');
+    const instances = await configManager.getServices('tautulli');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -26,7 +26,7 @@ router.get('/activity/:instanceId', async (req, res) => {
 
 router.get('/history/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('tautulli');
+    const instances = await configManager.getServices('tautulli');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -42,7 +42,7 @@ router.get('/history/:instanceId', async (req, res) => {
 
 router.get('/libraries/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('tautulli');
+    const instances = await configManager.getServices('tautulli');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 

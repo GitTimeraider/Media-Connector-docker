@@ -47,6 +47,13 @@ Manage your entire media stack from one beautiful web interface. Control Sonarr,
 - Queue management
 - Calendar view for upcoming releases
 
+### Authentication & Security
+- **User Management** - Create and manage multiple users
+- **Role-based Access Control** - Admin and User roles
+- **Secure Authentication** - JWT-based login system
+- **Password Reset** - Forgot password functionality via Docker logs
+- **Profile Management** - Users can manage their own credentials
+
 ### Modern Web Interface
 - **Responsive Design** - Works on desktop, tablet, and mobile
 - **Dark Mode** - Easy on the eyes
@@ -66,7 +73,8 @@ docker run -d \
   -p 3001:3001 \
   -e PUID=1000 \
   -e PGID=1000 \
-  -v /path/to/config:/config \
+  -e JWT_SECRET=your-secret-key-here \
+  -v /path/to/data:/app/server/data \
   --restart unless-stopped \
   ghcr.io/gittimerider/media-connector:latest
 ```
@@ -84,13 +92,14 @@ services:
     ports:
       - "3001:3001"
     volumes:
-      - ./config:/config
+      - ./data:/app/server/data  # SQLite database storage
     environment:
       - PUID=1000
       - PGID=1000
       - NODE_ENV=production
       - PORT=3001
-      - CONFIG_FILE=/config/services.json
+      - JWT_SECRET=change-this-secret-key-in-production
+      - TMDB_API_KEY=your-tmdb-api-key-optional
 ```
 
 Then run:
@@ -126,6 +135,13 @@ docker run -d \
 ```
 
 3. Access the web interface at `http://localhost:3001`
+
+#### Default Credentials
+On first run, a default admin account is automatically created:
+- **Username**: `admin`
+- **Password**: `admin`
+
+**⚠️ IMPORTANT**: Change the default password immediately after logging in!
 
 ### Method 2: Docker Compose
 
@@ -186,6 +202,115 @@ npm start
 5. Click **Test Connection** to verify
 6. Click **Save**
 
+---
+
+## User Management
+
+### Default Admin Account
+Media Connector automatically creates a default administrator account when no admin users exist:
+- **Username**: `admin`
+- **Password**: `admin`
+
+⚠️ **Important**: Change the default password immediately after first login!
+
+### Guest Mode (Optional)
+You can bypass authentication entirely by enabling guest mode:
+
+**Docker Environment Variable**:
+```bash
+DISABLE_AUTH=true
+```
+
+When enabled:
+- No login screen is shown
+- Users are automatically logged in as a Guest user with User role
+- Guest user has read-only access (cannot modify settings or users)
+- Guest user is not visible in the user list
+- Useful for trusted networks or personal use
+
+**Enable in Docker Compose**:
+```yaml
+environment:
+  - DISABLE_AUTH=true
+```
+
+**Enable in Docker Run**:
+```bash
+docker run -d \
+  -e DISABLE_AUTH=true \
+  ...
+```
+
+### Managing Your Profile
+All users can manage their own profile:
+1. Click on your avatar in the top-right corner
+2. Select **My Profile**
+3. Update your username and/or password
+4. Click **Save Changes**
+
+### Admin Functions
+
+#### Creating Users (Admin Only)
+1. Navigate to **Users** in the sidebar (Admin only)
+2. Click **Add User**
+3. Enter username and password
+4. Select role (User or Admin)
+5. Click **Add User**
+
+#### Managing Users (Admin Only)
+- **Toggle Admin Role**: Click on the role chip to promote/demote users
+- **Reset Password**: Click the key icon to set a new password for any user
+- **Delete User**: Click the delete icon
+  - ⚠️ Cannot delete your own account if you are the last admin
+  - ⚠️ At least one admin user must exist at all times
+
+#### Forgot Password
+If a user forgets their password:
+1. On the login screen, click **Forgot password?**
+2. Enter your username
+3. Click **Reset Password**
+4. A new randomly generated 32-character password will be logged in the Docker container logs
+5. Check the logs with: `docker logs media-connector`
+6. Look for the password reset section in the logs
+7. Use the new password to log in
+8. Immediately change the password to something memorable
+
+---
+
+## Data Storage & Security
+
+### SQLite Database
+Media Connector uses an SQLite database to securely store:
+- **User accounts** - Usernames, hashed passwords, roles
+- **Service configurations** - URLs, API keys, credentials
+
+**Database Location**: `server/data/media-connector.db`
+
+### Automatic Migration
+When upgrading from JSON-based storage (v1.x), the application will automatically:
+1. Detect existing `users.json` and `services.json` files
+2. Migrate data to SQLite database
+3. Backup original files with `.backup` extension
+4. Use database for all future operations
+
+### Security Features
+- ✅ **Password Hashing** - bcrypt with salt rounds for user passwords
+- ✅ **JWT Tokens** - Secure session management with 7-day expiration
+- ✅ **Database Storage** - Credentials stored in SQLite instead of plaintext JSON
+- ✅ **Role-based Access** - Admin vs. User permissions
+- ✅ **Docker Volume Persistence** - Database persists across container restarts
+
+### Backup Your Data
+The SQLite database file contains all your configuration. Back it up regularly:
+```bash
+# Backup the database
+docker cp media-connector:/app/server/data/media-connector.db ./backup.db
+
+# Restore from backup
+docker cp ./backup.db media-connector:/app/server/data/media-connector.db
+docker restart media-connector
+```
+
 ### Environment Variables
 
 Create a `.env` file in the root directory:
@@ -193,7 +318,9 @@ Create a `.env` file in the root directory:
 ```env
 NODE_ENV=production
 PORT=3001
-CONFIG_FILE=/config/services.json
+JWT_SECRET=your-secret-key-change-this-in-production
+TMDB_API_KEY=your-tmdb-api-key-here
+DISABLE_AUTH=false
 ```
 
 **Docker-Specific Environment Variables:**
@@ -204,7 +331,9 @@ CONFIG_FILE=/config/services.json
 | `PGID` | `1000` | Group ID for file permissions |
 | `PORT` | `3001` | Port the application runs on |
 | `NODE_ENV` | `production` | Node environment |
-| `CONFIG_FILE` | `/config/services.json` | Path to configuration file |
+| `JWT_SECRET` | `(auto-generated)` | Secret key for JWT tokens - **CHANGE THIS!** |
+| `TMDB_API_KEY` | `(none)` | Optional: TMDB API key for movie/TV metadata |
+| `DISABLE_AUTH` | `false` | Set to `true` to bypass login (guest mode) |
 
 **Setting PUID/PGID:**
 

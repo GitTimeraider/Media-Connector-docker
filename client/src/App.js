@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Box, 
   AppBar, 
@@ -12,7 +12,12 @@ import {
   ListItemText,
   ListItemButton,
   Divider,
-  IconButton
+  IconButton,
+  Button,
+  CircularProgress,
+  Avatar,
+  Menu,
+  MenuItem
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -25,9 +30,14 @@ import {
   Settings as SettingsIcon,
   Menu as MenuIcon,
   GridView as GridViewIcon,
-  Dns as DnsIcon
+  Dns as DnsIcon,
+  Person,
+  Logout,
+  PeopleAlt
 } from '@mui/icons-material';
 
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Sonarr from './pages/Sonarr';
 import Radarr from './pages/Radarr';
@@ -38,16 +48,58 @@ import Search from './pages/Search';
 import Settings from './pages/Settings';
 import Overview from './pages/Overview';
 import Unraid from './pages/Unraid';
+import Users from './pages/Users';
+import Profile from './pages/Profile';
 
 const drawerWidth = 240;
 
-function App() {
+// Protected Route Component
+const ProtectedRoute = ({ children, adminOnly = false }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (adminOnly && !isAdmin()) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// Main App Layout Component
+function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isAdmin } = useAuth();
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleProfileMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleProfileMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleProfileMenuClose();
+    logout();
+    navigate('/login');
   };
 
   const menuItems = [
@@ -64,6 +116,7 @@ function App() {
     { divider: true },
     { text: 'Unraid', icon: <DnsIcon />, path: '/unraid' },
     { divider: true },
+    ...(isAdmin() ? [{ text: 'Users', icon: <PeopleAlt />, path: '/users' }] : []),
     { text: 'Settings', icon: <SettingsIcon />, path: '/settings' },
   ];
 
@@ -119,9 +172,32 @@ function App() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             {menuItems.find(item => item.path === location.pathname)?.text || 'Media Connector'}
           </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body2" sx={{ display: { xs: 'none', sm: 'block' } }}>
+              {user?.username}
+            </Typography>
+            <IconButton onClick={handleProfileMenuOpen} color="inherit">
+              <Avatar sx={{ width: 32, height: 32, bgcolor: 'secondary.main' }}>
+                {user?.username?.charAt(0).toUpperCase()}
+              </Avatar>
+            </IconButton>
+          </Box>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleProfileMenuClose}
+          >
+            <MenuItem onClick={() => { navigate('/profile'); handleProfileMenuClose(); }}>
+              <Person sx={{ mr: 1 }} /> My Profile
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleLogout}>
+              <Logout sx={{ mr: 1 }} /> Logout
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       
@@ -174,10 +250,31 @@ function App() {
           <Route path="/downloads" element={<Downloads />} />
           <Route path="/search" element={<Search />} />
           <Route path="/unraid" element={<Unraid />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </Box>
     </Box>
+  );
+}
+
+// Main App with Auth
+function App() {
+  return (
+    <AuthProvider>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/*"
+          element={
+            <ProtectedRoute>
+              <AppLayout />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 }
 

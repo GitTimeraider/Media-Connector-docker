@@ -1,41 +1,66 @@
 const express = require('express');
 const router = express.Router();
-const configManager = require('../config/services');
+const ServicesModel = require('../models/Services');
 
 // Get all services configuration
-router.get('/services', (req, res) => {
-  const services = configManager.getAllServices();
-  // Return full data including API keys/passwords for Settings page
-  // This endpoint should only be accessible from the web UI
-  res.json(services);
+router.get('/services', async (req, res) => {
+  try {
+    const services = await ServicesModel.getAllServices();
+    // Return full data including API keys/passwords for Settings page
+    // This endpoint should only be accessible from the web UI
+    res.json(services);
+  } catch (error) {
+    console.error('Error getting services:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Get services of a specific type
-router.get('/services/:type', (req, res) => {
-  const services = configManager.getServices(req.params.type);
-  res.json(services);
+router.get('/services/:type', async (req, res) => {
+  try {
+    const services = await ServicesModel.getServicesByType(req.params.type);
+    res.json(services);
+  } catch (error) {
+    console.error('Error getting services by type:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Add a new service instance
-router.post('/services/:type', (req, res) => {
-  const service = configManager.addService(req.params.type, req.body);
-  res.json(service);
+router.post('/services/:type', async (req, res) => {
+  try {
+    const service = await ServicesModel.createService(req.params.type, req.body);
+    res.json(service);
+  } catch (error) {
+    console.error('Error creating service:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Update a service instance
-router.put('/services/:type/:id', (req, res) => {
-  const service = configManager.updateService(req.params.type, req.params.id, req.body);
-  if (service) {
-    res.json(service);
-  } else {
-    res.status(404).json({ error: 'Service not found' });
+router.put('/services/:type/:id', async (req, res) => {
+  try {
+    const service = await ServicesModel.updateService(req.params.id, req.body);
+    if (service) {
+      res.json(service);
+    } else {
+      res.status(404).json({ error: 'Service not found' });
+    }
+  } catch (error) {
+    console.error('Error updating service:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
 // Delete a service instance
-router.delete('/services/:type/:id', (req, res) => {
-  configManager.deleteService(req.params.type, req.params.id);
-  res.json({ success: true });
+router.delete('/services/:type/:id', async (req, res) => {
+  try {
+    await ServicesModel.deleteService(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Test service connection

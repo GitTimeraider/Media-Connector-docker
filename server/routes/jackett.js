@@ -3,14 +3,14 @@ const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('jackett');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('jackett');
   res.json(instances);
 });
 
 router.get('/indexers/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('jackett');
+    const instances = await configManager.getServices('jackett');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -24,7 +24,7 @@ router.get('/indexers/:instanceId', async (req, res) => {
 
 router.get('/search/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('jackett');
+    const instances = await configManager.getServices('jackett');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 

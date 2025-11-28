@@ -3,14 +3,14 @@ const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('overseerr');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('overseerr');
   res.json(instances);
 });
 
 router.get('/status/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('overseerr');
+    const instances = await configManager.getServices('overseerr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -24,7 +24,7 @@ router.get('/status/:instanceId', async (req, res) => {
 
 router.get('/requests/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('overseerr');
+    const instances = await configManager.getServices('overseerr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -38,7 +38,7 @@ router.get('/requests/:instanceId', async (req, res) => {
 
 router.post('/request/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('overseerr');
+    const instances = await configManager.getServices('overseerr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -52,7 +52,7 @@ router.post('/request/:instanceId', async (req, res) => {
 
 router.get('/search/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('overseerr');
+    const instances = await configManager.getServices('overseerr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 

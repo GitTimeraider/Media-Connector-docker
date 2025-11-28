@@ -4,15 +4,15 @@ const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
 
 // Get all configured Sonarr instances
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('sonarr');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('sonarr');
   res.json(instances);
 });
 
 // Get system status
 router.get('/status/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -35,7 +35,7 @@ router.get('/status/:instanceId', async (req, res) => {
 // Get series
 router.get('/series/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -50,10 +50,43 @@ router.get('/series/:instanceId', async (req, res) => {
   }
 });
 
+// Get recent downloads
+router.get('/recent/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    
+    // Get recent episodes from history
+    const history = await client.get('/api/v3/history', { 
+      pageSize: 50,
+      sortKey: 'date',
+      sortDirection: 'descending',
+      eventType: 1 // Download Grabbed = 1, Download Completed = 4
+    });
+    
+    // Get unique series from recent downloads
+    const seriesIds = [...new Set(history.records.map(h => h.seriesId))].slice(0, 10);
+    const seriesPromises = seriesIds.map(id => 
+      client.get(`/api/v3/series/${id}`).catch(() => null)
+    );
+    const recentSeries = (await Promise.all(seriesPromises)).filter(s => s !== null);
+    
+    res.json(recentSeries);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get series by ID
 router.get('/series/:instanceId/:seriesId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -71,7 +104,7 @@ router.get('/series/:instanceId/:seriesId', async (req, res) => {
 // Search for series
 router.get('/search/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -83,25 +116,41 @@ router.get('/search/:instanceId', async (req, res) => {
     
     // Sort results to prioritize exact phrase matches
     const searchTerm = req.query.term.toLowerCase();
+    const searchWords = searchTerm.split(/\s+/);
+    
     const sortedResults = results.sort((a, b) => {
       const aTitle = (a.title || '').toLowerCase();
       const bTitle = (b.title || '').toLowerCase();
       
-      // Exact match comes first
-      if (aTitle === searchTerm && bTitle !== searchTerm) return -1;
-      if (bTitle === searchTerm && aTitle !== searchTerm) return 1;
+      // Calculate match scores (higher = better match)
+      const getScore = (title) => {
+        // Exact match = highest score
+        if (title === searchTerm) return 1000;
+        
+        // Contains exact phrase = high score
+        if (title.includes(searchTerm)) {
+          // Bonus if it starts with the search term
+          if (title.startsWith(searchTerm)) return 900;
+          return 800;
+        }
+        
+        // Check how many search words are in the title
+        const matchedWords = searchWords.filter(word => title.includes(word)).length;
+        if (matchedWords === searchWords.length) {
+          // All words present but not as exact phrase = medium score
+          return 500 + matchedWords;
+        } else if (matchedWords > 0) {
+          // Some words present = low score
+          return 100 + matchedWords;
+        }
+        
+        return 0;
+      };
       
-      // Contains exact phrase comes second
-      const aContains = aTitle.includes(searchTerm);
-      const bContains = bTitle.includes(searchTerm);
-      if (aContains && !bContains) return -1;
-      if (bContains && !aContains) return 1;
+      const aScore = getScore(aTitle);
+      const bScore = getScore(bTitle);
       
-      // Then by relevance (starts with search term)
-      if (aTitle.startsWith(searchTerm) && !bTitle.startsWith(searchTerm)) return -1;
-      if (bTitle.startsWith(searchTerm) && !aTitle.startsWith(searchTerm)) return 1;
-      
-      return 0;
+      return bScore - aScore; // Sort descending by score
     });
     
     res.json(sortedResults);
@@ -113,7 +162,7 @@ router.get('/search/:instanceId', async (req, res) => {
 // Add series
 router.post('/series/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -131,7 +180,7 @@ router.post('/series/:instanceId', async (req, res) => {
 // Trigger series search
 router.post('/command/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -149,7 +198,7 @@ router.post('/command/:instanceId', async (req, res) => {
 // Get queue
 router.get('/queue/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -167,7 +216,7 @@ router.get('/queue/:instanceId', async (req, res) => {
 // Get calendar
 router.get('/calendar/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -185,7 +234,7 @@ router.get('/calendar/:instanceId', async (req, res) => {
 // Get quality profiles
 router.get('/qualityprofile/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -203,7 +252,7 @@ router.get('/qualityprofile/:instanceId', async (req, res) => {
 // Get root folders
 router.get('/rootfolder/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {
@@ -221,7 +270,7 @@ router.get('/rootfolder/:instanceId', async (req, res) => {
 // Get tags
 router.get('/tag/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sonarr');
+    const instances = await configManager.getServices('sonarr');
     const instance = instances.find(i => i.id === req.params.instanceId);
     
     if (!instance) {

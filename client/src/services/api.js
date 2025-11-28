@@ -9,13 +9,93 @@ class ApiService {
       timeout: 30000,
     });
 
+    // Request interceptor - add auth token
+    this.client.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(error);
+      }
+    );
+
+    // Response interceptor - handle auth errors
     this.client.interceptors.response.use(
       response => response,
       error => {
+        if (error.response?.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        }
         console.error('API Error:', error);
         return Promise.reject(error);
       }
     );
+  }
+
+  // Auth endpoints
+  async login(username, password) {
+    const response = await this.client.post('/auth/login', { username, password });
+    return response.data;
+  }
+
+  async guestLogin() {
+    const response = await axios.get(`${API_BASE_URL}/auth/guest`);
+    return response.data;
+  }
+
+  async verifyToken() {
+    const response = await this.client.get('/auth/verify');
+    return response.data;
+  }
+
+  async forgotPassword(username) {
+    const response = await this.client.post('/auth/forgot-password', { username });
+    return response.data;
+  }
+
+  // User management endpoints
+  async getUsers() {
+    const response = await this.client.get('/auth/users');
+    return response.data;
+  }
+
+  async createUser(username, password, role) {
+    const response = await this.client.post('/auth/users', { username, password, role });
+    return response.data;
+  }
+
+  async updateUser(id, updates) {
+    const response = await this.client.put(`/auth/users/${id}`, updates);
+    return response.data;
+  }
+
+  async deleteUser(id) {
+    const response = await this.client.delete(`/auth/users/${id}`);
+    return response.data;
+  }
+
+  async resetUserPassword(id, password) {
+    const response = await this.client.post(`/auth/users/${id}/reset-password`, { password });
+    return response.data;
+  }
+
+  // Profile endpoints
+  async getProfile() {
+    const response = await this.client.get('/auth/profile');
+    return response.data;
+  }
+
+  async updateProfile(updates) {
+    const response = await this.client.put('/auth/profile', updates);
+    return response.data;
   }
 
   // Config endpoints
@@ -231,6 +311,38 @@ class ApiService {
   // Prowlarr endpoints
   async searchProwlarr(instanceId, params) {
     const response = await this.client.get(`/prowlarr/search/${instanceId}`, { params });
+    return response.data;
+  }
+
+  // TMDB endpoints
+  async getTrendingContent() {
+    const response = await this.client.get('/tmdb/trending');
+    return response.data;
+  }
+
+  async getPopularMovies() {
+    const response = await this.client.get('/tmdb/movies/popular');
+    return response.data;
+  }
+
+  async getUpcomingMovies() {
+    const response = await this.client.get('/tmdb/movies/upcoming');
+    return response.data;
+  }
+
+  async getPopularTVShows() {
+    const response = await this.client.get('/tmdb/tv/popular');
+    return response.data;
+  }
+
+  // Recent downloads
+  async getRecentRadarrDownloads(instanceId) {
+    const response = await this.client.get(`/radarr/recent/${instanceId}`);
+    return response.data;
+  }
+
+  async getRecentSonarrDownloads(instanceId) {
+    const response = await this.client.get(`/sonarr/recent/${instanceId}`);
     return response.data;
   }
 

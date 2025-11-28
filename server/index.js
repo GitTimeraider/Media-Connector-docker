@@ -5,6 +5,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 require('dotenv').config();
 
+const { runMigrations } = require('./utils/migrate');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -38,24 +40,31 @@ const jackettRoutes = require('./routes/jackett');
 const unraidRoutes = require('./routes/unraid');
 const configRoutes = require('./routes/config');
 const systemRoutes = require('./routes/system');
+const tmdbRoutes = require('./routes/tmdb');
+const authRoutes = require('./routes/auth');
+const { authenticateToken, requireAdmin } = require('./middleware/auth');
 
-// API Routes
-app.use('/api/sonarr', sonarrRoutes);
-app.use('/api/radarr', radarrRoutes);
-app.use('/api/lidarr', lidarrRoutes);
-app.use('/api/readarr', readarrRoutes);
-app.use('/api/sabnzbd', sabnzbdRoutes);
-app.use('/api/nzbget', nzbgetRoutes);
-app.use('/api/qbittorrent', qbittorrentRoutes);
-app.use('/api/transmission', transmissionRoutes);
-app.use('/api/deluge', delugeRoutes);
-app.use('/api/overseerr', overseerrRoutes);
-app.use('/api/tautulli', tautulliRoutes);
-app.use('/api/prowlarr', prowlarrRoutes);
-app.use('/api/jackett', jackettRoutes);
-app.use('/api/unraid', unraidRoutes);
-app.use('/api/config', configRoutes);
-app.use('/api/system', systemRoutes);
+// Public API Routes (no auth required)
+app.use('/api/auth', authRoutes);
+
+// Protected API Routes (authentication required)
+app.use('/api/sonarr', authenticateToken, sonarrRoutes);
+app.use('/api/radarr', authenticateToken, radarrRoutes);
+app.use('/api/lidarr', authenticateToken, lidarrRoutes);
+app.use('/api/readarr', authenticateToken, readarrRoutes);
+app.use('/api/sabnzbd', authenticateToken, sabnzbdRoutes);
+app.use('/api/nzbget', authenticateToken, nzbgetRoutes);
+app.use('/api/qbittorrent', authenticateToken, qbittorrentRoutes);
+app.use('/api/transmission', authenticateToken, transmissionRoutes);
+app.use('/api/deluge', authenticateToken, delugeRoutes);
+app.use('/api/overseerr', authenticateToken, overseerrRoutes);
+app.use('/api/tautulli', authenticateToken, tautulliRoutes);
+app.use('/api/prowlarr', authenticateToken, prowlarrRoutes);
+app.use('/api/jackett', authenticateToken, jackettRoutes);
+app.use('/api/unraid', authenticateToken, unraidRoutes);
+app.use('/api/config', authenticateToken, configRoutes);
+app.use('/api/system', authenticateToken, systemRoutes);
+app.use('/api/tmdb', authenticateToken, tmdbRoutes);
 
 // Health check endpoint (before wildcard route)
 app.get('/health', (req, res) => {
@@ -80,7 +89,19 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Media Connector server running on port ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Initialize database and run migrations before starting server
+async function startServer() {
+  try {
+    await runMigrations();
+    
+    app.listen(PORT, () => {
+      console.log(`Media Connector server running on port ${PORT}`);
+      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();

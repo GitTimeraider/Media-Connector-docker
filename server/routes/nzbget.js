@@ -3,14 +3,14 @@ const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('nzbget');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('nzbget');
   res.json(instances);
 });
 
 router.post('/rpc/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('nzbget');
+    const instances = await configManager.getServices('nzbget');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -28,7 +28,7 @@ router.post('/rpc/:instanceId', async (req, res) => {
 
 router.get('/status/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('nzbget');
+    const instances = await configManager.getServices('nzbget');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 

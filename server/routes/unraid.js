@@ -3,21 +3,26 @@ const router = express.Router();
 const axios = require('axios');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('unraid');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('unraid');
   res.json(instances);
 });
 
 router.get('/status/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('unraid');
+    const instances = await configManager.getServices('unraid');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const headers = {
-      'x-api-key': instance.apiKey,
       'Content-Type': 'application/json'
     };
+    
+    // Add API key to headers if available
+    if (instance.apiKey) {
+      headers['x-api-key'] = instance.apiKey;
+      headers['Authorization'] = `Bearer ${instance.apiKey}`;
+    }
 
     // Get system info via GraphQL API
     const query = `
@@ -44,6 +49,8 @@ router.get('/status/:instanceId', async (req, res) => {
       }
     `;
 
+    console.log(`Attempting Unraid status request to: ${instance.url}/graphql`);
+    
     const response = await axios.post(`${instance.url}/graphql`, 
       { query },
       { headers, timeout: 10000 }
@@ -52,20 +59,32 @@ router.get('/status/:instanceId', async (req, res) => {
     res.json(response.data.data);
   } catch (error) {
     console.error('Unraid status error:', error.message);
-    res.status(500).json({ error: error.message, details: error.response?.data });
+    console.error('Error details:', error.response?.data || error.response?.statusText);
+    console.error('Request URL:', error.config?.url);
+    res.status(500).json({ 
+      error: error.message, 
+      details: error.response?.data,
+      statusCode: error.response?.status,
+      url: error.config?.url
+    });
   }
 });
 
 router.get('/docker/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('unraid');
+    const instances = await configManager.getServices('unraid');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const headers = {
-      'x-api-key': instance.apiKey,
       'Content-Type': 'application/json'
     };
+    
+    // Add API key to headers if available
+    if (instance.apiKey) {
+      headers['x-api-key'] = instance.apiKey;
+      headers['Authorization'] = `Bearer ${instance.apiKey}`;
+    }
 
     // Get Docker containers via GraphQL API
     const query = `
@@ -80,6 +99,8 @@ router.get('/docker/:instanceId', async (req, res) => {
       }
     `;
 
+    console.log(`Attempting Unraid docker request to: ${instance.url}/graphql`);
+
     const response = await axios.post(`${instance.url}/graphql`,
       { query },
       { headers, timeout: 10000 }
@@ -88,13 +109,20 @@ router.get('/docker/:instanceId', async (req, res) => {
     res.json(response.data.data);
   } catch (error) {
     console.error('Unraid docker error:', error.message);
-    res.status(500).json({ error: error.message, details: error.response?.data });
+    console.error('Error details:', error.response?.data || error.response?.statusText);
+    console.error('Request URL:', error.config?.url);
+    res.status(500).json({ 
+      error: error.message, 
+      details: error.response?.data,
+      statusCode: error.response?.status,
+      url: error.config?.url
+    });
   }
 });
 
 router.get('/vms/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('unraid');
+    const instances = await configManager.getServices('unraid');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -128,7 +156,7 @@ router.get('/vms/:instanceId', async (req, res) => {
 
 router.get('/array/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('unraid');
+    const instances = await configManager.getServices('unraid');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -173,7 +201,7 @@ router.get('/array/:instanceId', async (req, res) => {
 
 router.post('/docker/action/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('unraid');
+    const instances = await configManager.getServices('unraid');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 

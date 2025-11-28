@@ -3,14 +3,14 @@ const router = express.Router();
 const axios = require('axios');
 const configManager = require('../config/services');
 
-router.get('/instances', (req, res) => {
-  const instances = configManager.getServices('sabnzbd');
+router.get('/instances', async (req, res) => {
+  const instances = await configManager.getServices('sabnzbd');
   res.json(instances);
 });
 
 router.get('/status/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -25,7 +25,7 @@ router.get('/status/:instanceId', async (req, res) => {
 
 router.get('/queue/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -40,7 +40,7 @@ router.get('/queue/:instanceId', async (req, res) => {
 
 router.get('/history/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -55,7 +55,7 @@ router.get('/history/:instanceId', async (req, res) => {
 
 router.post('/pause/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -70,7 +70,7 @@ router.post('/pause/:instanceId', async (req, res) => {
 
 router.post('/resume/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -85,7 +85,7 @@ router.post('/resume/:instanceId', async (req, res) => {
 
 router.post('/add/:instanceId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
@@ -101,7 +101,7 @@ router.post('/add/:instanceId', async (req, res) => {
 
 router.delete('/queue/:instanceId/:nzoId', async (req, res) => {
   try {
-    const instances = configManager.getServices('sabnzbd');
+    const instances = await configManager.getServices('sabnzbd');
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
