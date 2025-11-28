@@ -43,7 +43,17 @@ router.get('/search/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const results = await client.get('/api/v1/search', { query: req.query.query });
+    const params = {
+      query: req.query.query,
+      type: 'search'
+    };
+    
+    // Add categories if specified
+    if (req.query.categories) {
+      params.categories = req.query.categories;
+    }
+    
+    const results = await client.get('/api/v1/search', params);
     res.json(results);
   } catch (error) {
     res.status(500).json({ error: error.message });

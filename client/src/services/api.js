@@ -167,6 +167,12 @@ class ApiService {
     return response.data;
   }
 
+  // Prowlarr endpoints
+  async searchProwlarr(instanceId, params) {
+    const response = await this.client.get(`/prowlarr/search/${instanceId}`, { params });
+    return response.data;
+  }
+
   // Unraid endpoints
   async getUnraidStatus(instanceId) {
     const response = await this.client.get(`/unraid/status/${instanceId}`);

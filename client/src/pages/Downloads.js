@@ -91,12 +91,12 @@ function Downloads() {
     );
   }
 
-  if (downloads.length === 0) {
+  if (downloads.length === 0 && !loading) {
     return (
       <Container>
         <Typography variant="h4" gutterBottom>Downloads</Typography>
         <Alert severity="info">
-          No active downloads. Configure download clients in Settings.
+          No active downloads.
         </Alert>
       </Container>
     );

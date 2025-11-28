@@ -69,7 +69,7 @@ function Unraid() {
       ]);
 
       if (stats.status === 'fulfilled') setSystemStats(stats.value);
-      if (docker.status === 'fulfilled') setDockerContainers(docker.value);
+      if (docker.status === 'fulfilled') setDockerContainers(Array.isArray(docker.value) ? docker.value : []);
       if (array.status === 'fulfilled') setArrayStatus(array.value);
     } catch (error) {
       console.error('Error loading Unraid data:', error);
