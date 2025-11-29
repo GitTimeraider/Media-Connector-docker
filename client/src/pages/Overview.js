@@ -13,7 +13,11 @@ import {
 import {
   CheckCircle,
   Error as ErrorIcon,
-  Warning
+  Warning,
+  LiveTv,
+  Movie,
+  MusicNote,
+  Book
 } from '@mui/icons-material';
 import api from '../services/api';
 
@@ -21,6 +25,12 @@ function Overview() {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState({});
   const [statuses, setStatuses] = useState({});
+  const [stats, setStats] = useState({
+    sonarr: { total: 0, monitored: 0 },
+    radarr: { total: 0, monitored: 0 },
+    lidarr: { total: 0, monitored: 0 },
+    readarr: { total: 0, monitored: 0 }
+  });
 
   useEffect(() => {
     loadOverview();
@@ -56,6 +66,68 @@ function Overview() {
       });
 
       setStatuses(statusMap);
+
+      // Load stats for media services
+      const statsPromises = [];
+      
+      if (servicesData.sonarr?.length > 0) {
+        statsPromises.push(
+          api.getSonarrSeries(servicesData.sonarr[0].id)
+            .then(series => ({
+              type: 'sonarr',
+              total: series.length,
+              monitored: series.filter(s => s.monitored).length
+            }))
+            .catch(() => ({ type: 'sonarr', total: 0, monitored: 0 }))
+        );
+      }
+
+      if (servicesData.radarr?.length > 0) {
+        statsPromises.push(
+          api.getRadarrMovies(servicesData.radarr[0].id)
+            .then(movies => ({
+              type: 'radarr',
+              total: movies.length,
+              monitored: movies.filter(m => m.monitored).length
+            }))
+            .catch(() => ({ type: 'radarr', total: 0, monitored: 0 }))
+        );
+      }
+
+      if (servicesData.lidarr?.length > 0) {
+        statsPromises.push(
+          api.getLidarrArtists(servicesData.lidarr[0].id)
+            .then(artists => ({
+              type: 'lidarr',
+              total: artists.length,
+              monitored: artists.filter(a => a.monitored).length
+            }))
+            .catch(() => ({ type: 'lidarr', total: 0, monitored: 0 }))
+        );
+      }
+
+      if (servicesData.readarr?.length > 0) {
+        statsPromises.push(
+          api.getReadarrBooks(servicesData.readarr[0].id)
+            .then(books => ({
+              type: 'readarr',
+              total: books.length,
+              monitored: books.filter(b => b.monitored).length
+            }))
+            .catch(() => ({ type: 'readarr', total: 0, monitored: 0 }))
+        );
+      }
+
+      if (statsPromises.length > 0) {
+        const statsResults = await Promise.all(statsPromises);
+        const newStats = { ...stats };
+        statsResults.forEach(result => {
+          if (result.type) {
+            newStats[result.type] = { total: result.total, monitored: result.monitored };
+          }
+        });
+        setStats(newStats);
+      }
     } catch (error) {
       console.error('Error loading overview:', error);
     } finally {
@@ -163,11 +235,96 @@ function Overview() {
     );
   }
 
+  const StatCard = ({ title, icon, value, subtitle, color }) => (
+    <Card 
+      sx={{ 
+        height: '100%',
+        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+        color: 'white',
+        transition: 'all 0.3s ease-in-out',
+        '&:hover': {
+          transform: 'translateY(-8px) scale(1.02)',
+          boxShadow: 6
+        }
+      }}
+    >
+      <CardContent>
+        <Box display="flex" alignItems="center" mb={2}>
+          <Box
+            sx={{
+              backgroundColor: 'rgba(255,255,255,0.2)',
+              borderRadius: 2,
+              p: 1,
+              mr: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            {icon}
+          </Box>
+          <Typography variant="h6" component="div">
+            {title}
+          </Typography>
+        </Box>
+        <Typography variant="h3" component="div" mb={1} sx={{ fontWeight: 'bold' }}>
+          {value}
+        </Typography>
+        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+          {subtitle}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Container maxWidth="xl">
       <Typography variant="h4" gutterBottom>
         Services Overview
       </Typography>
+
+      {/* Library Stats */}
+      <Grid container spacing={3} sx={{ mt: 2, mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="TV Shows"
+            icon={<LiveTv sx={{ color: 'white' }} />}
+            value={stats.sonarr.total}
+            subtitle={`${stats.sonarr.monitored} monitored`}
+            color="#1976d2"
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Movies"
+            icon={<Movie sx={{ color: 'white' }} />}
+            value={stats.radarr.total}
+            subtitle={`${stats.radarr.monitored} monitored`}
+            color="#dc004e"
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Music"
+            icon={<MusicNote sx={{ color: 'white' }} />}
+            value={stats.lidarr.total}
+            subtitle={`${stats.lidarr.monitored} monitored`}
+            color="#f57c00"
+          />
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard
+            title="Books"
+            icon={<Book sx={{ color: 'white' }} />}
+            value={stats.readarr.total}
+            subtitle={`${stats.readarr.monitored} monitored`}
+            color="#388e3c"
+          />
+        </Grid>
+      </Grid>
 
       {Object.entries(services).map(([serviceType, instances]) => 
         instances.length > 0 && (

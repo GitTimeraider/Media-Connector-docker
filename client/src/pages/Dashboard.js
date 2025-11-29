@@ -40,13 +40,6 @@ import api from '../services/api';
 function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [services, setServices] = useState({});
-  const [stats, setStats] = useState({
-    sonarr: { total: 0, monitored: 0 },
-    radarr: { total: 0, monitored: 0 },
-    lidarr: { total: 0, monitored: 0 },
-    readarr: { total: 0, monitored: 0 },
-    downloads: { active: 0, queued: 0 }
-  });
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [trendingTV, setTrendingTV] = useState([]);
   const [upcomingMovies, setUpcomingMovies] = useState([]);
@@ -67,51 +60,18 @@ function Dashboard() {
       const servicesData = await api.getServices();
       setServices(servicesData);
 
-      // Load stats for each service type
-      const statsPromises = [];
-      
+      // Load recent downloads
       if (servicesData.sonarr?.length > 0) {
-        statsPromises.push(
-          api.getSonarrSeries(servicesData.sonarr[0].id)
-            .then(series => ({
-              type: 'sonarr',
-              total: series.length,
-              monitored: series.filter(s => s.monitored).length
-            }))
-            .catch(() => ({ type: 'sonarr', total: 0, monitored: 0 }))
-        );
-        
-        // Load recent downloads
         api.getRecentSonarrDownloads(servicesData.sonarr[0].id)
           .then(series => setRecentDownloads(prev => ({ ...prev, series })))
           .catch(() => {});
       }
 
       if (servicesData.radarr?.length > 0) {
-        statsPromises.push(
-          api.getRadarrMovies(servicesData.radarr[0].id)
-            .then(movies => ({
-              type: 'radarr',
-              total: movies.length,
-              monitored: movies.filter(m => m.monitored).length
-            }))
-            .catch(() => ({ type: 'radarr', total: 0, monitored: 0 }))
-        );
-        
-        // Load recent downloads
         api.getRecentRadarrDownloads(servicesData.radarr[0].id)
           .then(movies => setRecentDownloads(prev => ({ ...prev, movies })))
           .catch(() => {});
       }
-
-      const results = await Promise.all(statsPromises);
-      const newStats = { ...stats };
-      results.forEach(result => {
-        if (result.type) {
-          newStats[result.type] = { total: result.total, monitored: result.monitored };
-        }
-      });
-      setStats(newStats);
     } catch (error) {
       console.error('Error loading dashboard:', error);
     } finally {
@@ -147,49 +107,6 @@ function Dashboard() {
     setDialogOpen(false);
     setTimeout(() => setSelectedItem(null), 200);
   };
-
-  const StatCard = ({ title, icon, value, subtitle, color }) => (
-    <Card 
-      sx={{ 
-        height: '100%',
-        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
-        color: 'white',
-        transition: 'all 0.3s ease-in-out',
-        cursor: 'pointer',
-        '&:hover': {
-          transform: 'translateY(-8px) scale(1.02)',
-          boxShadow: 6
-        }
-      }}
-    >
-        <CardContent>
-          <Box display="flex" alignItems="center" mb={2}>
-            <Box
-              sx={{
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                borderRadius: 2,
-                p: 1,
-                mr: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {icon}
-            </Box>
-            <Typography variant="h6" component="div">
-              {title}
-            </Typography>
-          </Box>
-          <Typography variant="h3" component="div" mb={1} sx={{ fontWeight: 'bold' }}>
-            {value}
-          </Typography>
-          <Typography variant="body2" sx={{ opacity: 0.9 }}>
-            {subtitle}
-          </Typography>
-        </CardContent>
-      </Card>
-  );
 
   if (loading) {
     return (
@@ -483,48 +400,7 @@ function Dashboard() {
         )}
       </Dialog>
       
-      {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mt: 2 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="TV Shows"
-            icon={<LiveTv sx={{ color: 'white' }} />}
-            value={stats.sonarr.total}
-            subtitle={`${stats.sonarr.monitored} monitored`}
-            color="#1976d2"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Movies"
-            icon={<Movie sx={{ color: 'white' }} />}
-            value={stats.radarr.total}
-            subtitle={`${stats.radarr.monitored} monitored`}
-            color="#dc004e"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Music"
-            icon={<MusicNote sx={{ color: 'white' }} />}
-            value={stats.lidarr.total}
-            subtitle={`${stats.lidarr.monitored} monitored`}
-            color="#f57c00"
-          />
-        </Grid>
-        
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard
-            title="Books"
-            icon={<Book sx={{ color: 'white' }} />}
-            value={stats.readarr.total}
-            subtitle={`${stats.readarr.monitored} monitored`}
-            color="#388e3c"
-          />
-        </Grid>
-      </Grid>
+
 
       {/* Trending Movies */}
       <Box sx={{ mt: 5 }}>
@@ -714,7 +590,7 @@ function Dashboard() {
         ) : null}
       </Box>
 
-      {/* Recent Downloads */}
+      {/* Recently Added to Library */}
       {(recentDownloads.movies.length > 0 || recentDownloads.series.length > 0) && (
         <Box sx={{ mt: 5 }}>
           <Box 
@@ -729,37 +605,83 @@ function Dashboard() {
               borderColor: 'success.main'
             }}
           >
-            <Download sx={{ mr: 1.5, fontSize: 32, color: 'success.main' }} />
+            <Download sx={{ mr: 1.5, fontSize: { xs: 24, sm: 32 }, color: 'success.main' }} />
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 600 }}>Recently Downloaded</Typography>
-              <Typography variant="caption" color="text.secondary">Latest additions to your library</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 600, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Your Library</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                Recently added movies and TV shows from Radarr & Sonarr
+              </Typography>
             </Box>
           </Box>
           
           {recentDownloads.movies.length > 0 && (
-            <>
-              <Typography variant="h6" sx={{ mt: 3, mb: 2, fontWeight: 600 }}>Movies</Typography>
-              <Grid container spacing={3}>
-                {recentDownloads.movies.slice(0, 5).map((movie, index) => (
-                  <Grid item xs={6} sm={4} md={2.4} key={index}>
+            <Box sx={{ mb: 4 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <Movie sx={{ mr: 1, fontSize: { xs: 20, sm: 24 }, color: 'error.main' }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>Movies from Radarr</Typography>
+              </Box>
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                overflowX: 'auto',
+                pb: 2,
+                '&::-webkit-scrollbar': {
+                  height: 8
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: 4
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: 4,
+                  '&:hover': {
+                    background: 'rgba(255,255,255,0.3)'
+                  }
+                }
+              }}>
+                {recentDownloads.movies.slice(0, 10).map((movie, index) => (
+                  <Box key={index} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={movie} type="movie" index={index} />
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
-            </>
+              </Box>
+            </Box>
           )}
           
           {recentDownloads.series.length > 0 && (
-            <>
-              <Typography variant="h6" sx={{ mt: 4, mb: 2, fontWeight: 600 }}>TV Shows</Typography>
-              <Grid container spacing={3}>
-                {recentDownloads.series.slice(0, 5).map((series, index) => (
-                  <Grid item xs={6} sm={4} md={2.4} key={index}>
+            <Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <LiveTv sx={{ mr: 1, fontSize: { xs: 20, sm: 24 }, color: 'primary.main' }} />
+                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>TV Shows from Sonarr</Typography>
+              </Box>
+              <Box sx={{
+                display: 'flex',
+                gap: 2,
+                overflowX: 'auto',
+                pb: 2,
+                '&::-webkit-scrollbar': {
+                  height: 8
+                },
+                '&::-webkit-scrollbar-track': {
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: 4
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  background: 'rgba(255,255,255,0.2)',
+                  borderRadius: 4,
+                  '&:hover': {
+                    background: 'rgba(255,255,255,0.3)'
+                  }
+                }
+              }}>
+                {recentDownloads.series.slice(0, 10).map((series, index) => (
+                  <Box key={index} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={series} type="tv" index={index} />
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
-            </>
+              </Box>
+            </Box>
           )}
         </Box>
       )}

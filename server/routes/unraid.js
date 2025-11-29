@@ -25,13 +25,35 @@ router.get('/status/:instanceId', async (req, res) => {
     }
 
     // Get system info via REST API (v4.27.0+)
-    console.log(`Attempting Unraid status request to: ${instance.url}/api/system`);
-    
-    const response = await axios.get(`${instance.url}/api/system`, 
-      { headers, timeout: 10000 }
-    );
+    // Try multiple endpoint patterns
+    const endpoints = [
+      `${instance.url}/system`,
+      `${instance.url}/api/system`,
+      `${instance.url}/info`,
+      `${instance.url}/api/info`
+    ];
 
-    res.json(response.data);
+    let response = null;
+    let lastError = null;
+
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Attempting Unraid status request to: ${endpoint}`);
+        response = await axios.get(endpoint, { headers, timeout: 5000 });
+        console.log(`Success! Unraid responded from: ${endpoint}`);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.log(`Failed ${endpoint}: ${error.message}`);
+      }
+    }
+
+    if (response) {
+      res.json(response.data);
+    } else {
+      console.error('All Unraid status endpoints failed:', lastError?.message);
+      res.json({ info: null, error: 'No valid endpoint found' });
+    }
   } catch (error) {
     console.error('Unraid status error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -56,13 +78,36 @@ router.get('/docker/:instanceId', async (req, res) => {
     }
 
     // Get Docker containers via REST API (v4.27.0+)
-    console.log(`Attempting Unraid docker request to: ${instance.url}/api/docker`);
+    // Try multiple endpoint patterns
+    const endpoints = [
+      `${instance.url}/docker`,
+      `${instance.url}/api/docker`,
+      `${instance.url}/containers`,
+      `${instance.url}/api/containers`,
+      `${instance.url}/docker/containers`
+    ];
 
-    const response = await axios.get(`${instance.url}/api/docker`,
-      { headers, timeout: 10000 }
-    );
+    let response = null;
+    let lastError = null;
 
-    res.json(response.data);
+    for (const endpoint of endpoints) {
+      try {
+        console.log(`Attempting Unraid docker request to: ${endpoint}`);
+        response = await axios.get(endpoint, { headers, timeout: 5000 });
+        console.log(`Success! Unraid responded from: ${endpoint}`);
+        break;
+      } catch (error) {
+        lastError = error;
+        console.log(`Failed ${endpoint}: ${error.message}`);
+      }
+    }
+
+    if (response) {
+      res.json(response.data);
+    } else {
+      console.error('All Unraid docker endpoints failed:', lastError?.message);
+      res.json({ dockerContainers: [], error: 'No valid endpoint found' });
+    }
   } catch (error) {
     console.error('Unraid docker error:', error.message);
     // Return empty data instead of 500 to prevent UI errors
@@ -82,11 +127,29 @@ router.get('/vms/:instanceId', async (req, res) => {
     };
 
     // Get VMs via REST API (v4.27.0+)
-    const response = await axios.get(`${instance.url}/api/vms`,
-      { headers, timeout: 10000 }
-    );
+    const endpoints = [
+      `${instance.url}/vms`,
+      `${instance.url}/api/vms`,
+      `${instance.url}/vm`,
+      `${instance.url}/api/vm`
+    ];
 
-    res.json(response.data);
+    let response = null;
+    for (const endpoint of endpoints) {
+      try {
+        response = await axios.get(endpoint, { headers, timeout: 5000 });
+        console.log(`Success! Unraid VMs from: ${endpoint}`);
+        break;
+      } catch (error) {
+        console.log(`Failed ${endpoint}: ${error.message}`);
+      }
+    }
+
+    if (response) {
+      res.json(response.data);
+    } else {
+      res.json({ vms: [], error: 'No valid endpoint found' });
+    }
   } catch (error) {
     console.error('Unraid VMs error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
@@ -105,11 +168,29 @@ router.get('/array/:instanceId', async (req, res) => {
     };
 
     // Get array status via REST API (v4.27.0+)
-    const response = await axios.get(`${instance.url}/api/array`,
-      { headers, timeout: 10000 }
-    );
+    const endpoints = [
+      `${instance.url}/array`,
+      `${instance.url}/api/array`,
+      `${instance.url}/disks`,
+      `${instance.url}/api/disks`
+    ];
 
-    res.json(response.data);
+    let response = null;
+    for (const endpoint of endpoints) {
+      try {
+        response = await axios.get(endpoint, { headers, timeout: 5000 });
+        console.log(`Success! Unraid array from: ${endpoint}`);
+        break;
+      } catch (error) {
+        console.log(`Failed ${endpoint}: ${error.message}`);
+      }
+    }
+
+    if (response) {
+      res.json(response.data);
+    } else {
+      res.json({ array: null, error: 'No valid endpoint found' });
+    }
   } catch (error) {
     console.error('Unraid array error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
