@@ -32,6 +32,7 @@ function Sonarr() {
   const [selectedInstance, setSelectedInstance] = useState(null);
   const [series, setSeries] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [seriesSearchQuery, setSeriesSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [qualityProfiles, setQualityProfiles] = useState([]);
@@ -98,12 +99,12 @@ function Sonarr() {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery) return;
+  const handleSeriesSearch = async (e) => {
+    if (e) e.preventDefault();
+    if (!seriesSearchQuery) return;
     try {
-      const results = await api.searchSonarr(selectedInstance, searchQuery);
+      const results = await api.searchSonarr(selectedInstance, seriesSearchQuery);
       setSearchResults(results);
-      setSearchOpen(true);
     } catch (error) {
       console.error('Error searching:', error);
     }
@@ -113,6 +114,10 @@ function Sonarr() {
     setSelectedSeries(show);
     setSelectedTags([]);
   };
+
+  const filteredSeries = series.filter(show =>
+    show.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleAddSeries = async () => {
     if (!selectedSeries) return;
@@ -178,19 +183,15 @@ function Sonarr() {
       <Box mb={3}>
         <TextField
           fullWidth
-          placeholder="Search for series..."
+          placeholder="Search series..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
                 <Search />
               </InputAdornment>
             ),
-            endAdornment: (
-              <Button onClick={handleSearch}>Search</Button>
-            )
           }}
         />
       </Box>
@@ -201,7 +202,7 @@ function Sonarr() {
         </Box>
       ) : (
         <Grid container spacing={3}>
-          {series.map((show) => (
+          {filteredSeries.map((show) => (
             <Grid item xs={12} sm={6} md={4} lg={3} key={show.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {show.images?.find(img => img.coverType === 'poster') && (
@@ -240,17 +241,16 @@ function Sonarr() {
       <Dialog open={searchOpen} onClose={() => setSearchOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Search TV Shows</DialogTitle>
         <DialogContent>
-          <Box mb={2}>
+          <Box component="form" onSubmit={handleSeriesSearch} sx={{ mb: 2 }}>
             <TextField
               fullWidth
               placeholder="Search for TV shows..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              value={seriesSearchQuery}
+              onChange={(e) => setSeriesSearchQuery(e.target.value)}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <Button onClick={handleSearch}>
+                    <Button type="submit">
                       <Search />
                     </Button>
                   </InputAdornment>
@@ -370,7 +370,7 @@ function Sonarr() {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => { setSearchOpen(false); setSelectedSeries(null); setSearchResults([]); setSearchQuery(''); }}>
+          <Button onClick={() => { setSearchOpen(false); setSelectedSeries(null); setSearchResults([]); setSeriesSearchQuery(''); }}>
             Close
           </Button>
         </DialogActions>

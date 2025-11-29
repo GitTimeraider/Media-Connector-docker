@@ -256,24 +256,25 @@ function Dashboard() {
     return (
       <Card 
         sx={{ 
+          width: '100%',
           height: '100%', 
           display: 'flex', 
           flexDirection: 'column',
-            position: 'relative',
-            overflow: 'hidden',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            cursor: 'pointer',
-            '&:hover': {
-              transform: 'translateY(-12px) scale(1.03)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-              zIndex: 10
-            }
-          }}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}
-        >
-          <CardActionArea onClick={() => handleOpenDialog(item)}>
-            <Box sx={{ position: 'relative', overflow: 'hidden', height: 225 }}>
+          position: 'relative',
+          overflow: 'hidden',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          cursor: 'pointer',
+          '&:hover': {
+            transform: 'translateY(-12px) scale(1.03)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+            zIndex: 10
+          }
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <CardActionArea onClick={() => handleOpenDialog(item)}>
+          <Box sx={{ position: 'relative', overflow: 'hidden', height: 225, width: '100%' }}>
               <CardMedia
                 component="img"
                 image={imageUrl}
@@ -284,7 +285,8 @@ function Dashboard() {
                   objectFit: 'cover',
                   objectPosition: 'center top',
                   transition: 'transform 0.3s ease',
-                  transform: isHovered ? 'scale(1.1)' : 'scale(1)'
+                  transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                  display: 'block'
                 }}
               />
               <Fade in={isHovered}>
@@ -330,7 +332,10 @@ function Dashboard() {
                       <Tooltip title="Add to Library">
                         <IconButton 
                           size="small" 
-                          onClick={handleAddToLibrary}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToLibrary(e);
+                          }}
                           sx={{ 
                             bgcolor: 'secondary.main', 
                             color: 'white',
@@ -411,24 +416,6 @@ function Dashboard() {
 
   return (
     <Container maxWidth="xl" sx={{ pb: 4 }}>
-      <Box sx={{ mb: 4, mt: 2 }}>
-        <Typography 
-          variant="h3" 
-          sx={{ 
-            fontWeight: 700,
-            background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 1
-          }}
-        >
-          Dashboard
-        </Typography>
-        <Typography variant="subtitle1" color="text.secondary">
-          Your media hub at a glance
-        </Typography>
-      </Box>
-
       {/* Search Bar */}
       <Paper 
         elevation={2}
@@ -506,7 +493,7 @@ function Dashboard() {
             }}
           >
             {searchResults.map((item, index) => (
-              <Box key={`${item.id}-${index}`} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+              <Box key={`${item.id}-${index}`} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
                 <MediaCard item={item} type={item.media_type} index={index} />
               </Box>
             ))}
@@ -653,8 +640,9 @@ function Dashboard() {
               }
             }
           }}>
+          }}>
             {trendingMovies.map((item, index) => (
-              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
                 <MediaCard item={item} type="movie" index={index} />
               </Box>
             ))}
@@ -718,7 +706,7 @@ function Dashboard() {
             }
           }}>
             {trendingTV.map((item, index) => (
-              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
                 <MediaCard item={item} type="tv" index={index} />
               </Box>
             ))}
@@ -782,7 +770,7 @@ function Dashboard() {
             }
           }}>
             {upcomingMovies.map((item, index) => (
-              <Box key={index} sx={{ minWidth: 200, flexShrink: 0 }}>
+              <Box key={index} sx={{ width: 200, minWidth: 200, maxWidth: 200, flexShrink: 0 }}>
                 <MediaCard item={item} type="movie" index={index} showReleaseDate />
               </Box>
             ))}
@@ -840,8 +828,9 @@ function Dashboard() {
                   }
                 }
               }}>
+              }}>
                 {recentDownloads.movies.slice(0, 10).map((movie, index) => (
-                  <Box key={index} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+                  <Box key={index} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={movie} type="movie" index={index} />
                   </Box>
                 ))}
@@ -875,8 +864,9 @@ function Dashboard() {
                   }
                 }
               }}>
+              }}>
                 {recentDownloads.series.slice(0, 10).map((series, index) => (
-                  <Box key={index} sx={{ minWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
+                  <Box key={index} sx={{ width: { xs: 150, sm: 180, md: 200 }, minWidth: { xs: 150, sm: 180, md: 200 }, maxWidth: { xs: 150, sm: 180, md: 200 }, flexShrink: 0 }}>
                     <MediaCard item={series} type="tv" index={index} />
                   </Box>
                 ))}
