@@ -224,7 +224,7 @@ function Search() {
         }
         
         // Penalize results with too many extra words (likely unrelated)
-        const titleWords = title.split(/[\s\-\.\[\]]+/).filter(w => w.length > 2);
+        const titleWords = title.split(/[\s\-.[.\]]+/).filter(w => w.length > 2);
         const searchWords = searchTerms.filter(w => w.length > 2);
         const extraWords = titleWords.length - searchWords.length;
         if (extraWords > 5) {
