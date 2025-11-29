@@ -19,8 +19,7 @@ import {
   DialogActions,
   Button,
   CardActionArea,
-  Fade,
-  Zoom
+  Fade
 } from '@mui/material';
 import {
   LiveTv,
@@ -148,20 +147,19 @@ function Dashboard() {
   };
 
   const StatCard = ({ title, icon, value, subtitle, color }) => (
-    <Zoom in timeout={300}>
-      <Card 
-        sx={{ 
-          height: '100%',
-          background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
-          color: 'white',
-          transition: 'all 0.3s ease-in-out',
-          cursor: 'pointer',
-          '&:hover': {
-            transform: 'translateY(-8px) scale(1.02)',
-            boxShadow: 6
-          }
-        }}
-      >
+    <Card 
+      sx={{ 
+        height: '100%',
+        background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
+        color: 'white',
+        transition: 'all 0.3s ease-in-out',
+        cursor: 'pointer',
+        '&:hover': {
+          transform: 'translateY(-8px) scale(1.02)',
+          boxShadow: 6
+        }
+      }}
+    >
         <CardContent>
           <Box display="flex" alignItems="center" mb={2}>
             <Box
@@ -189,7 +187,6 @@ function Dashboard() {
           </Typography>
         </CardContent>
       </Card>
-    </Zoom>
   );
 
   if (loading) {
@@ -225,12 +222,11 @@ function Dashboard() {
       : item.year || '';
     
     return (
-      <Zoom in timeout={300 + (index * 50)}>
-        <Card 
-          sx={{ 
-            height: '100%', 
-            display: 'flex', 
-            flexDirection: 'column',
+      <Card 
+        sx={{ 
+          height: '100%', 
+          display: 'flex', 
+          flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -362,7 +358,6 @@ function Dashboard() {
             </CardContent>
           </CardActionArea>
         </Card>
-      </Zoom>
     );
   };
 

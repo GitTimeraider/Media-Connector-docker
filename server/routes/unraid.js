@@ -59,14 +59,8 @@ router.get('/status/:instanceId', async (req, res) => {
     res.json(response.data.data);
   } catch (error) {
     console.error('Unraid status error:', error.message);
-    console.error('Error details:', error.response?.data || error.response?.statusText);
-    console.error('Request URL:', error.config?.url);
-    res.status(500).json({ 
-      error: error.message, 
-      details: error.response?.data,
-      statusCode: error.response?.status,
-      url: error.config?.url
-    });
+    // Return empty data instead of 500 to prevent UI errors
+    res.json({ info: null });
   }
 });
 
@@ -109,14 +103,8 @@ router.get('/docker/:instanceId', async (req, res) => {
     res.json(response.data.data);
   } catch (error) {
     console.error('Unraid docker error:', error.message);
-    console.error('Error details:', error.response?.data || error.response?.statusText);
-    console.error('Request URL:', error.config?.url);
-    res.status(500).json({ 
-      error: error.message, 
-      details: error.response?.data,
-      statusCode: error.response?.status,
-      url: error.config?.url
-    });
+    // Return empty data instead of 500 to prevent UI errors
+    res.json({ dockerContainers: [] });
   }
 });
 

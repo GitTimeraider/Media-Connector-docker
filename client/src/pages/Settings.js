@@ -18,8 +18,6 @@ import {
   DialogActions,
   CircularProgress,
   Chip,
-  Fade,
-  Zoom,
   Paper,
   Divider,
   Tooltip,
@@ -182,10 +180,9 @@ function Settings() {
     const instances = services[serviceType] || [];
 
     return (
-      <Zoom in={true} style={{ transitionDelay: '100ms' }}>
-        <Card 
-          sx={{ 
-            mb: 3,
+      <Card 
+        sx={{ 
+          mb: 3,
             background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -240,30 +237,27 @@ function Settings() {
             </Box>
 
             {instances.length === 0 ? (
-              <Fade in={true}>
-                <Paper
-                  sx={{
-                    p: 4,
-                    textAlign: 'center',
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '2px dashed rgba(255, 255, 255, 0.1)',
-                    borderRadius: 2
-                  }}
-                >
-                  <Typography variant="body2" color="text.secondary">
-                    No {label} instances configured yet
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Click "Add {label}" to get started
-                  </Typography>
-                </Paper>
-              </Fade>
+              <Paper
+                sx={{
+                  p: 4,
+                  textAlign: 'center',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '2px dashed rgba(255, 255, 255, 0.1)',
+                  borderRadius: 2
+                }}
+              >
+                <Typography variant="body2" color="text.secondary">
+                  No {label} instances configured yet
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Click "Add {label}" to get started
+                </Typography>
+              </Paper>
             ) : (
               <Grid container spacing={2}>
                 {instances.map((instance, index) => (
                   <Grid item xs={12} key={instance.id}>
-                    <Fade in={true} style={{ transitionDelay: `${index * 50}ms` }}>
-                      <Paper
+                    <Paper
                         elevation={hoveredCard === instance.id ? 8 : 2}
                         onMouseEnter={() => setHoveredCard(instance.id)}
                         onMouseLeave={() => setHoveredCard(null)}
@@ -345,14 +339,12 @@ function Settings() {
                           </Box>
                         </Box>
                       </Paper>
-                    </Fade>
                   </Grid>
                 ))}
               </Grid>
             )}
           </CardContent>
         </Card>
-      </Zoom>
     );
   };
 
@@ -360,8 +352,7 @@ function Settings() {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Fade in={true}>
-        <Box mb={4}>
+      <Box mb={4}>
           <Box display="flex" alignItems="center" gap={2} mb={1}>
             <Box
               sx={{
@@ -396,7 +387,6 @@ function Settings() {
             </Box>
           </Box>
         </Box>
-      </Fade>
 
       <Paper 
         elevation={3}
@@ -631,21 +621,19 @@ function Settings() {
             </Grid>
             {testStatus && !testStatus.loading && (
               <Grid item xs={12}>
-                <Zoom in={true}>
-                  <Alert
-                    severity={testStatus.success ? 'success' : 'error'}
-                    icon={testStatus.success ? <CheckCircle /> : <Error />}
-                    sx={{
-                      '& .MuiAlert-icon': {
-                        fontSize: 28
-                      }
-                    }}
-                  >
-                    <Typography variant="body2" fontWeight="bold">
-                      {testStatus.message}
-                    </Typography>
-                  </Alert>
-                </Zoom>
+                <Alert
+                  severity={testStatus.success ? 'success' : 'error'}
+                  icon={testStatus.success ? <CheckCircle /> : <Error />}
+                  sx={{
+                    '& .MuiAlert-icon': {
+                      fontSize: 28
+                    }
+                  }}
+                >
+                  <Typography variant="body2" fontWeight="bold">
+                    {testStatus.message}
+                  </Typography>
+                </Alert>
               </Grid>
             )}
           </Grid>
