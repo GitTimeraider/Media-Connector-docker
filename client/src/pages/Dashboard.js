@@ -137,14 +137,14 @@ function Dashboard() {
     // Load profiles and folders from Radarr/Sonarr
     try {
       if (mediaType === 'movie' && services.radarr?.length > 0) {
-        const profiles = await api.getRadarrProfiles(services.radarr[0].id);
+        const profiles = await api.getRadarrQualityProfiles(services.radarr[0].id);
         const folders = await api.getRadarrRootFolders(services.radarr[0].id);
         setQualityProfiles(profiles || []);
         setRootFolders(folders || []);
         if (profiles?.length > 0) setSelectedProfile(profiles[0].id);
         if (folders?.length > 0) setSelectedFolder(folders[0].path);
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
-        const profiles = await api.getSonarrProfiles(services.sonarr[0].id);
+        const profiles = await api.getSonarrQualityProfiles(services.sonarr[0].id);
         const folders = await api.getSonarrRootFolders(services.sonarr[0].id);
         setQualityProfiles(profiles || []);
         setRootFolders(folders || []);

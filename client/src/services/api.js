@@ -381,28 +381,6 @@ class ApiService {
     return response.data;
   }
 
-  // Radarr profiles and folders
-  async getRadarrProfiles(instanceId) {
-    const response = await this.client.get(`/radarr/profiles/${instanceId}`);
-    return response.data;
-  }
-
-  async getRadarrRootFolders(instanceId) {
-    const response = await this.client.get(`/radarr/rootfolders/${instanceId}`);
-    return response.data;
-  }
-
-  // Sonarr profiles and folders
-  async getSonarrProfiles(instanceId) {
-    const response = await this.client.get(`/sonarr/profiles/${instanceId}`);
-    return response.data;
-  }
-
-  async getSonarrRootFolders(instanceId) {
-    const response = await this.client.get(`/sonarr/rootfolders/${instanceId}`);
-    return response.data;
-  }
-
   // Recent downloads
   async getRecentRadarrDownloads(instanceId) {
     const response = await this.client.get(`/radarr/recent/${instanceId}`);
