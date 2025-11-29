@@ -191,7 +191,65 @@ function Search() {
       }
       
       const results = await api.searchProwlarr(prowlarrInstance, params);
-      setSearchResults(Array.isArray(results) ? results : []);
+      
+      // Filter and score results for relevance
+      const filteredResults = Array.isArray(results) ? results : [];
+      const searchTerms = searchQuery.toLowerCase().split(' ');
+      
+      // Calculate relevance score for each result
+      const scoredResults = filteredResults.map(result => {
+        const title = (result.title || '').toLowerCase();
+        let score = 0;
+        
+        // Exact match gets highest score
+        if (title === searchQuery.toLowerCase()) {
+          score += 100;
+        }
+        
+        // Contains full search query
+        if (title.includes(searchQuery.toLowerCase())) {
+          score += 50;
+        }
+        
+        // Check for individual search terms
+        searchTerms.forEach(term => {
+          if (term.length > 2 && title.includes(term)) {
+            score += 10;
+          }
+        });
+        
+        // Boost score for results that start with the search query
+        if (title.startsWith(searchQuery.toLowerCase())) {
+          score += 25;
+        }
+        
+        // Penalize results with too many extra words (likely unrelated)
+        const titleWords = title.split(/[\s\-\.\[\]]+/).filter(w => w.length > 2);
+        const searchWords = searchTerms.filter(w => w.length > 2);
+        const extraWords = titleWords.length - searchWords.length;
+        if (extraWords > 5) {
+          score -= extraWords * 2;
+        }
+        
+        return { ...result, relevanceScore: score };
+      });
+      
+      // Filter out results with score below threshold and sort by relevance
+      const relevantResults = scoredResults
+        .filter(r => r.relevanceScore > 0)
+        .sort((a, b) => {
+          // Sort by relevance score first
+          if (b.relevanceScore !== a.relevanceScore) {
+            return b.relevanceScore - a.relevanceScore;
+          }
+          // Then by seeders if torrent
+          if (a.seeders && b.seeders) {
+            return b.seeders - a.seeders;
+          }
+          return 0;
+        });
+      
+      setSearchResults(relevantResults);
     } catch (error) {
       console.error('Error searching:', error);
       setSearchResults([]);
@@ -326,14 +384,31 @@ function Search() {
       </Box>
 
       {searchResults.length > 0 && (
-        <Grid container spacing={2}>
-          {searchResults.map((result, index) => (
+        <>
+          <Alert severity="success" sx={{ mb: 2 }}>
+            Found {searchResults.length} relevant result{searchResults.length !== 1 ? 's' : ''} for "{searchQuery}"
+            {selectedCategory !== 'all' && ` in ${categories.find(c => c.value === selectedCategory)?.label}`}
+          </Alert>
+          <Grid container spacing={2}>
+            {searchResults.map((result, index) => (
             <Grid item xs={12} key={index}>
-              <Card>
+              <Card sx={{ 
+                border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
+                        result.relevanceScore >= 50 ? '2px solid #2196f3' : 
+                        '1px solid rgba(255,255,255,0.1)'
+              }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    {result.title}
-                  </Typography>
+                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+                    <Typography variant="h6" sx={{ flex: 1, pr: 2 }}>
+                      {result.title}
+                    </Typography>
+                    {result.relevanceScore >= 100 && (
+                      <Chip label="Exact Match" size="small" color="success" />
+                    )}
+                    {result.relevanceScore >= 50 && result.relevanceScore < 100 && (
+                      <Chip label="High Match" size="small" color="primary" />
+                    )}
+                  </Box>
                   <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                     <Chip label={result.indexer} size="small" color="primary" />
                     <Chip 
@@ -380,7 +455,8 @@ function Search() {
               </Card>
             </Grid>
           ))}
-        </Grid>
+          </Grid>
+        </>
       )}
 
       {searchResults.length === 0 && searchQuery && !searching && (
