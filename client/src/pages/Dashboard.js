@@ -327,16 +327,14 @@ function Dashboard() {
                       </IconButton>
                     </Tooltip>
                     {!isInLibrary && (
-                      <Tooltip title={isAdding ? "Adding..." : "Add to Library"}>
+                      <Tooltip title="Add to Library">
                         <IconButton 
                           size="small" 
                           onClick={handleAddToLibrary}
-                          disabled={isAdding}
                           sx={{ 
                             bgcolor: 'secondary.main', 
                             color: 'white',
-                            '&:hover': { bgcolor: 'secondary.dark' },
-                            '&:disabled': { bgcolor: 'rgba(156,39,176,0.5)' }
+                            '&:hover': { bgcolor: 'secondary.dark' }
                           }}
                         >
                           <Add />
