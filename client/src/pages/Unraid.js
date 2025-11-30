@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Grid,
@@ -32,6 +32,9 @@ function Unraid() {
   const [systemStats, setSystemStats] = useState(null);
   const [dockerContainers, setDockerContainers] = useState([]);
   const [arrayStatus, setArrayStatus] = useState(null);
+  const [realtimeStats, setRealtimeStats] = useState(null);
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     loadInstances();
@@ -40,11 +43,73 @@ function Unraid() {
   useEffect(() => {
     if (selectedInstance) {
       loadUnraidData();
+      connectWebSocket();
       const interval = setInterval(loadUnraidData, 10000); // Refresh every 10s
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        disconnectWebSocket();
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInstance]);
+
+  const connectWebSocket = async () => {
+    try {
+      // Start subscription on backend
+      await api.post(`/api/unraid/subscribe/${selectedInstance}`);
+      
+      // Connect to WebSocket
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = window.location.host; // includes hostname:port
+      const wsUrl = `${protocol}//${host}`;
+      
+      wsRef.current = new WebSocket(wsUrl);
+      
+      wsRef.current.onopen = () => {
+        console.log('WebSocket connected');
+        setWsConnected(true);
+        // Subscribe to instance updates
+        wsRef.current.send(JSON.stringify({
+          type: 'subscribe',
+          instanceId: selectedInstance
+        }));
+      };
+      
+      wsRef.current.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        if (message.type === 'stats' && message.instanceId === selectedInstance) {
+          console.log('Received real-time stats:', message.data);
+          setRealtimeStats(message.data);
+        }
+      };
+      
+      wsRef.current.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        setWsConnected(false);
+      };
+      
+      wsRef.current.onclose = () => {
+        console.log('WebSocket disconnected');
+        setWsConnected(false);
+      };
+    } catch (error) {
+      console.error('Error connecting WebSocket:', error);
+    }
+  };
+
+  const disconnectWebSocket = async () => {
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+    
+    // Stop subscription on backend
+    try {
+      await api.delete(`/api/unraid/subscribe/${selectedInstance}`);
+    } catch (error) {
+      console.error('Error stopping subscription:', error);
+    }
+  };
 
   const loadInstances = async () => {
     try {
@@ -72,14 +137,24 @@ function Unraid() {
 
       if (stats.status === 'fulfilled') {
         const statsData = stats.value;
-        // Combine info and system data
-        setSystemStats({
-          cpu: statsData?.info?.cpu,
-          memory: statsData?.system?.memory,
-          os: statsData?.info?.os,
-          cpuUsage: statsData?.system?.cpu?.usage,
-          versions: statsData?.info?.versions
-        });
+        console.log('Stats value structure:', statsData);
+        
+        // Calculate total memory from layout (Unraid API doesn't provide real-time usage in queries)
+        const memoryLayout = statsData?.info?.memory?.layout || [];
+        const totalMemory = memoryLayout.reduce((sum, module) => sum + (module.size || 0), 0);
+        
+        // Data is directly in the response from GraphQL
+        const combinedStats = {
+          cpu: statsData?.info?.cpu || statsData?.cpu,
+          memory: {
+            total: totalMemory,
+            layout: memoryLayout
+          },
+          os: statsData?.info?.os || statsData?.os,
+          versions: statsData?.info?.versions || statsData?.versions
+        };
+        console.log('Combined stats:', combinedStats);
+        setSystemStats(combinedStats);
       }
       if (docker.status === 'fulfilled') {
         const containers = docker.value?.docker?.containers || docker.value?.dockerContainers || docker.value;
@@ -147,10 +222,38 @@ function Unraid() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Memory sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h6">CPU</Typography>
+                  {wsConnected && (
+                    <Chip 
+                      label="Live" 
+                      color="success" 
+                      size="small" 
+                      sx={{ ml: 'auto', height: 20 }}
+                    />
+                  )}
                 </Box>
-                <Typography variant="h4">{systemStats.cpuUsage ? Math.round(systemStats.cpuUsage) : 0}%</Typography>
-                <Typography variant="body2" sx={{ fontSize: '0.75rem' }}>{systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}</Typography>
-                <Typography variant="caption">{systemStats.cpu?.cores || 0} cores, {systemStats.cpu?.threads || 0} threads</Typography>
+                <Typography variant="body1" sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
+                  {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
+                </Typography>
+                <Typography variant="caption">
+                  {systemStats.cpu?.cores || 0} cores, {systemStats.cpu?.threads || 0} threads
+                </Typography>
+                {systemStats.cpu?.speed && (
+                  <Typography variant="caption" display="block">
+                    {(systemStats.cpu.speed / 1000).toFixed(2)} GHz
+                  </Typography>
+                )}
+                {realtimeStats?.info?.cpu?.usage !== undefined && (
+                  <Box sx={{ mt: 2 }}>
+                    <Typography variant="h4" color="primary">
+                      {realtimeStats.info.cpu.usage.toFixed(1)}%
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={realtimeStats.info.cpu.usage} 
+                      sx={{ mt: 1 }}
+                    />
+                  </Box>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -161,15 +264,35 @@ function Unraid() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Storage sx={{ mr: 1, color: 'success.main' }} />
                   <Typography variant="h6">Memory</Typography>
+                  {wsConnected && (
+                    <Chip 
+                      label="Live" 
+                      color="success" 
+                      size="small" 
+                      sx={{ ml: 'auto', height: 20 }}
+                    />
+                  )}
                 </Box>
-                <Typography variant="h4">{systemStats.memory ? Math.round((systemStats.memory.used / systemStats.memory.total) * 100) : 0}%</Typography>
-                <Typography variant="caption">{formatBytes(systemStats.memory?.used || 0)} / {formatBytes(systemStats.memory?.total || 0)}</Typography>
-                <LinearProgress 
-                  variant="determinate" 
-                  value={systemStats.memory ? (systemStats.memory.used / systemStats.memory.total) * 100 : 0} 
-                  color="success"
-                  sx={{ mt: 1 }}
-                />
+                {realtimeStats?.info?.memory ? (
+                  <>
+                    <Typography variant="h4">
+                      {((realtimeStats.info.memory.used / realtimeStats.info.memory.total) * 100).toFixed(1)}%
+                    </Typography>
+                    <Typography variant="caption">
+                      {formatBytes(realtimeStats.info.memory.used)} / {formatBytes(realtimeStats.info.memory.total)}
+                    </Typography>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={(realtimeStats.info.memory.used / realtimeStats.info.memory.total) * 100} 
+                      sx={{ mt: 1 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="h4">{formatBytes(systemStats.memory?.total || 0)}</Typography>
+                    <Typography variant="caption">{systemStats.memory?.layout?.length || 0} modules</Typography>
+                  </>
+                )}
               </CardContent>
             </Card>
           </Grid>

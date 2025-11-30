@@ -157,8 +157,10 @@ function AppLayout() {
       <AppBar
         position="fixed"
         sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
           ml: { sm: `${drawerWidth}px` },
+          maxWidth: '100vw',
+          boxSizing: 'border-box'
         }}
       >
         <Toolbar>
@@ -235,8 +237,11 @@ function AppLayout() {
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { xs: '100%', sm: `calc(100% - ${drawerWidth}px)` },
+          maxWidth: '100vw',
           mt: 8,
+          overflowX: 'hidden',
+          boxSizing: 'border-box'
         }}
       >
         <Routes>

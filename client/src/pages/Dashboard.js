@@ -426,7 +426,10 @@ function Dashboard() {
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: 'center',
           gap: { xs: 1.5, sm: 0 },
-          backgroundColor: 'rgba(255, 255, 255, 0.05)'
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          width: '100%',
+          maxWidth: '100%',
+          boxSizing: 'border-box'
         }}
       >
         <TextField
@@ -446,12 +449,14 @@ function Dashboard() {
           }}
         />
         <Button
-          fullWidth={{ xs: true, sm: false }}
           variant="contained"
           onClick={handleSearch}
           disabled={searching || !searchQuery.trim()}
           startIcon={searching ? <CircularProgress size={20} /> : <SearchIcon />}
-          sx={{ minWidth: { sm: 120 } }}
+          sx={{ 
+            minWidth: { sm: 120 },
+            width: { xs: '100%', sm: 'auto' }
+          }}
         >
           {searching ? 'Searching...' : 'Search'}
         </Button>
@@ -479,6 +484,8 @@ function Dashboard() {
               gap: 2,
               overflowX: 'auto',
               pb: 2,
+              width: '100%',
+              maxWidth: '100%',
               '&::-webkit-scrollbar': {
                 height: 8,
               },
@@ -696,6 +703,8 @@ function Dashboard() {
             gap: 3, 
             overflowX: 'auto', 
             pb: 2,
+            width: '100%',
+            maxWidth: '100%',
             '&::-webkit-scrollbar': {
               height: 8
             },
@@ -762,6 +771,8 @@ function Dashboard() {
             gap: 3, 
             overflowX: 'auto', 
             pb: 2,
+            width: '100%',
+            maxWidth: '100%',
             '&::-webkit-scrollbar': {
               height: 8
             },
@@ -823,6 +834,8 @@ function Dashboard() {
                 gap: 2,
                 overflowX: 'auto',
                 pb: 2,
+                width: '100%',
+                maxWidth: '100%',
                 '&::-webkit-scrollbar': {
                   height: 8
                 },
@@ -860,6 +873,8 @@ function Dashboard() {
                 gap: 2,
                 overflowX: 'auto',
                 pb: 2,
+                width: '100%',
+                maxWidth: '100%',
                 '&::-webkit-scrollbar': {
                   height: 8
                 },

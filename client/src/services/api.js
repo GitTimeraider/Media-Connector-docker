@@ -40,6 +40,17 @@ class ApiService {
     );
   }
 
+  // Generic HTTP methods
+  async post(url, data) {
+    const response = await this.client.post(url, data);
+    return response.data;
+  }
+
+  async delete(url) {
+    const response = await this.client.delete(url);
+    return response.data;
+  }
+
   // Auth endpoints
   async login(username, password) {
     const response = await this.client.post('/auth/login', { username, password });

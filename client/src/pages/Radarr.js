@@ -337,7 +337,7 @@ function Radarr() {
       ) : (
         <Grid container spacing={3}>
           {filteredMovies.map((movie) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={movie.id}>
+            <Grid item xs={6} sm={6} md={4} lg={3} key={movie.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {movie.images?.find(img => img.coverType === 'poster') && (
                   <CardMedia

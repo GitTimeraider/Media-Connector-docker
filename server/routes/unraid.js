@@ -24,7 +24,8 @@ router.get('/status/:instanceId', async (req, res) => {
       headers['Authorization'] = `Bearer ${instance.apiKey}`;
     }
 
-    // Get system info via GraphQL API - including real-time stats
+    // Get system info via GraphQL API
+    // Note: CPU usage and memory usage are NOT available in queries, only in subscriptions
     const query = `
       query {
         info {
@@ -34,11 +35,17 @@ router.get('/status/:instanceId', async (req, res) => {
             brand
             cores
             threads
+            speed
+            speedmax
+            speedmin
           }
           memory {
             layout {
               size
               type
+              bank
+              clockSpeed
+              manufacturer
             }
           }
           versions {
@@ -55,16 +62,6 @@ router.get('/status/:instanceId', async (req, res) => {
             uptime
           }
         }
-        system {
-          cpu {
-            usage
-          }
-          memory {
-            total
-            free
-            used
-          }
-        }
       }
     `;
 
@@ -74,6 +71,8 @@ router.get('/status/:instanceId', async (req, res) => {
       { query },
       { headers, timeout: 10000 }
     );
+
+    console.log('Unraid status response:', JSON.stringify(response.data, null, 2));
 
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
@@ -279,6 +278,39 @@ router.post('/docker/action/:instanceId', async (req, res) => {
   } catch (error) {
     console.error('Unraid docker action error:', error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });
+  }
+});
+
+// Start real-time subscription for instance
+router.post('/subscribe/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('unraid');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    // Get the UnraidSubscriptionManager from app locals (set in server/index.js)
+    const unraidManager = req.app.locals.unraidManager;
+    
+    // Subscribe to real-time stats
+    unraidManager.subscribe(req.params.instanceId, instance.url, instance.apiKey);
+    
+    res.json({ success: true, instanceId: req.params.instanceId });
+  } catch (error) {
+    console.error('Unraid subscription error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Stop real-time subscription for instance
+router.delete('/subscribe/:instanceId', async (req, res) => {
+  try {
+    const unraidManager = req.app.locals.unraidManager;
+    unraidManager.unsubscribe(req.params.instanceId);
+    
+    res.json({ success: true, instanceId: req.params.instanceId });
+  } catch (error) {
+    console.error('Unraid unsubscribe error:', error.message);
+    res.status(500).json({ error: error.message });
   }
 });
 

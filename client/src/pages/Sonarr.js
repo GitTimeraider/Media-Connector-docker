@@ -203,7 +203,7 @@ function Sonarr() {
       ) : (
         <Grid container spacing={3}>
           {filteredSeries.map((show) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={show.id}>
+            <Grid item xs={6} sm={6} md={4} lg={3} key={show.id}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 {show.images?.find(img => img.coverType === 'poster') && (
                   <CardMedia
