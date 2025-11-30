@@ -244,14 +244,6 @@ function Dashboard() {
     
     // Check if item is already in library (has id from Radarr/Sonarr)
     const isInLibrary = Boolean(item.id && !item.tmdbId);
-
-    const handleAddToLibrary = (e) => {
-      e.stopPropagation();
-      if (isInLibrary) return;
-      
-      const mediaType = type || item.media_type;
-      handleOpenAddDialog(item, mediaType);
-    };
     
     return (
       <Card 
