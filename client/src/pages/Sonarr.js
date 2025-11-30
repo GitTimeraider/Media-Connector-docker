@@ -292,7 +292,7 @@ function Sonarr() {
                   </Typography>
                   <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
                     <Chip 
-                      label={`${show.seasonCount} Seasons`} 
+                      label={`${show.seasons?.length || 0} Seasons`} 
                       size="small" 
                       color="primary" 
                     />
@@ -340,7 +340,7 @@ function Sonarr() {
                 </Grid>
                 <Grid item xs={12} sm={8}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-                    <Chip label={`${seriesToView.seasonCount} Seasons`} />
+                    <Chip label={`${seriesToView.seasons?.length || 0} Seasons`} />
                     {seriesToView.status && (
                       <Chip label={seriesToView.status} />
                     )}
@@ -494,7 +494,7 @@ function Sonarr() {
                         <Box flexGrow={1}>
                           <Typography variant="h6">{result.title}</Typography>
                           <Typography variant="body2" color="text.secondary" gutterBottom>
-                            {result.year} {result.seasonCount ? `• ${result.seasonCount} Season${result.seasonCount > 1 ? 's' : ''}` : ''} {result.network ? `• ${result.network}` : ''}
+                            {result.year} {result.seasons?.length ? `• ${result.seasons.length} Season${result.seasons.length > 1 ? 's' : ''}` : ''} {result.network ? `• ${result.network}` : ''}
                           </Typography>
                           <Typography variant="body2">
                             {result.overview || 'No description available'}
@@ -512,7 +512,7 @@ function Sonarr() {
                 <CardContent>
                   <Typography variant="h6">{selectedSeries.title} ({selectedSeries.year})</Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {selectedSeries.seasonCount} Season{selectedSeries.seasonCount > 1 ? 's' : ''}
+                    {selectedSeries.seasons?.length || 0} Season{(selectedSeries.seasons?.length || 0) !== 1 ? 's' : ''}
                   </Typography>
                 </CardContent>
               </Card>
