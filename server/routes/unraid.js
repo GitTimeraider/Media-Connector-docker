@@ -114,6 +114,11 @@ router.get('/docker/:instanceId', async (req, res) => {
             state
             status
             autoStart
+            stats {
+              memoryUsage
+              memoryLimit
+              cpuPercentage
+            }
           }
         }
       }
@@ -294,17 +299,16 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     // Use GraphQL mutation for docker actions
     // Try using container name as that's what Unraid usually expects
     const actionName = action.charAt(0).toUpperCase() + action.slice(1);
+    
+    // Try simpler mutation format without return fields
     const mutation = `
       mutation {
-        dockerContainer${actionName}(name: "${containerName}") {
-          id
-          names
-          state
-        }
+        dockerContainer${actionName}(name: "${containerName}")
       }
     `;
 
     console.log('Sending mutation:', mutation);
+    console.log('Container name for mutation:', containerName);
 
     const response = await axios.post(`${instance.url}/graphql`,
       { query: mutation },

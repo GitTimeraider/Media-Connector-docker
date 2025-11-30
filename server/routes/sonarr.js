@@ -177,6 +177,25 @@ router.post('/series/:instanceId', async (req, res) => {
   }
 });
 
+// Delete series
+router.delete('/series/:instanceId/:seriesId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const { deleteFiles } = req.query;
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const result = await client.delete(`/api/v3/series/${req.params.seriesId}?deleteFiles=${deleteFiles === 'true'}`);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Trigger series search
 router.post('/command/:instanceId', async (req, res) => {
   try {

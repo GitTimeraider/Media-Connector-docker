@@ -23,7 +23,7 @@ import {
   MenuItem,
   OutlinedInput
 } from '@mui/material';
-import { Search, Add } from '@mui/icons-material';
+import { Search, Add, Delete, Close } from '@mui/icons-material';
 import api from '../services/api';
 
 function Sonarr() {
@@ -42,6 +42,9 @@ function Sonarr() {
   const [selectedQualityProfile, setSelectedQualityProfile] = useState('');
   const [selectedRootFolder, setSelectedRootFolder] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [seriesToView, setSeriesToView] = useState(null);
+  const [deleteFiles, setDeleteFiles] = useState(false);
 
   useEffect(() => {
     loadInstances();
@@ -96,6 +99,36 @@ function Sonarr() {
       console.error('Error loading series:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenDetail = (series) => {
+    setSeriesToView(series);
+    setDetailDialogOpen(true);
+  };
+
+  const handleCloseDetail = () => {
+    setDetailDialogOpen(false);
+    setTimeout(() => {
+      setSeriesToView(null);
+      setDeleteFiles(false);
+    }, 200);
+  };
+
+  const handleDeleteSeries = async () => {
+    if (!seriesToView) return;
+    
+    if (!window.confirm(`Are you sure you want to delete "${seriesToView.title}"${deleteFiles ? ' and its files' : ''}?`)) {
+      return;
+    }
+    
+    try {
+      await api.deleteSonarrSeries(selectedInstance, seriesToView.id, deleteFiles);
+      handleCloseDetail();
+      loadSeries();
+    } catch (error) {
+      console.error('Error deleting series:', error);
+      alert(`Failed to delete series: ${error.response?.data?.message || error.message}`);
     }
   };
 
@@ -204,7 +237,20 @@ function Sonarr() {
         <Grid container spacing={3}>
           {filteredSeries.map((show) => (
             <Grid item xs={6} sm={6} md={4} lg={3} key={show.id}>
-              <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <Card 
+                sx={{ 
+                  height: '100%', 
+                  display: 'flex', 
+                  flexDirection: 'column',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 4
+                  }
+                }}
+                onClick={() => handleOpenDetail(show)}
+              >
                 {show.images?.find(img => img.coverType === 'poster') && (
                   <CardMedia
                     component="img"
@@ -236,6 +282,92 @@ function Sonarr() {
           ))}
         </Grid>
       )}
+
+      {/* Series Detail Dialog */}
+      <Dialog open={detailDialogOpen} onClose={handleCloseDetail} maxWidth="md" fullWidth>
+        {seriesToView && (
+          <>
+            <DialogTitle>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="h5">{seriesToView.title}</Typography>
+                <Button
+                  onClick={handleCloseDetail}
+                  size="small"
+                  sx={{ minWidth: 'auto', p: 1 }}
+                >
+                  <Close />
+                </Button>
+              </Box>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={4}>
+                  {seriesToView.images?.find(img => img.coverType === 'poster') && (
+                    <CardMedia
+                      component="img"
+                      image={seriesToView.images.find(img => img.coverType === 'poster').remoteUrl}
+                      alt={seriesToView.title}
+                      sx={{ borderRadius: 2, width: '100%' }}
+                    />
+                  )}
+                </Grid>
+                <Grid item xs={12} sm={8}>
+                  <Box display="flex" gap={1} mb={2} flexWrap="wrap">
+                    <Chip label={`${seriesToView.seasonCount} Seasons`} />
+                    {seriesToView.monitored && (
+                      <Chip label="Monitored" color="primary" />
+                    )}
+                    {seriesToView.status && (
+                      <Chip label={seriesToView.status} />
+                    )}
+                    {seriesToView.qualityProfileId && (
+                      <Chip label={`Quality: ${qualityProfiles.find(p => p.id === seriesToView.qualityProfileId)?.name || 'Unknown'}`} />
+                    )}
+                  </Box>
+                  <Typography variant="h6" gutterBottom>Overview</Typography>
+                  <Typography variant="body1" paragraph>
+                    {seriesToView.overview || 'No overview available.'}
+                  </Typography>
+                  {seriesToView.path && (
+                    <>
+                      <Typography variant="h6" gutterBottom>File Path</Typography>
+                      <Typography variant="body2" color="text.secondary" paragraph>
+                        {seriesToView.path}
+                      </Typography>
+                    </>
+                  )}
+                  <Box sx={{ mt: 2, p: 2, bgcolor: 'background.paper', borderRadius: 1 }}>
+                    <FormControl component="fieldset">
+                      <Box display="flex" alignItems="center">
+                        <input
+                          type="checkbox"
+                          checked={deleteFiles}
+                          onChange={(e) => setDeleteFiles(e.target.checked)}
+                          style={{ marginRight: 8 }}
+                        />
+                        <Typography variant="body2">
+                          Delete series files from disk
+                        </Typography>
+                      </Box>
+                    </FormControl>
+                  </Box>
+                </Grid>
+              </Grid>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleCloseDetail}>Close</Button>
+              <Button 
+                onClick={handleDeleteSeries}
+                color="error"
+                variant="contained"
+                startIcon={<Delete />}
+              >
+                Delete from Sonarr
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
 
       <Dialog open={searchOpen} onClose={() => setSearchOpen(false)} maxWidth="md" fullWidth>
         <DialogTitle>Search TV Shows</DialogTitle>

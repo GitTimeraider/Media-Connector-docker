@@ -150,6 +150,13 @@ class ApiService {
     return response.data;
   }
 
+  async deleteSonarrSeries(instanceId, seriesId, deleteFiles = false) {
+    const response = await this.client.delete(`/sonarr/series/${instanceId}/${seriesId}`, {
+      params: { deleteFiles }
+    });
+    return response.data;
+  }
+
   async getSonarrQueue(instanceId) {
     const response = await this.client.get(`/sonarr/queue/${instanceId}`);
     return response.data;
@@ -188,6 +195,13 @@ class ApiService {
 
   async addRadarrMovie(instanceId, data) {
     const response = await this.client.post(`/radarr/movie/${instanceId}`, data);
+    return response.data;
+  }
+
+  async deleteRadarrMovie(instanceId, movieId, deleteFiles = false) {
+    const response = await this.client.delete(`/radarr/movie/${instanceId}/${movieId}`, {
+      params: { deleteFiles }
+    });
     return response.data;
   }
 

@@ -169,6 +169,25 @@ router.post('/movie/:instanceId', async (req, res) => {
   }
 });
 
+// Delete movie
+router.delete('/movie/:instanceId/:movieId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('radarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const { deleteFiles } = req.query;
+    const client = new ApiClient(instance.url, instance.apiKey);
+    const result = await client.delete(`/api/v3/movie/${req.params.movieId}?deleteFiles=${deleteFiles === 'true'}`);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Trigger movie search
 router.post('/command/:instanceId', async (req, res) => {
   try {
