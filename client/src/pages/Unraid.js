@@ -56,7 +56,7 @@ function Unraid() {
   const connectWebSocket = async () => {
     try {
       // Start subscription on backend
-      await api.post(`/api/unraid/subscribe/${selectedInstance}`);
+      await api.startUnraidSubscription(selectedInstance);
       
       // Connect to WebSocket
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -105,7 +105,7 @@ function Unraid() {
     
     // Stop subscription on backend
     try {
-      await api.delete(`/api/unraid/subscribe/${selectedInstance}`);
+      await api.stopUnraidSubscription(selectedInstance);
     } catch (error) {
       console.error('Error stopping subscription:', error);
     }
@@ -159,7 +159,14 @@ function Unraid() {
       if (docker.status === 'fulfilled') {
         const containers = docker.value?.docker?.containers || docker.value?.dockerContainers || docker.value;
         console.log('Docker containers:', { docker: containers });
-        setDockerContainers(Array.isArray(containers) ? containers : []);
+        const sortedContainers = Array.isArray(containers) 
+          ? containers.sort((a, b) => {
+              const nameA = (a.names?.[0] || a.name || a.Names?.[0] || '').replace(/^\//g, '').toLowerCase();
+              const nameB = (b.names?.[0] || b.name || b.Names?.[0] || '').replace(/^\//g, '').toLowerCase();
+              return nameA.localeCompare(nameB);
+            })
+          : [];
+        setDockerContainers(sortedContainers);
       }
       if (array.status === 'fulfilled') setArrayStatus(array.value?.array || array.value);
     } catch (error) {
@@ -339,7 +346,7 @@ function Unraid() {
               <CardContent>
                 <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                   <Typography variant="h6">
-                    {container.names?.[0] || container.name || container.Names?.[0]?.replace('/', '') || 'Unknown'}
+                    {(container.names?.[0] || container.name || container.Names?.[0] || 'Unknown').replace(/^\//g, '')}
                   </Typography>
                   <Chip
                     icon={(container.state || container.State) === 'running' ? <CheckCircle /> : <ErrorIcon />}
@@ -361,35 +368,37 @@ function Unraid() {
                 )}
 
                 <Box display="flex" gap={1} mt={2}>
-                  {(container.state || container.State) === 'running' ? (
-                    <Tooltip title="Stop">
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => handleDockerAction(container.id || container.Id, 'stop')}
-                      >
-                        <Stop />
-                      </IconButton>
-                    </Tooltip>
+                  {(container.state || container.State)?.toLowerCase() === 'running' ? (
+                    <>
+                      <Tooltip title="Stop">
+                        <IconButton 
+                          size="small" 
+                          color="error"
+                          onClick={() => handleDockerAction(container.id || container.Id || container.name, 'stop')}
+                        >
+                          <Stop />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Restart">
+                        <IconButton 
+                          size="small"
+                          onClick={() => handleDockerAction(container.id || container.Id || container.name, 'restart')}
+                        >
+                          <Refresh />
+                        </IconButton>
+                      </Tooltip>
+                    </>
                   ) : (
                     <Tooltip title="Start">
                       <IconButton 
                         size="small" 
                         color="success"
-                        onClick={() => handleDockerAction(container.id || container.Id, 'start')}
+                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'start')}
                       >
                         <PlayArrow />
                       </IconButton>
                     </Tooltip>
                   )}
-                  <Tooltip title="Restart">
-                    <IconButton 
-                      size="small"
-                      onClick={() => handleDockerAction(container.id || container.Id, 'restart')}
-                    >
-                      <Refresh />
-                    </IconButton>
-                  </Tooltip>
                 </Box>
               </CardContent>
             </Card>

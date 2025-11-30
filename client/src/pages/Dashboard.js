@@ -334,7 +334,9 @@ function Dashboard() {
                           size="small" 
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAddToLibrary(e);
+                            e.preventDefault();
+                            const mediaType = type || item.media_type;
+                            handleOpenAddDialog(item, mediaType);
                           }}
                           sx={{ 
                             bgcolor: 'secondary.main', 

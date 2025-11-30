@@ -40,17 +40,6 @@ class ApiService {
     );
   }
 
-  // Generic HTTP methods
-  async post(url, data) {
-    const response = await this.client.post(url, data);
-    return response.data;
-  }
-
-  async delete(url) {
-    const response = await this.client.delete(url);
-    return response.data;
-  }
-
   // Auth endpoints
   async login(username, password) {
     const response = await this.client.post('/auth/login', { username, password });
@@ -421,6 +410,16 @@ class ApiService {
 
   async unraidDockerAction(instanceId, containerId, action) {
     const response = await this.client.post(`/unraid/docker/action/${instanceId}`, { containerId, action });
+    return response.data;
+  }
+
+  async startUnraidSubscription(instanceId) {
+    const response = await this.client.post(`/unraid/subscribe/${instanceId}`);
+    return response.data;
+  }
+
+  async stopUnraidSubscription(instanceId) {
+    const response = await this.client.delete(`/unraid/subscribe/${instanceId}`);
     return response.data;
   }
 
