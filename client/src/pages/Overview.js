@@ -161,6 +161,11 @@ function Overview() {
         return await api.getProwlarrStatus(instanceId);
       case 'tautulli':
         return await api.getTautulliStatus(instanceId);
+      case 'unraid':
+        // For Unraid, check if we can get the status - if info is returned, it's online
+        const unraidStatus = await api.getUnraidStatus(instanceId);
+        // If we get info back (even if null), the server responded so it's reachable
+        return { status: 'online', info: unraidStatus?.info };
       default:
         throw new Error('Unknown service type');
     }

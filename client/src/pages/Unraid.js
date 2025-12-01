@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, Component } from 'react';
+import React, { useState, useEffect, Component } from 'react';
 import {
   Container,
   Grid,
@@ -82,9 +82,6 @@ function UnraidContent() {
   const [systemStats, setSystemStats] = useState(null);
   const [dockerContainers, setDockerContainers] = useState([]);
   const [arrayStatus, setArrayStatus] = useState(null);
-  const [realtimeStats, setRealtimeStats] = useState(null);
-  const [wsConnected, setWsConnected] = useState(false);
-  const wsRef = useRef(null);
 
   useEffect(() => {
     loadInstances();
@@ -93,80 +90,13 @@ function UnraidContent() {
   useEffect(() => {
     if (selectedInstance) {
       loadUnraidData();
-      connectWebSocket();
       const interval = setInterval(loadUnraidData, 10000); // Refresh every 10s
       return () => {
         clearInterval(interval);
-        disconnectWebSocket();
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedInstance]);
-
-  const connectWebSocket = async () => {
-    try {
-      // Start subscription on backend
-      await api.startUnraidSubscription(selectedInstance);
-      
-      // Connect to WebSocket
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = window.location.host; // includes hostname:port
-      const wsUrl = `${protocol}//${host}`;
-      
-      wsRef.current = new WebSocket(wsUrl);
-      
-      wsRef.current.onopen = () => {
-        console.log('WebSocket connected');
-        setWsConnected(true);
-        // Subscribe to instance updates
-        try {
-          wsRef.current.send(JSON.stringify({
-            type: 'subscribe',
-            instanceId: selectedInstance
-          }));
-        } catch (e) {
-          console.error('Error sending WebSocket message:', e);
-        }
-      };
-      
-      wsRef.current.onmessage = (event) => {
-        try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'stats' && message.instanceId === selectedInstance) {
-            setRealtimeStats(message.data);
-          }
-        } catch (e) {
-          console.error('Error parsing WebSocket message:', e);
-        }
-      };
-      
-      wsRef.current.onerror = (error) => {
-        console.error('WebSocket error:', error);
-        setWsConnected(false);
-      };
-      
-      wsRef.current.onclose = () => {
-        console.log('WebSocket disconnected');
-        setWsConnected(false);
-      };
-    } catch (error) {
-      console.error('Error connecting WebSocket:', error);
-    }
-  };
-
-  const disconnectWebSocket = async () => {
-    if (wsRef.current) {
-      wsRef.current.close();
-      wsRef.current = null;
-    }
-    
-    // Stop subscription on backend
-    try {
-      await api.stopUnraidSubscription(selectedInstance);
-    } catch (error) {
-      console.error('Error stopping subscription:', error);
-    }
-  };
 
   const loadInstances = async () => {
     try {
@@ -303,14 +233,6 @@ function UnraidContent() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Memory sx={{ mr: 1, color: 'primary.main' }} />
                   <Typography variant="h6">CPU</Typography>
-                  {wsConnected && (
-                    <Chip 
-                      label="Live" 
-                      color="success" 
-                      size="small" 
-                      sx={{ ml: 'auto', height: 20 }}
-                    />
-                  )}
                 </Box>
                 <Typography variant="body1" sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
                   {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
@@ -323,11 +245,10 @@ function UnraidContent() {
                     {safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz
                   </Typography>
                 )}
-                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined || realtimeStats?.systemMetricsCpu?.percentTotal !== undefined) ? (
+                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined) ? (
                   <Box sx={{ mt: 2 }}>
                     <Typography variant="h4" color="primary">
                       {safeNumber(
-                        realtimeStats?.systemMetricsCpu?.percentTotal ??
                         systemStats.cpu?.usage ??
                         systemStats.cpu?.currentLoad
                       ).toFixed(1)}%
@@ -335,7 +256,6 @@ function UnraidContent() {
                     <LinearProgress 
                       variant="determinate" 
                       value={Math.min(safeNumber(
-                        realtimeStats?.systemMetricsCpu?.percentTotal ??
                         systemStats.cpu?.usage ??
                         systemStats.cpu?.currentLoad
                       ), 100)} 
@@ -359,32 +279,24 @@ function UnraidContent() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Storage sx={{ mr: 1, color: 'success.main' }} />
                   <Typography variant="h6">Memory</Typography>
-                  {wsConnected && (
-                    <Chip 
-                      label="Live" 
-                      color="success" 
-                      size="small" 
-                      sx={{ ml: 'auto', height: 20 }}
-                    />
-                  )}
                 </Box>
-                {(systemStats.memory?.used && systemStats.memory?.total) || (realtimeStats?.systemMetricsMemory?.used && realtimeStats?.systemMetricsMemory?.total) ? (
+                {(systemStats.memory?.used && systemStats.memory?.total) ? (
                   <>
                     <Typography variant="h4">
                       {(() => {
-                        const used = safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used);
-                        const total = safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total) || 1;
+                        const used = safeNumber(systemStats.memory?.used);
+                        const total = safeNumber(systemStats.memory?.total) || 1;
                         return ((used / total) * 100).toFixed(1);
                       })()}%
                     </Typography>
                     <Typography variant="caption">
-                      {formatBytes(safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used))} / {formatBytes(safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total))}
+                      {formatBytes(safeNumber(systemStats.memory?.used))} / {formatBytes(safeNumber(systemStats.memory?.total))}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
                       value={(() => {
-                        const used = safeNumber(systemStats.memory?.used) || safeNumber(realtimeStats?.systemMetricsMemory?.used);
-                        const total = safeNumber(systemStats.memory?.total) || safeNumber(realtimeStats?.systemMetricsMemory?.total) || 1;
+                        const used = safeNumber(systemStats.memory?.used);
+                        const total = safeNumber(systemStats.memory?.total) || 1;
                         return Math.min((used / total) * 100, 100);
                       })()} 
                       sx={{ mt: 1 }}
@@ -409,14 +321,6 @@ function UnraidContent() {
                 <Box display="flex" alignItems="center" mb={1}>
                   <Computer sx={{ mr: 1, color: 'info.main' }} />
                   <Typography variant="h6">System</Typography>
-                  {wsConnected && (
-                    <Chip 
-                      label="Live" 
-                      color="success" 
-                      size="small" 
-                      sx={{ ml: 'auto', height: 20 }}
-                    />
-                  )}
                 </Box>
                 <Typography variant="body2" fontWeight={500}>
                   {systemStats.os?.hostname || 'Unknown'}
