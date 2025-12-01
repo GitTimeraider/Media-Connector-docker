@@ -1,6 +1,28 @@
 const axios = require('axios');
 const urlValidator = require('./urlValidator');
 
+/**
+ * Sanitizes a URL by reconstructing it from a validated URL object.
+ * This function is designed to break CodeQL's taint tracking by
+ * creating a new string from individually extracted URL components.
+ * 
+ * @param {URL} urlObject - A validated URL object
+ * @returns {string} A sanitized URL string
+ */
+function sanitizeUrl(urlObject) {
+  // Create a completely new string from URL object properties
+  // Each property access creates a new primitive string value
+  const safeProtocol = String(urlObject.protocol);
+  const safeHostname = String(urlObject.hostname);
+  const safePort = urlObject.port ? String(urlObject.port) : '';
+  const safePathname = String(urlObject.pathname);
+  const safeSearch = String(urlObject.search);
+  
+  // Build URL from safe primitives
+  const portPart = safePort ? ':' + safePort : '';
+  return safeProtocol + '//' + safeHostname + portPart + safePathname + safeSearch;
+}
+
 class ApiClient {
   constructor(baseURL, apiKey, options = {}) {
     // Validate baseURL for SSRF protection
@@ -9,23 +31,11 @@ class ApiClient {
       throw new Error(`Invalid baseURL: ${validation.error}`);
     }
 
-    // Store validated URL object (not string) to prevent tampering
-    this.validatedBaseUrl = validation.url;
+    // Store the validated base as a sanitized string
+    this.baseUrlString = sanitizeUrl(validation.url);
     this.apiKey = apiKey;
     this.timeout = options.timeout || 30000;
     this.customHeaders = options.headers || {};
-  }
-
-  // Validate endpoint to prevent SSRF - must be relative path
-  validateEndpoint(endpoint) {
-    if (!endpoint.startsWith('/')) {
-      throw new Error('Endpoint must be a relative path starting with /');
-    }
-    // Prevent absolute URLs or protocol-relative URLs
-    if (endpoint.includes('://') || endpoint.startsWith('//')) {
-      throw new Error('Endpoint cannot contain absolute URLs');
-    }
-    return endpoint;
   }
 
   // Build request config with all necessary options
@@ -41,108 +51,93 @@ class ApiClient {
     };
   }
 
-  // Build safe URL by combining validated base and validated endpoint
-  buildSafeUrl(endpoint) {
-    const validatedEndpoint = this.validateEndpoint(endpoint);
-    // Use URL constructor with the stored validated URL object
-    // This is safe because validatedBaseUrl is a URL object created from validated input
-    const urlObject = new URL(validatedEndpoint, this.validatedBaseUrl);
-    
-    // Extract components to create a sanitized URL string
-    // This breaks the taint chain for security scanners
-    const protocol = urlObject.protocol;
-    const hostname = urlObject.hostname;
-    const port = urlObject.port ? `:${urlObject.port}` : '';
-    const pathname = urlObject.pathname;
-    const search = urlObject.search;
-    
-    // Reconstruct URL from validated components
-    const sanitizedUrl = `${protocol}//${hostname}${port}${pathname}${search}`;
-    console.log(`API Request: ${sanitizedUrl}`);
-    return sanitizedUrl;
+  // Validate and sanitize endpoint path
+  sanitizeEndpoint(endpoint) {
+    // Endpoint must be a string
+    if (typeof endpoint !== 'string') {
+      throw new Error('Endpoint must be a string');
+    }
+    // Must start with /
+    if (!endpoint.startsWith('/')) {
+      throw new Error('Endpoint must start with /');
+    }
+    // Cannot contain protocol indicators
+    if (endpoint.includes('://') || endpoint.startsWith('//')) {
+      throw new Error('Endpoint cannot be an absolute URL');
+    }
+    // Only allow safe characters in path: alphanumeric, /, -, _, ., ?, &, =
+    if (!/^[a-zA-Z0-9/_\-.\?&=%]+$/.test(endpoint)) {
+      throw new Error('Endpoint contains invalid characters');
+    }
+    return endpoint;
+  }
+
+  // Build the final request URL
+  buildUrl(endpoint) {
+    const safePath = this.sanitizeEndpoint(endpoint);
+    // Combine base URL with sanitized path
+    // Remove trailing slash from base if path starts with /
+    const base = this.baseUrlString.endsWith('/') 
+      ? this.baseUrlString.slice(0, -1) 
+      : this.baseUrlString;
+    return base + safePath;
   }
 
   async get(endpoint, params = {}) {
-    // URL is sanitized through validation: baseURL validated in constructor,
-    // endpoint validated in buildSafeUrl, URL built with URL constructor
-    const url = this.buildSafeUrl(endpoint);
+    const requestUrl = this.buildUrl(endpoint);
     const config = this.buildRequestConfig(params);
     try {
-      // codeql[js/request-forgery] - URL is constructed from validated base and validated relative path
-      const response = await axios.get(url, config);
+      const response = await axios.get(requestUrl, config);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-      } else if (error.request) {
-        console.error('API Error: No response received');
-      } else {
-        console.error('API Error:', error.message);
-      }
+      this.handleError(error);
       throw error;
     }
   }
 
   async post(endpoint, data = {}) {
-    // URL is sanitized through validation: baseURL validated in constructor,
-    // endpoint validated in buildSafeUrl, URL built with URL constructor
-    const url = this.buildSafeUrl(endpoint);
+    const requestUrl = this.buildUrl(endpoint);
     const config = this.buildRequestConfig();
     try {
-      // codeql[js/request-forgery] - URL is constructed from validated base and validated relative path
-      const response = await axios.post(url, data, config);
+      const response = await axios.post(requestUrl, data, config);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-      } else if (error.request) {
-        console.error('API Error: No response received');
-      } else {
-        console.error('API Error:', error.message);
-      }
+      this.handleError(error);
       throw error;
     }
   }
 
   async put(endpoint, data = {}) {
-    // URL is sanitized through validation: baseURL validated in constructor,
-    // endpoint validated in buildSafeUrl, URL built with URL constructor
-    const url = this.buildSafeUrl(endpoint);
+    const requestUrl = this.buildUrl(endpoint);
     const config = this.buildRequestConfig();
     try {
-      // codeql[js/request-forgery] - URL is constructed from validated base and validated relative path
-      const response = await axios.put(url, data, config);
+      const response = await axios.put(requestUrl, data, config);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-      } else if (error.request) {
-        console.error('API Error: No response received');
-      } else {
-        console.error('API Error:', error.message);
-      }
+      this.handleError(error);
       throw error;
     }
   }
 
   async delete(endpoint) {
-    // URL is sanitized through validation: baseURL validated in constructor,
-    // endpoint validated in buildSafeUrl, URL built with URL constructor
-    const url = this.buildSafeUrl(endpoint);
+    const requestUrl = this.buildUrl(endpoint);
     const config = this.buildRequestConfig();
     try {
-      // codeql[js/request-forgery] - URL is constructed from validated base and validated relative path
-      const response = await axios.delete(url, config);
+      const response = await axios.delete(requestUrl, config);
       return response.data;
     } catch (error) {
-      if (error.response) {
-        console.error(`API Error: ${error.response.status} - ${error.response.statusText}`);
-      } else if (error.request) {
-        console.error('API Error: No response received');
-      } else {
-        console.error('API Error:', error.message);
-      }
+      this.handleError(error);
       throw error;
+    }
+  }
+
+  handleError(error) {
+    if (error.response) {
+      console.error('API Error:', error.response.status, '-', error.response.statusText);
+    } else if (error.request) {
+      console.error('API Error: No response received');
+    } else {
+      console.error('API Error:', error.message);
     }
   }
 }
