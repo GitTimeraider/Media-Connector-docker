@@ -27,8 +27,7 @@ import {
   Select,
   MenuItem,
   Checkbox,
-  Zoom,
-  Slide
+  Zoom
 } from '@mui/material';
 import {
   LiveTv,
