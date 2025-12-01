@@ -21,9 +21,9 @@ router.get('/status/:instanceId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     const [system, queue, calendar] = await Promise.all([
-      client.get('v3/system/status'),
-      client.get('v3/queue'),
-      client.get('v3/calendar', { start: new Date().toISOString(), end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
+      client.getSystemStatus(),
+      client.getQueue(),
+      client.getCalendar({ start: new Date().toISOString(), end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() })
     ]);
 
     res.json({ system, queue, calendar });
@@ -43,7 +43,7 @@ router.get('/series/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const series = await client.get('v3/series');
+    const series = await client.getSeries();
     res.json(series);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -63,7 +63,7 @@ router.get('/recent/:instanceId', async (req, res) => {
     const client = new ApiClient(instance.url, instance.apiKey);
     
     // Get recent episodes from history
-    const history = await client.get('v3/history', { 
+    const history = await client.getHistory({ 
       pageSize: 50,
       sortKey: 'date',
       sortDirection: 'descending',
@@ -73,7 +73,7 @@ router.get('/recent/:instanceId', async (req, res) => {
     // Get unique series from recent downloads
     const seriesIds = [...new Set(history.records.map(h => h.seriesId))].slice(0, 10);
     const seriesPromises = seriesIds.map(id => 
-      client.getById('v3/series', id).catch(() => null)
+      client.getSeriesById(id).catch(() => null)
     );
     const recentSeries = (await Promise.all(seriesPromises)).filter(s => s !== null);
     
@@ -94,7 +94,7 @@ router.get('/series/:instanceId/:seriesId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const series = await client.getById('v3/series', req.params.seriesId);
+    const series = await client.getSeriesById(req.params.seriesId);
     res.json(series);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -112,7 +112,7 @@ router.get('/search/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const results = await client.get('v3/series/lookup', { term: req.query.term });
+    const results = await client.searchSeries({ term: req.query.term });
     
     // Sort results to prioritize exact phrase matches
     const searchTerm = req.query.term.toLowerCase();
@@ -170,7 +170,7 @@ router.post('/series/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.post('v3/series', req.body);
+    const result = await client.addSeries(req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -189,10 +189,10 @@ router.put('/series/:instanceId/:seriesId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     // Get current series first
-    const currentSeries = await client.getById('v3/series', req.params.seriesId);
+    const currentSeries = await client.getSeriesById(req.params.seriesId);
     // Update with new values
     const updatedSeries = { ...currentSeries, ...req.body };
-    const result = await client.putById('v3/series', req.params.seriesId, updatedSeries);
+    const result = await client.updateSeries(req.params.seriesId, updatedSeries);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -211,7 +211,7 @@ router.delete('/series/:instanceId/:seriesId', async (req, res) => {
 
     const { deleteFiles } = req.query;
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.deleteById('v3/series', req.params.seriesId, { deleteFiles: deleteFiles === 'true' });
+    const result = await client.deleteSeries(req.params.seriesId, { deleteFiles: deleteFiles === 'true' });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -229,7 +229,7 @@ router.post('/command/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.post('v3/command', req.body);
+    const result = await client.postCommand(req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -247,7 +247,7 @@ router.get('/queue/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const queue = await client.get('v3/queue');
+    const queue = await client.getQueue();
     res.json(queue);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -265,7 +265,7 @@ router.get('/calendar/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const calendar = await client.get('v3/calendar', req.query);
+    const calendar = await client.getCalendar(req.query);
     res.json(calendar);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -283,7 +283,7 @@ router.get('/qualityprofile/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const profiles = await client.get('v3/qualityprofile');
+    const profiles = await client.getQualityProfiles();
     res.json(profiles);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -301,7 +301,7 @@ router.get('/rootfolder/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const folders = await client.get('v3/rootfolder');
+    const folders = await client.getRootFolders();
     res.json(folders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -319,7 +319,7 @@ router.get('/tag/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const tags = await client.get('v3/tag');
+    const tags = await client.getTags();
     res.json(tags);
   } catch (error) {
     res.status(500).json({ error: error.message });

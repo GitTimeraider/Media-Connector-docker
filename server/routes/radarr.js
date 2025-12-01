@@ -21,9 +21,9 @@ router.get('/status/:instanceId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     const [system, queue, calendar] = await Promise.all([
-      client.get('v3/system/status'),
-      client.get('v3/queue'),
-      client.get('v3/calendar')
+      client.getSystemStatus(),
+      client.getQueue(),
+      client.getCalendar()
     ]);
 
     res.json({ system, queue, calendar });
@@ -43,7 +43,7 @@ router.get('/movie/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const movies = await client.get('v3/movie');
+    const movies = await client.getMovies();
     res.json(movies);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -61,7 +61,7 @@ router.get('/recent/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const movies = await client.get('v3/movie');
+    const movies = await client.getMovies();
     
     // Filter movies that have been downloaded recently (have files and recent download date)
     const recentMovies = movies
@@ -86,7 +86,7 @@ router.get('/movie/:instanceId/:movieId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const movie = await client.getById('v3/movie', req.params.movieId);
+    const movie = await client.getMovieById(req.params.movieId);
     res.json(movie);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -104,7 +104,7 @@ router.get('/search/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const results = await client.get('v3/movie/lookup', { term: req.query.term });
+    const results = await client.searchMovies({ term: req.query.term });
     
     // Sort results to prioritize exact phrase matches
     const searchTerm = req.query.term.toLowerCase();
@@ -162,7 +162,7 @@ router.post('/movie/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.post('v3/movie', req.body);
+    const result = await client.addMovie(req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -181,10 +181,10 @@ router.put('/movie/:instanceId/:movieId', async (req, res) => {
 
     const client = new ApiClient(instance.url, instance.apiKey);
     // Get current movie first
-    const currentMovie = await client.getById('v3/movie', req.params.movieId);
+    const currentMovie = await client.getMovieById(req.params.movieId);
     // Update with new values
     const updatedMovie = { ...currentMovie, ...req.body };
-    const result = await client.putById('v3/movie', req.params.movieId, updatedMovie);
+    const result = await client.updateMovie(req.params.movieId, updatedMovie);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -203,7 +203,7 @@ router.delete('/movie/:instanceId/:movieId', async (req, res) => {
 
     const { deleteFiles } = req.query;
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.deleteById('v3/movie', req.params.movieId, { deleteFiles: deleteFiles === 'true' });
+    const result = await client.deleteMovie(req.params.movieId, { deleteFiles: deleteFiles === 'true' });
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -221,7 +221,7 @@ router.post('/command/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const result = await client.post('v3/command', req.body);
+    const result = await client.postCommand(req.body);
     res.json(result);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -239,7 +239,7 @@ router.get('/queue/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const queue = await client.get('v3/queue');
+    const queue = await client.getQueue();
     res.json(queue);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -257,7 +257,7 @@ router.get('/calendar/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const calendar = await client.get('v3/calendar', req.query);
+    const calendar = await client.getCalendar(req.query);
     res.json(calendar);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -275,7 +275,7 @@ router.get('/qualityprofile/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const profiles = await client.get('v3/qualityprofile');
+    const profiles = await client.getQualityProfiles();
     res.json(profiles);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -293,7 +293,7 @@ router.get('/rootfolder/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const folders = await client.get('v3/rootfolder');
+    const folders = await client.getRootFolders();
     res.json(folders);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -311,7 +311,7 @@ router.get('/tag/:instanceId', async (req, res) => {
     }
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const tags = await client.get('v3/tag');
+    const tags = await client.getTags();
     res.json(tags);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -2,46 +2,6 @@ const axios = require('axios');
 const urlValidator = require('./urlValidator');
 
 /**
- * Allowlist of valid API endpoints.
- * All endpoints must be defined here - no dynamic paths allowed.
- * This prevents SSRF by ensuring only known, safe paths can be requested.
- */
-const ALLOWED_ENDPOINTS = {
-  // Radarr/Sonarr v3 API endpoints
-  'v3/system/status': '/api/v3/system/status',
-  'v3/queue': '/api/v3/queue',
-  'v3/calendar': '/api/v3/calendar',
-  'v3/movie': '/api/v3/movie',
-  'v3/movie/lookup': '/api/v3/movie/lookup',
-  'v3/series': '/api/v3/series',
-  'v3/series/lookup': '/api/v3/series/lookup',
-  'v3/history': '/api/v3/history',
-  'v3/command': '/api/v3/command',
-  'v3/qualityprofile': '/api/v3/qualityprofile',
-  'v3/rootfolder': '/api/v3/rootfolder',
-  'v3/tag': '/api/v3/tag',
-  
-  // Prowlarr v1 API endpoints
-  'v1/system/status': '/api/v1/system/status',
-  'v1/indexer': '/api/v1/indexer',
-  'v1/search': '/api/v1/search'
-};
-
-/**
- * Gets a safe endpoint path from the allowlist.
- * @param {string} key - The endpoint key (e.g., 'v3/movie')
- * @returns {string} The safe endpoint path
- * @throws {Error} If the endpoint is not in the allowlist
- */
-function getSafeEndpoint(key) {
-  const endpoint = ALLOWED_ENDPOINTS[key];
-  if (!endpoint) {
-    throw new Error('Endpoint not in allowlist: ' + key);
-  }
-  return endpoint;
-}
-
-/**
  * Sanitizes a URL by reconstructing it from a validated URL object.
  * @param {URL} urlObject - A validated URL object
  * @returns {string} A sanitized URL string
@@ -84,17 +44,6 @@ function validateQueryValue(value) {
   return str;
 }
 
-/**
- * Gets the base URL without trailing slash.
- * @param {string} baseUrlString - The base URL
- * @returns {string} Base URL without trailing slash
- */
-function getBaseUrl(baseUrlString) {
-  return baseUrlString.endsWith('/') 
-    ? baseUrlString.slice(0, -1) 
-    : baseUrlString;
-}
-
 class ApiClient {
   constructor(baseURL, apiKey, options = {}) {
     // Validate baseURL for SSRF protection
@@ -103,8 +52,9 @@ class ApiClient {
       throw new Error('Invalid baseURL: ' + validation.error);
     }
 
-    // Store the validated base as a sanitized string
-    this.baseUrlString = sanitizeUrl(validation.url);
+    // Store the validated base as a sanitized string (without trailing slash)
+    let sanitized = sanitizeUrl(validation.url);
+    this.baseUrlString = sanitized.endsWith('/') ? sanitized.slice(0, -1) : sanitized;
     this.apiKey = apiKey;
     this.timeout = options.timeout || 30000;
     this.customHeaders = options.headers || {};
@@ -129,74 +79,150 @@ class ApiClient {
     };
   }
 
-  /**
-   * Makes a GET request using an allowlisted endpoint key.
-   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS (e.g., 'v3/movie')
-   * @param {Object} params - Query parameters
-   */
-  async get(endpointKey, params = {}) {
-    const safePath = getSafeEndpoint(endpointKey);
-    const baseUrl = getBaseUrl(this.baseUrlString);
+  // ============================================
+  // V3 API Methods (Radarr/Sonarr)
+  // Each method uses a hardcoded path - no user input in URL
+  // ============================================
+
+  async getSystemStatus(params = {}) {
     const config = this.buildRequestConfig(params);
-    const response = await axios.get(baseUrl + safePath, config);
+    const response = await axios.get(this.baseUrlString + '/api/v3/system/status', config);
     return response.data;
   }
 
-  /**
-   * Makes a GET request with an ID appended to an allowlisted endpoint.
-   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
-   * @param {string|number} id - The resource ID (validated to be numeric)
-   * @param {Object} params - Query parameters
-   */
-  async getById(endpointKey, id, params = {}) {
-    const safePath = getSafeEndpoint(endpointKey);
+  async getQueue(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/queue', config);
+    return response.data;
+  }
+
+  async getCalendar(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/calendar', config);
+    return response.data;
+  }
+
+  async getMovies(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/movie', config);
+    return response.data;
+  }
+
+  async getMovieById(id, params = {}) {
     const safeId = validateId(id);
-    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig(params);
-    const response = await axios.get(baseUrl + safePath + '/' + safeId, config);
+    const response = await axios.get(this.baseUrlString + '/api/v3/movie/' + safeId, config);
     return response.data;
   }
 
-  /**
-   * Makes a POST request using an allowlisted endpoint key.
-   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
-   * @param {Object} data - Request body
-   */
-  async post(endpointKey, data = {}) {
-    const safePath = getSafeEndpoint(endpointKey);
-    const baseUrl = getBaseUrl(this.baseUrlString);
+  async searchMovies(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/movie/lookup', config);
+    return response.data;
+  }
+
+  async addMovie(data) {
     const config = this.buildRequestConfig();
-    const response = await axios.post(baseUrl + safePath, data, config);
+    const response = await axios.post(this.baseUrlString + '/api/v3/movie', data, config);
     return response.data;
   }
 
-  /**
-   * Makes a PUT request with an ID appended to an allowlisted endpoint.
-   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
-   * @param {string|number} id - The resource ID (validated to be numeric)
-   * @param {Object} data - Request body
-   */
-  async putById(endpointKey, id, data = {}) {
-    const safePath = getSafeEndpoint(endpointKey);
+  async updateMovie(id, data) {
     const safeId = validateId(id);
-    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig();
-    const response = await axios.put(baseUrl + safePath + '/' + safeId, data, config);
+    const response = await axios.put(this.baseUrlString + '/api/v3/movie/' + safeId, data, config);
     return response.data;
   }
 
-  /**
-   * Makes a DELETE request with an ID appended to an allowlisted endpoint.
-   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
-   * @param {string|number} id - The resource ID (validated to be numeric)
-   * @param {Object} params - Query parameters
-   */
-  async deleteById(endpointKey, id, params = {}) {
-    const safePath = getSafeEndpoint(endpointKey);
+  async deleteMovie(id, params = {}) {
     const safeId = validateId(id);
-    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig(params);
-    const response = await axios.delete(baseUrl + safePath + '/' + safeId, config);
+    const response = await axios.delete(this.baseUrlString + '/api/v3/movie/' + safeId, config);
+    return response.data;
+  }
+
+  async getSeries(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/series', config);
+    return response.data;
+  }
+
+  async getSeriesById(id, params = {}) {
+    const safeId = validateId(id);
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/series/' + safeId, config);
+    return response.data;
+  }
+
+  async searchSeries(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/series/lookup', config);
+    return response.data;
+  }
+
+  async addSeries(data) {
+    const config = this.buildRequestConfig();
+    const response = await axios.post(this.baseUrlString + '/api/v3/series', data, config);
+    return response.data;
+  }
+
+  async updateSeries(id, data) {
+    const safeId = validateId(id);
+    const config = this.buildRequestConfig();
+    const response = await axios.put(this.baseUrlString + '/api/v3/series/' + safeId, data, config);
+    return response.data;
+  }
+
+  async deleteSeries(id, params = {}) {
+    const safeId = validateId(id);
+    const config = this.buildRequestConfig(params);
+    const response = await axios.delete(this.baseUrlString + '/api/v3/series/' + safeId, config);
+    return response.data;
+  }
+
+  async getHistory(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/history', config);
+    return response.data;
+  }
+
+  async postCommand(data) {
+    const config = this.buildRequestConfig();
+    const response = await axios.post(this.baseUrlString + '/api/v3/command', data, config);
+    return response.data;
+  }
+
+  async getQualityProfiles(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/qualityprofile', config);
+    return response.data;
+  }
+
+  async getRootFolders(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/rootfolder', config);
+    return response.data;
+  }
+
+  async getTags(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v3/tag', config);
+    return response.data;
+  }
+
+  // ============================================
+  // V1 API Methods (Prowlarr)
+  // ============================================
+
+  async getV1SystemStatus(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v1/system/status', config);
+    return response.data;
+  }
+
+  async getIndexers(params = {}) {
+    const config = this.buildRequestConfig(params);
+    const response = await axios.get(this.baseUrlString + '/api/v1/indexer', config);
     return response.data;
   }
 }
