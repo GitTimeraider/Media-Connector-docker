@@ -76,11 +76,11 @@ router.post('/test/:type', async (req, res) => {
       return res.status(400).json({ success: false, error: validation.error });
     }
     
-    let endpoint = '/api/v3/system/status'; // Default for *arr apps
+    let endpointKey = 'v3/system/status'; // Default for *arr apps
     
     // Adjust endpoint based on service type
     if (req.params.type === 'prowlarr') {
-      endpoint = '/api/v1/system/status';
+      endpointKey = 'v1/system/status';
     } else if (req.params.type === 'sabnzbd') {
       const axios = require('axios');
       // SAFE: URL has been validated by urlValidator.validateServiceUrl above
@@ -113,7 +113,7 @@ router.post('/test/:type', async (req, res) => {
     }
     
     const client = new ApiClient(url, apiKey);
-    const result = await client.get(endpoint);
+    const result = await client.get(endpointKey);
     res.json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });

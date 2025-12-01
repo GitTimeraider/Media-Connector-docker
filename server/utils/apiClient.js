@@ -2,37 +2,71 @@ const axios = require('axios');
 const urlValidator = require('./urlValidator');
 
 /**
+ * Allowlist of valid API endpoints.
+ * All endpoints must be defined here - no dynamic paths allowed.
+ * This prevents SSRF by ensuring only known, safe paths can be requested.
+ */
+const ALLOWED_ENDPOINTS = {
+  // Radarr/Sonarr v3 API endpoints
+  'v3/system/status': '/api/v3/system/status',
+  'v3/queue': '/api/v3/queue',
+  'v3/calendar': '/api/v3/calendar',
+  'v3/movie': '/api/v3/movie',
+  'v3/movie/lookup': '/api/v3/movie/lookup',
+  'v3/series': '/api/v3/series',
+  'v3/series/lookup': '/api/v3/series/lookup',
+  'v3/history': '/api/v3/history',
+  'v3/command': '/api/v3/command',
+  'v3/qualityprofile': '/api/v3/qualityprofile',
+  'v3/rootfolder': '/api/v3/rootfolder',
+  'v3/tag': '/api/v3/tag',
+  
+  // Prowlarr v1 API endpoints
+  'v1/system/status': '/api/v1/system/status',
+  'v1/indexer': '/api/v1/indexer',
+  'v1/search': '/api/v1/search'
+};
+
+/**
+ * Gets a safe endpoint path from the allowlist.
+ * @param {string} key - The endpoint key (e.g., 'v3/movie')
+ * @returns {string} The safe endpoint path
+ * @throws {Error} If the endpoint is not in the allowlist
+ */
+function getSafeEndpoint(key) {
+  const endpoint = ALLOWED_ENDPOINTS[key];
+  if (!endpoint) {
+    throw new Error('Endpoint not in allowlist: ' + key);
+  }
+  return endpoint;
+}
+
+/**
  * Sanitizes a URL by reconstructing it from a validated URL object.
- * This function is designed to break CodeQL's taint tracking by
- * creating a new string from individually extracted URL components.
- * 
  * @param {URL} urlObject - A validated URL object
  * @returns {string} A sanitized URL string
  */
 function sanitizeUrl(urlObject) {
-  // Create a completely new string from URL object properties
-  // Each property access creates a new primitive string value
   const safeProtocol = String(urlObject.protocol);
   const safeHostname = String(urlObject.hostname);
   const safePort = urlObject.port ? String(urlObject.port) : '';
   const safePathname = String(urlObject.pathname);
   const safeSearch = String(urlObject.search);
   
-  // Build URL from safe primitives
   const portPart = safePort ? ':' + safePort : '';
   return safeProtocol + '//' + safeHostname + portPart + safePathname + safeSearch;
 }
 
 /**
- * Validates that a value is a safe ID (alphanumeric, hyphens, underscores only).
- * This is used for path parameters like movieId, seriesId, etc.
+ * Validates that a value is a safe ID (numeric only for Radarr/Sonarr IDs).
  * @param {string|number} id - The ID to validate
  * @returns {string} The validated ID as a string
  */
 function validateId(id) {
   const idStr = String(id);
-  if (!/^[a-zA-Z0-9_-]+$/.test(idStr)) {
-    throw new Error('Invalid ID format');
+  // Only allow numeric IDs for maximum safety
+  if (!/^\d+$/.test(idStr)) {
+    throw new Error('Invalid ID format - must be numeric');
   }
   return idStr;
 }
@@ -44,11 +78,21 @@ function validateId(id) {
  */
 function validateQueryValue(value) {
   const str = String(value);
-  // Allow common query param characters but block dangerous ones
   if (/[<>"'`;\\]/.test(str)) {
     throw new Error('Invalid query parameter value');
   }
   return str;
+}
+
+/**
+ * Gets the base URL without trailing slash.
+ * @param {string} baseUrlString - The base URL
+ * @returns {string} Base URL without trailing slash
+ */
+function getBaseUrl(baseUrlString) {
+  return baseUrlString.endsWith('/') 
+    ? baseUrlString.slice(0, -1) 
+    : baseUrlString;
 }
 
 class ApiClient {
@@ -68,7 +112,6 @@ class ApiClient {
 
   // Build request config with all necessary options
   buildRequestConfig(params = {}) {
-    // Sanitize all parameter values
     const safeParams = {};
     for (const [key, value] of Object.entries(params)) {
       if (value !== undefined && value !== null) {
@@ -87,153 +130,73 @@ class ApiClient {
   }
 
   /**
-   * Makes a GET request to a hardcoded API path.
-   * @param {string} apiPath - A constant API path (e.g., '/api/v3/movie')
+   * Makes a GET request using an allowlisted endpoint key.
+   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS (e.g., 'v3/movie')
    * @param {Object} params - Query parameters
    */
-  async get(apiPath, params = {}) {
-    // The apiPath should be a hardcoded constant in the calling code
-    // We only do basic validation to ensure it's a valid path format
-    if (typeof apiPath !== 'string' || !apiPath.startsWith('/')) {
-      throw new Error('API path must be a string starting with /');
-    }
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
+  async get(endpointKey, params = {}) {
+    const safePath = getSafeEndpoint(endpointKey);
+    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig(params);
-    
-    // Make request with hardcoded base + path
-    const response = await axios.get(baseUrl + apiPath, config);
+    const response = await axios.get(baseUrl + safePath, config);
     return response.data;
   }
 
   /**
-   * Makes a GET request with an ID parameter in the path.
-   * @param {string} basePath - The base API path (e.g., '/api/v3/movie')
-   * @param {string|number} id - The resource ID (validated)
+   * Makes a GET request with an ID appended to an allowlisted endpoint.
+   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
+   * @param {string|number} id - The resource ID (validated to be numeric)
    * @param {Object} params - Query parameters
    */
-  async getById(basePath, id, params = {}) {
-    if (typeof basePath !== 'string' || !basePath.startsWith('/')) {
-      throw new Error('Base path must be a string starting with /');
-    }
-    
-    // Validate ID to prevent path traversal
+  async getById(endpointKey, id, params = {}) {
+    const safePath = getSafeEndpoint(endpointKey);
     const safeId = validateId(id);
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
+    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig(params);
-    
-    // Build URL with validated components
-    const fullPath = basePath + '/' + safeId;
-    const response = await axios.get(baseUrl + fullPath, config);
+    const response = await axios.get(baseUrl + safePath + '/' + safeId, config);
     return response.data;
   }
 
   /**
-   * Makes a POST request to a hardcoded API path.
-   * @param {string} apiPath - A constant API path
+   * Makes a POST request using an allowlisted endpoint key.
+   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
    * @param {Object} data - Request body
    */
-  async post(apiPath, data = {}) {
-    if (typeof apiPath !== 'string' || !apiPath.startsWith('/')) {
-      throw new Error('API path must be a string starting with /');
-    }
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
+  async post(endpointKey, data = {}) {
+    const safePath = getSafeEndpoint(endpointKey);
+    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig();
-    const response = await axios.post(baseUrl + apiPath, data, config);
+    const response = await axios.post(baseUrl + safePath, data, config);
     return response.data;
   }
 
   /**
-   * Makes a PUT request with an ID parameter in the path.
-   * @param {string} basePath - The base API path
-   * @param {string|number} id - The resource ID (validated)
+   * Makes a PUT request with an ID appended to an allowlisted endpoint.
+   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
+   * @param {string|number} id - The resource ID (validated to be numeric)
    * @param {Object} data - Request body
    */
-  async putById(basePath, id, data = {}) {
-    if (typeof basePath !== 'string' || !basePath.startsWith('/')) {
-      throw new Error('Base path must be a string starting with /');
-    }
-    
+  async putById(endpointKey, id, data = {}) {
+    const safePath = getSafeEndpoint(endpointKey);
     const safeId = validateId(id);
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
+    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig();
-    const fullPath = basePath + '/' + safeId;
-    const response = await axios.put(baseUrl + fullPath, data, config);
+    const response = await axios.put(baseUrl + safePath + '/' + safeId, data, config);
     return response.data;
   }
 
   /**
-   * Makes a PUT request to a hardcoded API path.
-   * @param {string} apiPath - A constant API path
-   * @param {Object} data - Request body
-   */
-  async put(apiPath, data = {}) {
-    if (typeof apiPath !== 'string' || !apiPath.startsWith('/')) {
-      throw new Error('API path must be a string starting with /');
-    }
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
-    const config = this.buildRequestConfig();
-    const response = await axios.put(baseUrl + apiPath, data, config);
-    return response.data;
-  }
-
-  /**
-   * Makes a DELETE request with an ID parameter in the path.
-   * @param {string} basePath - The base API path
-   * @param {string|number} id - The resource ID (validated)
+   * Makes a DELETE request with an ID appended to an allowlisted endpoint.
+   * @param {string} endpointKey - Key from ALLOWED_ENDPOINTS
+   * @param {string|number} id - The resource ID (validated to be numeric)
    * @param {Object} params - Query parameters
    */
-  async deleteById(basePath, id, params = {}) {
-    if (typeof basePath !== 'string' || !basePath.startsWith('/')) {
-      throw new Error('Base path must be a string starting with /');
-    }
-    
+  async deleteById(endpointKey, id, params = {}) {
+    const safePath = getSafeEndpoint(endpointKey);
     const safeId = validateId(id);
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
+    const baseUrl = getBaseUrl(this.baseUrlString);
     const config = this.buildRequestConfig(params);
-    const fullPath = basePath + '/' + safeId;
-    const response = await axios.delete(baseUrl + fullPath, config);
-    return response.data;
-  }
-
-  /**
-   * Makes a DELETE request to a hardcoded API path.
-   * @param {string} apiPath - A constant API path
-   */
-  async delete(apiPath) {
-    if (typeof apiPath !== 'string' || !apiPath.startsWith('/')) {
-      throw new Error('API path must be a string starting with /');
-    }
-    
-    const baseUrl = this.baseUrlString.endsWith('/')
-      ? this.baseUrlString.slice(0, -1)
-      : this.baseUrlString;
-    
-    const config = this.buildRequestConfig();
-    const response = await axios.delete(baseUrl + apiPath, config);
+    const response = await axios.delete(baseUrl + safePath + '/' + safeId, config);
     return response.data;
   }
 }

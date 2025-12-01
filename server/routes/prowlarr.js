@@ -15,7 +15,7 @@ router.get('/status/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const system = await client.get('/api/v1/system/status');
+    const system = await client.get('v1/system/status');
     res.json({ system });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -29,7 +29,7 @@ router.get('/indexers/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const client = new ApiClient(instance.url, instance.apiKey);
-    const indexers = await client.get('/api/v1/indexer');
+    const indexers = await client.get('v1/indexer');
     res.json(indexers);
   } catch (error) {
     res.status(500).json({ error: error.message });
