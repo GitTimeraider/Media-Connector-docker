@@ -190,17 +190,12 @@ function UnraidContent() {
         api.getUnraidArray(selectedInstance)
       ]);
 
-      console.log('Unraid Data Loaded:', { stats, docker, array });
-
       if (stats.status === 'fulfilled') {
         const statsData = stats.value;
-        console.log('Stats value structure:', JSON.stringify(statsData, null, 2));
         
         // GraphQL response structure: { info: { cpu, memory, os, system }, metrics: { cpu, memory } }
         const info = statsData?.info || {};
         const metrics = statsData?.metrics || {};
-        console.log('Info object:', JSON.stringify(info, null, 2));
-        console.log('Metrics object:', JSON.stringify(metrics, null, 2));
         
         // Hardware info from info.memory.layout
         const memoryLayout = info?.memory?.layout || [];
@@ -226,15 +221,10 @@ function UnraidContent() {
           system: info?.system || {},
           versions: info?.versions || {}
         };
-        console.log('Combined stats:', JSON.stringify(combinedStats, null, 2));
-        console.log('CPU brand:', combinedStats.cpu?.brand);
-        console.log('Memory total:', combinedStats.memory?.total);
-        console.log('OS hostname:', combinedStats.os?.hostname);
         setSystemStats(combinedStats);
       }
       if (docker.status === 'fulfilled') {
         const containers = docker.value?.docker?.containers || docker.value?.dockerContainers || docker.value;
-        console.log('Docker containers:', { docker: containers });
         const sortedContainers = Array.isArray(containers) 
           ? containers.sort((a, b) => {
               const nameA = (a.names?.[0] || a.name || a.Names?.[0] || '').replace(/^\//g, '').toLowerCase();
@@ -250,14 +240,12 @@ function UnraidContent() {
     }
   };
 
-  const handleDockerAction = async (container, action) => {
+  const handleDockerAction = async (containerId, action) => {
     try {
-      console.log('Docker action:', { container, action, instanceId: selectedInstance });
-      await api.unraidDockerAction(selectedInstance, container, action);
+      await api.unraidDockerAction(selectedInstance, containerId, action);
       loadUnraidData();
     } catch (error) {
       console.error('Error performing action:', error);
-      console.error('Error details:', error.response?.data);
       alert(`Failed to ${action} container: ${error.response?.data?.error || error.message}`);
     }
   };
@@ -547,10 +535,7 @@ function UnraidContent() {
                       <IconButton 
                         size="small" 
                         color="error"
-                        onClick={() => {
-                          console.log('Stop clicked, container:', container);
-                          handleDockerAction(container.id || container.Id || container.name, 'stop');
-                        }}
+                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'stop')}
                       >
                         <Stop />
                       </IconButton>
@@ -560,10 +545,7 @@ function UnraidContent() {
                       <IconButton 
                         size="small" 
                         color="success"
-                        onClick={() => {
-                          console.log('Start clicked, container:', container);
-                          handleDockerAction(container.id || container.Id || container.name, 'start');
-                        }}
+                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'start')}
                       >
                         <PlayArrow />
                       </IconButton>

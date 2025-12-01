@@ -87,14 +87,10 @@ router.get('/status/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
-    console.log('Unraid GraphQL response:', JSON.stringify(response.data, null, 2));
-
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
-      console.log('Returning response.data.data:', response.data.data);
       res.json(response.data.data);
     } else {
-      console.log('Returning response.data:', response.data);
       res.json(response.data);
     }
   } catch (error) {
@@ -286,8 +282,14 @@ router.post('/docker/action/:instanceId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid action. Must be start or stop' });
     }
     
-    // Validate containerId format (should be alphanumeric with possible special chars)
-    if (!/^[a-zA-Z0-9_\-\.]+$/.test(containerId)) {
+    // Validate containerId - must be provided and be a non-empty string
+    // Unraid uses PrefixedID format like "docker/container/abc123"
+    if (!containerId || typeof containerId !== 'string' || containerId.trim().length === 0) {
+      return res.status(400).json({ error: 'Container ID is required' });
+    }
+    
+    // Validate containerId format - allow alphanumeric, slashes, underscores, hyphens, dots
+    if (!/^[a-zA-Z0-9_\-\.\/]+$/.test(containerId)) {
       return res.status(400).json({ error: 'Invalid container ID format' });
     }
     
