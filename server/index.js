@@ -19,6 +19,7 @@ const unraidManager = new UnraidSubscriptionManager();
 app.locals.unraidManager = unraidManager;
 
 // Security middleware
+// Disable headers that cause issues with HTTP access on local network IPs
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
@@ -28,9 +29,14 @@ app.use(helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"],
       imgSrc: ["'self'", "data:", "https:", "http:"],
       connectSrc: ["'self'", "ws:", "wss:"],
+      // Don't upgrade insecure requests when running on HTTP
+      upgradeInsecureRequests: null,
     },
   },
   crossOriginEmbedderPolicy: false,
+  // Disable headers that require HTTPS or cause issues on non-localhost HTTP
+  crossOriginOpenerPolicy: false,
+  originAgentCluster: false,
 }));
 app.use(cors());
 app.use(bodyParser.json());
