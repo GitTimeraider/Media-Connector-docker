@@ -34,7 +34,10 @@ class ApiService {
             window.location.href = '/login';
           }
         }
-        console.error('API Error:', error);
+        // Only log non-rate-limit errors to avoid console spam
+        if (error.response?.status !== 429) {
+          console.error('API Error:', error);
+        }
         return Promise.reject(error);
       }
     );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Container,
   Grid,
@@ -96,10 +96,18 @@ function Dashboard() {
   const [tags, setTags] = useState('');
   const [monitored, setMonitored] = useState(true);
   const [searchOnAdd, setSearchOnAdd] = useState(true);
+  
+  // Ref to track if component is mounted (for cancelling background operations)
+  const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     loadDashboard();
     loadTMDBContent();
+    
+    return () => {
+      isMountedRef.current = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -137,36 +145,28 @@ function Dashboard() {
         api.getUpcomingMovies()
       ]);
       
-      // Fetch cast for each item
-      const enrichWithCast = async (items, mediaType) => {
-        if (!items || items.length === 0) return [];
-        const enriched = await Promise.all(items.map(async (item) => {
-          try {
-            const details = await api.getTMDBDetails(item.id, mediaType);
-            return { ...item, cast: details.credits?.cast || [], genres: details.genres || [] };
-          } catch (error) {
-            return item;
-          }
-        }));
-        return enriched;
-      };
+      // Check if still mounted before updating state
+      if (!isMountedRef.current) return;
       
+      // Set initial items immediately without enrichment to avoid rate limits
+      // Cast/genre enrichment is optional - skip it to prevent 429 errors and crashes
       if (trendingMoviesRes.status === 'fulfilled') {
-        const moviesWithCast = await enrichWithCast(trendingMoviesRes.value, 'movie');
-        setTrendingMovies(moviesWithCast || []);
+        setTrendingMovies(trendingMoviesRes.value || []);
       }
       if (trendingTVRes.status === 'fulfilled') {
-        const tvWithCast = await enrichWithCast(trendingTVRes.value, 'tv');
-        setTrendingTV(tvWithCast || []);
+        setTrendingTV(trendingTVRes.value || []);
       }
       if (upcomingRes.status === 'fulfilled') {
-        const upcomingWithCast = await enrichWithCast(upcomingRes.value, 'movie');
-        setUpcomingMovies(upcomingWithCast || []);
+        setUpcomingMovies(upcomingRes.value || []);
       }
     } catch (error) {
-      console.error('Error loading TMDB content:', error);
+      if (isMountedRef.current) {
+        console.error('Error loading TMDB content:', error);
+      }
     } finally {
-      setTmdbLoading(false);
+      if (isMountedRef.current) {
+        setTmdbLoading(false);
+      }
     }
   };
 
@@ -177,22 +177,18 @@ function Dashboard() {
       setSearching(true);
       const results = await api.searchTMDB(searchQuery);
       
-      // Enrich results with cast information
-      const enrichedResults = await Promise.all((results || []).map(async (item) => {
-        try {
-          const mediaType = item.media_type || 'movie';
-          const details = await api.getTMDBDetails(item.id, mediaType);
-          return { ...item, cast: details.credits?.cast || [] };
-        } catch {
-          return item;
-        }
-      }));
-      
-      setSearchResults(enrichedResults);
+      // Show results immediately without enrichment to avoid rate limits
+      if (isMountedRef.current) {
+        setSearchResults(results || []);
+      }
     } catch (error) {
-      console.error('Error searching TMDB:', error);
+      if (isMountedRef.current) {
+        console.error('Error searching TMDB:', error);
+      }
     } finally {
-      setSearching(false);
+      if (isMountedRef.current) {
+        setSearching(false);
+      }
     }
   };
 
