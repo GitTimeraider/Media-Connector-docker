@@ -26,7 +26,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Checkbox
+  Checkbox,
+  Zoom,
+  Slide
 } from '@mui/material';
 import {
   LiveTv,
@@ -436,19 +438,62 @@ function Dashboard() {
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
           cursor: 'pointer',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: 3,
           '&:hover': {
-            transform: 'translateY(-12px) scale(1.03)',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-            zIndex: 10
+            transform: 'translateY(-16px) scale(1.05)',
+            boxShadow: '0 25px 50px rgba(0,0,0,0.5), 0 0 30px rgba(156,39,176,0.3)',
+            zIndex: 10,
+            border: '1px solid rgba(156,39,176,0.5)',
+            background: 'linear-gradient(135deg, rgba(156,39,176,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+          },
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '-100%',
+            width: '100%',
+            height: '100%',
+            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+            transition: 'left 0.5s',
+            pointerEvents: 'none',
+            zIndex: 1
+          },
+          '&:hover::before': {
+            left: '100%'
           }
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
         <CardActionArea onClick={() => handleOpenDialog(item)}>
-          <Box sx={{ position: 'relative', overflow: 'hidden', height: { xs: 200, sm: 225, md: 250 }, width: '100%' }}>
+          <Box sx={{ 
+            position: 'relative', 
+            overflow: 'hidden', 
+            height: { xs: 200, sm: 225, md: 250 }, 
+            width: '100%',
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: '-50%',
+              left: '-50%',
+              width: '200%',
+              height: '200%',
+              background: 'radial-gradient(circle, rgba(156,39,176,0.4) 0%, transparent 70%)',
+              opacity: isHovered ? 1 : 0,
+              transition: 'opacity 0.4s',
+              pointerEvents: 'none',
+              animation: isHovered ? 'pulse 2s ease-in-out infinite' : 'none'
+            },
+            '@keyframes pulse': {
+              '0%, 100%': { transform: 'scale(1)', opacity: 0.6 },
+              '50%': { transform: 'scale(1.1)', opacity: 0.8 }
+            }
+          }}>
               <CardMedia
                 component="img"
                 image={imageUrl}
@@ -458,9 +503,10 @@ function Dashboard() {
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center top',
-                  transition: 'transform 0.3s ease',
-                  transform: isHovered ? 'scale(1.1)' : 'scale(1)',
-                  display: 'block'
+                  transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  transform: isHovered ? 'scale(1.15) rotate(1deg)' : 'scale(1)',
+                  display: 'block',
+                  filter: isHovered ? 'brightness(1.1) contrast(1.1)' : 'brightness(1)'
                 }}
               />
               <Fade in={isHovered}>
@@ -471,26 +517,34 @@ function Dashboard() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 100%)',
+                    background: 'linear-gradient(to top, rgba(156,39,176,0.95) 0%, rgba(0,0,0,0.7) 50%, transparent 100%)',
                     display: 'flex',
                     alignItems: 'flex-end',
-                    p: 2
+                    p: 2,
+                    backdropFilter: 'blur(5px)'
                   }}
                 >
                   <Box display="flex" gap={1}>
-                    <Tooltip title="View Details">
+                    <Tooltip title="View Details" arrow TransitionComponent={Zoom}>
                       <IconButton 
                         size="small" 
                         sx={{ 
-                          bgcolor: 'primary.main', 
+                          bgcolor: 'rgba(33,150,243,0.9)', 
                           color: 'white',
-                          '&:hover': { bgcolor: 'primary.dark' }
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 4px 15px rgba(33,150,243,0.4)',
+                          transition: 'all 0.3s',
+                          '&:hover': { 
+                            bgcolor: 'primary.main',
+                            transform: 'scale(1.15) rotate(5deg)',
+                            boxShadow: '0 6px 20px rgba(33,150,243,0.6)'
+                          }
                         }}
                       >
                         <Info />
                       </IconButton>
                     </Tooltip>
-                    <Tooltip title="Play Trailer">
+                    <Tooltip title="Play Trailer" arrow TransitionComponent={Zoom}>
                       <IconButton 
                         size="small"
                         onClick={async (e) => {
@@ -512,16 +566,23 @@ function Dashboard() {
                           }
                         }}
                         sx={{ 
-                          bgcolor: 'success.main', 
+                          bgcolor: 'rgba(76,175,80,0.9)', 
                           color: 'white',
-                          '&:hover': { bgcolor: 'success.dark' }
+                          backdropFilter: 'blur(10px)',
+                          boxShadow: '0 4px 15px rgba(76,175,80,0.4)',
+                          transition: 'all 0.3s',
+                          '&:hover': { 
+                            bgcolor: 'success.main',
+                            transform: 'scale(1.15) rotate(-5deg)',
+                            boxShadow: '0 6px 20px rgba(76,175,80,0.6)'
+                          }
                         }}
                       >
                         <PlayArrow />
                       </IconButton>
                     </Tooltip>
                     {!isInLibrary && (
-                      <Tooltip title="Add to Library">
+                      <Tooltip title="Add to Library" arrow TransitionComponent={Zoom}>
                         <IconButton 
                           size="small" 
                           onClick={(e) => {
@@ -533,9 +594,16 @@ function Dashboard() {
                             handleOpenAddDialog(item, mediaType);
                           }}
                           sx={{ 
-                            bgcolor: 'secondary.main', 
+                            bgcolor: 'rgba(255,87,34,0.9)', 
                             color: 'white',
-                            '&:hover': { bgcolor: 'secondary.dark' }
+                            backdropFilter: 'blur(10px)',
+                            boxShadow: '0 4px 15px rgba(255,87,34,0.4)',
+                            transition: 'all 0.3s',
+                            '&:hover': { 
+                              bgcolor: 'warning.main',
+                              transform: 'scale(1.15) rotate(90deg)',
+                              boxShadow: '0 6px 20px rgba(255,87,34,0.6)'
+                            }
                           }}
                         >
                           <Add />
@@ -568,8 +636,14 @@ function Dashboard() {
                     label={year} 
                     size="small" 
                     sx={{ 
-                      fontWeight: 500,
-                      background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)'
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      boxShadow: '0 2px 8px rgba(102,126,234,0.3)',
+                      transition: 'all 0.3s',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(102,126,234,0.5)'
+                      }
                     }} 
                   />
                 )}
@@ -579,8 +653,14 @@ function Dashboard() {
                     label={item.vote_average.toFixed(1)} 
                     size="small" 
                     sx={{ 
-                      fontWeight: 500,
-                      background: 'linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)'
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                      boxShadow: '0 2px 8px rgba(245,87,108,0.3)',
+                      transition: 'all 0.3s',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(245,87,108,0.5)'
+                      }
                     }}
                   />
                 )}
@@ -614,8 +694,14 @@ function Dashboard() {
                     label={formattedDate} 
                     size="small" 
                     sx={{ 
-                      fontWeight: 500,
-                      background: 'linear-gradient(45deg, #4CAF50 30%, #8BC34A 90%)'
+                      fontWeight: 600,
+                      background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                      boxShadow: '0 2px 8px rgba(79,172,254,0.3)',
+                      transition: 'all 0.3s',
+                      '&:hover': {
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 4px 12px rgba(79,172,254,0.5)'
+                      }
                     }}
                   />
                 )}
@@ -647,7 +733,7 @@ function Dashboard() {
     <Container maxWidth="xl" sx={{ pb: 4, overflowX: 'hidden', width: '100%' }}>
       {/* Search Bar */}
       <Paper 
-        elevation={2}
+        elevation={0}
         sx={{ 
           mb: 4, 
           p: { xs: 1.5, sm: 2 }, 
@@ -655,10 +741,19 @@ function Dashboard() {
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: 'center',
           gap: { xs: 1.5, sm: 0 },
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          background: 'linear-gradient(135deg, rgba(156,39,176,0.15) 0%, rgba(33,150,243,0.1) 100%)',
+          backdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          borderRadius: 3,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
           width: '100%',
           maxWidth: '100%',
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          transition: 'all 0.3s',
+          '&:hover': {
+            boxShadow: '0 12px 40px rgba(156,39,176,0.3)',
+            transform: 'translateY(-2px)'
+          }
         }}
       >
         <TextField
@@ -878,17 +973,40 @@ function Dashboard() {
           alignItems="center" 
           mb={3}
           sx={{
-            background: 'linear-gradient(90deg, rgba(255,87,34,0.1) 0%, transparent 100%)',
-            p: 2,
-            borderRadius: 2,
-            borderLeft: 4,
-            borderColor: 'warning.main'
+            background: 'linear-gradient(135deg, rgba(255,87,34,0.2) 0%, rgba(255,193,7,0.1) 100%)',
+            backdropFilter: 'blur(10px)',
+            p: 2.5,
+            borderRadius: 3,
+            borderLeft: '6px solid',
+            borderImage: 'linear-gradient(to bottom, #ff5722, #ffc107) 1',
+            boxShadow: '0 4px 20px rgba(255,87,34,0.2)',
+            transition: 'all 0.3s',
+            position: 'relative',
+            overflow: 'hidden',
+            '&:hover': {
+              transform: 'translateX(8px)',
+              boxShadow: '0 6px 30px rgba(255,87,34,0.4)'
+            },
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+              animation: 'shimmer 3s infinite',
+            },
+            '@keyframes shimmer': {
+              '0%': { transform: 'translateX(-100%)' },
+              '100%': { transform: 'translateX(100%)' }
+            }
           }}
         >
-          <Movie sx={{ mr: 1.5, fontSize: 32, color: 'warning.main' }} />
+          <Movie sx={{ mr: 1.5, fontSize: 32, color: 'warning.main', filter: 'drop-shadow(0 2px 4px rgba(255,87,34,0.5))' }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>Trending Movies</Typography>
-            <Typography variant="caption" color="text.secondary">Most popular movies this week</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>Trending Movies</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.85rem' }}>Most popular movies this week</Typography>
           </Box>
         </Box>
         {tmdbLoading ? (
@@ -915,17 +1033,20 @@ function Dashboard() {
             pb: 2,
             cursor: 'grab',
             '&::-webkit-scrollbar': {
-              height: 8
+              height: 10
             },
             '&::-webkit-scrollbar-track': {
-              background: 'rgba(255,255,255,0.05)',
-              borderRadius: 4
+              background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 0%, rgba(33,150,243,0.1) 100%)',
+              borderRadius: 10,
+              border: '1px solid rgba(255,255,255,0.1)'
             },
             '&::-webkit-scrollbar-thumb': {
-              background: 'rgba(255,255,255,0.2)',
-              borderRadius: 4,
+              background: 'linear-gradient(90deg, #9c27b0 0%, #2196f3 100%)',
+              borderRadius: 10,
+              transition: 'all 0.3s',
               '&:hover': {
-                background: 'rgba(255,255,255,0.3)'
+                background: 'linear-gradient(90deg, #7b1fa2 0%, #1976d2 100%)',
+                boxShadow: '0 0 10px rgba(156,39,176,0.5)'
               }
             },
             overscrollBehavior: 'contain auto',
@@ -951,17 +1072,36 @@ function Dashboard() {
           alignItems="center" 
           mb={3}
           sx={{
-            background: 'linear-gradient(90deg, rgba(156,39,176,0.1) 0%, transparent 100%)',
-            p: 2,
-            borderRadius: 2,
-            borderLeft: 4,
-            borderColor: 'secondary.main'
+            background: 'linear-gradient(135deg, rgba(156,39,176,0.2) 0%, rgba(103,58,183,0.1) 100%)',
+            backdropFilter: 'blur(10px)',
+            p: 2.5,
+            borderRadius: 3,
+            borderLeft: '6px solid',
+            borderImage: 'linear-gradient(to bottom, #9c27b0, #673ab7) 1',
+            boxShadow: '0 4px 20px rgba(156,39,176,0.2)',
+            transition: 'all 0.3s',
+            position: 'relative',
+            overflow: 'hidden',
+            '&:hover': {
+              transform: 'translateX(8px)',
+              boxShadow: '0 6px 30px rgba(156,39,176,0.4)'
+            },
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+              animation: 'shimmer 3s infinite',
+            }
           }}
         >
-          <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main' }} />
+          <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main', filter: 'drop-shadow(0 2px 4px rgba(156,39,176,0.5))' }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>Trending TV Shows</Typography>
-            <Typography variant="caption" color="text.secondary">Most popular series this week</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>Trending TV Shows</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.85rem' }}>Most popular series this week</Typography>
           </Box>
         </Box>
         {tmdbLoading ? (
@@ -1026,17 +1166,36 @@ function Dashboard() {
           alignItems="center" 
           mb={3}
           sx={{
-            background: 'linear-gradient(90deg, rgba(33,150,243,0.1) 0%, transparent 100%)',
-            p: 2,
-            borderRadius: 2,
-            borderLeft: 4,
-            borderColor: 'primary.main'
+            background: 'linear-gradient(135deg, rgba(33,150,243,0.2) 0%, rgba(3,169,244,0.1) 100%)',
+            backdropFilter: 'blur(10px)',
+            p: 2.5,
+            borderRadius: 3,
+            borderLeft: '6px solid',
+            borderImage: 'linear-gradient(to bottom, #2196f3, #03a9f4) 1',
+            boxShadow: '0 4px 20px rgba(33,150,243,0.2)',
+            transition: 'all 0.3s',
+            position: 'relative',
+            overflow: 'hidden',
+            '&:hover': {
+              transform: 'translateX(8px)',
+              boxShadow: '0 6px 30px rgba(33,150,243,0.4)'
+            },
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+              animation: 'shimmer 3s infinite',
+            }
           }}
         >
-          <CalendarToday sx={{ mr: 1.5, fontSize: 32, color: 'primary.main' }} />
+          <CalendarToday sx={{ mr: 1.5, fontSize: 32, color: 'primary.main', filter: 'drop-shadow(0 2px 4px rgba(33,150,243,0.5))' }} />
           <Box>
-            <Typography variant="h5" sx={{ fontWeight: 600 }}>Upcoming Movies</Typography>
-            <Typography variant="caption" color="text.secondary">Popular movies coming to theaters</Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>Upcoming Movies</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.85rem' }}>Popular movies coming to theaters</Typography>
           </Box>
         </Box>
         {tmdbLoading ? (
@@ -1098,17 +1257,36 @@ function Dashboard() {
             alignItems="center" 
             mb={3}
             sx={{
-              background: 'linear-gradient(90deg, rgba(76,175,80,0.1) 0%, transparent 100%)',
-              p: 2,
-              borderRadius: 2,
-              borderLeft: 4,
-              borderColor: 'success.main'
+              background: 'linear-gradient(135deg, rgba(76,175,80,0.2) 0%, rgba(139,195,74,0.1) 100%)',
+              backdropFilter: 'blur(10px)',
+              p: 2.5,
+              borderRadius: 3,
+              borderLeft: '6px solid',
+              borderImage: 'linear-gradient(to bottom, #4caf50, #8bc34a) 1',
+              boxShadow: '0 4px 20px rgba(76,175,80,0.2)',
+              transition: 'all 0.3s',
+              position: 'relative',
+              overflow: 'hidden',
+              '&:hover': {
+                transform: 'translateX(8px)',
+                boxShadow: '0 6px 30px rgba(76,175,80,0.4)'
+              },
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+                animation: 'shimmer 3s infinite',
+              }
             }}
           >
-            <Download sx={{ mr: 1.5, fontSize: { xs: 24, sm: 32 }, color: 'success.main' }} />
+            <Download sx={{ mr: 1.5, fontSize: { xs: 24, sm: 32 }, color: 'success.main', filter: 'drop-shadow(0 2px 4px rgba(76,175,80,0.5))' }} />
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>Your Library</Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+              <Typography variant="h5" sx={{ fontWeight: 700, fontSize: { xs: '1.25rem', sm: '1.5rem' }, letterSpacing: 0.5 }}>Your Library</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ fontSize: { xs: '0.7rem', sm: '0.85rem' } }}>
                 Recently added movies and TV shows from Radarr & Sonarr
               </Typography>
             </Box>
