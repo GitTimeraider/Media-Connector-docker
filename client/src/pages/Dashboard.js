@@ -486,10 +486,6 @@ function Dashboard() {
               opacity: isHovered ? 1 : 0,
               transition: 'opacity 0.4s',
               pointerEvents: 'none'
-            },
-            '@keyframes pulse': {
-              '0%, 100%': { transform: 'scale(1)', opacity: 0.6 },
-              '50%': { transform: 'scale(1.1)', opacity: 0.8 }
             }
           }}>
               <CardMedia
@@ -991,7 +987,7 @@ function Dashboard() {
               right: 0,
               bottom: 0,
               background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 3s infinite',
+              animation: 'shimmer 8s infinite',
             },
             '@keyframes shimmer': {
               '0%': { transform: 'translateX(-100%)' },
@@ -1090,7 +1086,7 @@ function Dashboard() {
               right: 0,
               bottom: 0,
               background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 3s infinite',
+              animation: 'shimmer 8s infinite',
             }
           }}
         >
@@ -1184,7 +1180,7 @@ function Dashboard() {
               right: 0,
               bottom: 0,
               background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-              animation: 'shimmer 3s infinite',
+              animation: 'shimmer 8s infinite',
             }
           }}
         >
@@ -1275,7 +1271,7 @@ function Dashboard() {
                 right: 0,
                 bottom: 0,
                 background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-                animation: 'shimmer 3s infinite',
+                animation: 'shimmer 8s infinite',
               }
             }}
           >
