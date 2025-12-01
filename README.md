@@ -1,4 +1,4 @@
-# Media Connector
+# Media Connector .. UNDER DEV, do NOT use yet!
 
 <div align="center">
 
