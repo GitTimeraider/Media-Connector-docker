@@ -66,39 +66,40 @@ class ApiClient {
     return endpoint;
   }
 
-  async get(endpoint, params = {}) {
-    // Validate endpoint is relative path only (no absolute URLs)
+  // Build safe URL by combining validated base and validated endpoint
+  buildSafeUrl(endpoint) {
     const validatedEndpoint = this.validateEndpoint(endpoint);
-    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
-    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
-    const response = await this.client.get(validatedEndpoint, { params });
+    // Use URL constructor to safely combine base and endpoint
+    // This prevents SSRF by ensuring the endpoint can't override the base
+    const safeUrl = new URL(validatedEndpoint, this.baseURL);
+    return safeUrl.toString();
+  }
+
+  async get(endpoint, params = {}) {
+    // Build complete URL using URL constructor for safety
+    const fullUrl = this.buildSafeUrl(endpoint);
+    const response = await this.client.get(fullUrl, { params });
     return response.data;
   }
 
   async post(endpoint, data = {}) {
-    // Validate endpoint is relative path only (no absolute URLs)
-    const validatedEndpoint = this.validateEndpoint(endpoint);
-    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
-    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
-    const response = await this.client.post(validatedEndpoint, data);
+    // Build complete URL using URL constructor for safety
+    const fullUrl = this.buildSafeUrl(endpoint);
+    const response = await this.client.post(fullUrl, data);
     return response.data;
   }
 
   async put(endpoint, data = {}) {
-    // Validate endpoint is relative path only (no absolute URLs)
-    const validatedEndpoint = this.validateEndpoint(endpoint);
-    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
-    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
-    const response = await this.client.put(validatedEndpoint, data);
+    // Build complete URL using URL constructor for safety
+    const fullUrl = this.buildSafeUrl(endpoint);
+    const response = await this.client.put(fullUrl, data);
     return response.data;
   }
 
   async delete(endpoint) {
-    // Validate endpoint is relative path only (no absolute URLs)
-    const validatedEndpoint = this.validateEndpoint(endpoint);
-    // SAFE: Both baseURL (validated in constructor) and endpoint (validated above) are safe
-    // The full URL will be: <validated-baseURL><validated-relative-endpoint>
-    const response = await this.client.delete(validatedEndpoint);
+    // Build complete URL using URL constructor for safety
+    const fullUrl = this.buildSafeUrl(endpoint);
+    const response = await this.client.delete(fullUrl);
     return response.data;
   }
 }
