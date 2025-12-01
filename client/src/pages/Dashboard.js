@@ -412,7 +412,25 @@ function Dashboard() {
                     </Tooltip>
                     <Tooltip title="Play Trailer">
                       <IconButton 
-                        size="small" 
+                        size="small"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          try {
+                            const mediaType = type || item.media_type || (item.title ? 'movie' : 'tv');
+                            const tmdbId = item.tmdbId || item.id;
+                            const videos = await api.getTMDBVideos(tmdbId, mediaType);
+                            const trailer = videos.find(v => v.type === 'Trailer' && v.site === 'YouTube');
+                            if (trailer) {
+                              window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank');
+                            } else {
+                              alert('No trailer available');
+                            }
+                          } catch (error) {
+                            console.error('Error loading trailer:', error);
+                            alert('Failed to load trailer');
+                          }
+                        }}
                         sx={{ 
                           bgcolor: 'success.main', 
                           color: 'white',
@@ -750,17 +768,22 @@ function Dashboard() {
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
-              <Button 
-                variant="contained" 
-                startIcon={<Add />}
-                onClick={() => {
-                  const mediaType = selectedItem.media_type || (selectedItem.title ? 'movie' : 'tv');
-                  handleCloseDialog();
-                  handleOpenAddDialog(selectedItem, mediaType);
-                }}
-              >
-                Add to Library
-              </Button>
+              {!Boolean(
+                selectedItem.hasFile || 
+                (selectedItem.id && (selectedItem.monitored !== undefined || selectedItem.tvdbId !== undefined || selectedItem.imdbId !== undefined))
+              ) && (
+                <Button 
+                  variant="contained" 
+                  startIcon={<Add />}
+                  onClick={() => {
+                    const mediaType = selectedItem.media_type || (selectedItem.title ? 'movie' : 'tv');
+                    handleCloseDialog();
+                    handleOpenAddDialog(selectedItem, mediaType);
+                  }}
+                >
+                  Add to Library
+                </Button>
+              )}
             </DialogActions>
           </>
         )}

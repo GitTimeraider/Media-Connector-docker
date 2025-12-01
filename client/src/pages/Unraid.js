@@ -136,10 +136,11 @@ function Unraid() {
 
       if (stats.status === 'fulfilled') {
         const statsData = stats.value;
-        console.log('Stats value structure:', statsData);
+        console.log('Stats value structure:', JSON.stringify(statsData, null, 2));
         
         // GraphQL response structure: { info: { cpu, memory, os } }
         const info = statsData?.info || statsData;
+        console.log('Info object:', JSON.stringify(info, null, 2));
         
         // Use memory data from GraphQL response
         const memory = info?.memory || {};
@@ -157,7 +158,10 @@ function Unraid() {
           os: info?.os || {},
           versions: info?.versions || {}
         };
-        console.log('Combined stats:', combinedStats);
+        console.log('Combined stats:', JSON.stringify(combinedStats, null, 2));
+        console.log('CPU brand:', combinedStats.cpu?.brand);
+        console.log('Memory total:', combinedStats.memory?.total);
+        console.log('OS hostname:', combinedStats.os?.hostname);
         setSystemStats(combinedStats);
       }
       if (docker.status === 'fulfilled') {
@@ -446,31 +450,18 @@ function Unraid() {
 
                 <Box display="flex" gap={1} mt={2}>
                   {(container.state || container.State)?.toLowerCase() === 'running' ? (
-                    <>
-                      <Tooltip title="Stop">
-                        <IconButton 
-                          size="small" 
-                          color="error"
-                          onClick={() => {
-                            console.log('Stop clicked, container:', container);
-                            handleDockerAction(container.id || container.Id || container.name, 'stop');
-                          }}
-                        >
-                          <Stop />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Restart">
-                        <IconButton 
-                          size="small"
-                          onClick={() => {
-                            console.log('Restart clicked, container:', container);
-                            handleDockerAction(container.id || container.Id || container.name, 'restart');
-                          }}
-                        >
-                          <Refresh />
-                        </IconButton>
-                      </Tooltip>
-                    </>
+                    <Tooltip title="Stop">
+                      <IconButton 
+                        size="small" 
+                        color="error"
+                        onClick={() => {
+                          console.log('Stop clicked, container:', container);
+                          handleDockerAction(container.id || container.Id || container.name, 'stop');
+                        }}
+                      >
+                        <Stop />
+                      </IconButton>
+                    </Tooltip>
                   ) : (
                     <Tooltip title="Start">
                       <IconButton 

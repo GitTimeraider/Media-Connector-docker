@@ -328,6 +328,11 @@ class ApiService {
     return response.data;
   }
 
+  async getTMDBVideos(id, mediaType) {
+    const response = await this.client.get(`/tmdb/${mediaType}/${id}/videos`);
+    return response.data;
+  }
+
   // Recent downloads
   async getRecentRadarrDownloads(instanceId) {
     const response = await this.client.get(`/radarr/recent/${instanceId}`);

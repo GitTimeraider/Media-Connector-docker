@@ -64,10 +64,14 @@ router.get('/status/:instanceId', async (req, res) => {
       { headers, timeout: 10000 }
     );
 
+    console.log('Unraid GraphQL response:', JSON.stringify(response.data, null, 2));
+
     // GraphQL returns data in response.data.data
     if (response.data && response.data.data) {
+      console.log('Returning response.data.data:', response.data.data);
       res.json(response.data.data);
     } else {
+      console.log('Returning response.data:', response.data);
       res.json(response.data);
     }
   } catch (error) {
