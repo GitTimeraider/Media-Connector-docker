@@ -63,7 +63,7 @@ class ServicesModel {
         updatedAt: service.updated_at
       }));
     } catch (error) {
-      console.error(`Error getting services for type ${type}:`, error);
+      console.error('Error getting services for type:', type, error);
       return [];
     }
   }
@@ -93,7 +93,7 @@ class ServicesModel {
         updatedAt: service.updated_at
       };
     } catch (error) {
-      console.error(`Error getting service ${id}:`, error);
+      console.error('Error getting service:', id, error);
       return null;
     }
   }

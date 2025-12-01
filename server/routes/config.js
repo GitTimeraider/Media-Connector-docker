@@ -67,7 +67,14 @@ router.delete('/services/:type/:id', async (req, res) => {
 router.post('/test/:type', async (req, res) => {
   try {
     const ApiClient = require('../utils/apiClient');
+    const urlValidator = require('../utils/urlValidator');
     const { url, apiKey } = req.body;
+    
+    // Validate URL for SSRF protection
+    const validation = urlValidator.validateServiceUrl(url);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, error: validation.error });
+    }
     
     let endpoint = '/api/v3/system/status'; // Default for *arr apps
     

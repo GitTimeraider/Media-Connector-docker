@@ -1,7 +1,15 @@
 const axios = require('axios');
+const urlValidator = require('./urlValidator');
 
 class ApiClient {
   constructor(baseURL, apiKey, options = {}) {
+    // Validate baseURL for SSRF protection
+    const validation = urlValidator.validateServiceUrl(baseURL);
+    if (!validation.valid) {
+      throw new Error(`Invalid baseURL: ${validation.error}`);
+    }
+
+    this.baseURL = baseURL;
     this.client = axios.create({
       baseURL,
       timeout: options.timeout || 30000,

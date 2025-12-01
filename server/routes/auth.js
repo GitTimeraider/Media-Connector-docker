@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { authLimiter, registrationLimiter } = require('../middleware/rateLimiter');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'media-connector-secret-key-change-in-production';
 const JWT_EXPIRES_IN = '7d';
@@ -35,7 +36,7 @@ router.get('/guest', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -84,7 +85,7 @@ router.get('/verify', async (req, res) => {
 });
 
 // Forgot password - generates new random password and logs it
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', authLimiter, async (req, res) => {
   try {
     const { username } = req.body;
 
@@ -116,7 +117,7 @@ router.get('/users', async (req, res) => {
 });
 
 // Create user (admin only)
-router.post('/users', async (req, res) => {
+router.post('/users', registrationLimiter, async (req, res) => {
   try {
     const { username, password, role } = req.body;
 
@@ -176,7 +177,7 @@ router.delete('/users/:id', async (req, res) => {
 });
 
 // Reset user password (admin only)
-router.post('/users/:id/reset-password', async (req, res) => {
+router.post('/users/:id/reset-password', authLimiter, async (req, res) => {
   try {
     const { id } = req.params;
     const { password } = req.body;

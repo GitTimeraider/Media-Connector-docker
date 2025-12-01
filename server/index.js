@@ -18,14 +18,19 @@ const unraidManager = new UnraidSubscriptionManager();
 // Make unraidManager available to routes
 app.locals.unraidManager = unraidManager;
 
-// Middleware
+// Security middleware
 app.use(helmet({
-  contentSecurityPolicy: false,
-  hsts: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: false,
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "http:"],
+      connectSrc: ["'self'", "ws:", "wss:"],
+    },
+  },
   crossOriginEmbedderPolicy: false,
-  originAgentCluster: false
 }));
 app.use(cors());
 app.use(bodyParser.json());
@@ -43,20 +48,21 @@ const systemRoutes = require('./routes/system');
 const tmdbRoutes = require('./routes/tmdb');
 const authRoutes = require('./routes/auth');
 const { authenticateToken, requireAdmin } = require('./middleware/auth');
+const { apiLimiter } = require('./middleware/rateLimiter');
 
-// Public API Routes (no auth required)
-app.use('/api/auth', authRoutes);
+// Public API Routes (no auth required, but rate limited)
+app.use('/api/auth', authRoutes); // Has its own specific rate limiting
 
-// Protected API Routes (authentication required)
-app.use('/api/sonarr', authenticateToken, sonarrRoutes);
-app.use('/api/radarr', authenticateToken, radarrRoutes);
-app.use('/api/sabnzbd', authenticateToken, sabnzbdRoutes);
-app.use('/api/deluge', authenticateToken, delugeRoutes);
-app.use('/api/prowlarr', authenticateToken, prowlarrRoutes);
-app.use('/api/unraid', authenticateToken, unraidRoutes);
-app.use('/api/config', authenticateToken, configRoutes);
-app.use('/api/system', authenticateToken, systemRoutes);
-app.use('/api/tmdb', authenticateToken, tmdbRoutes);
+// Protected API Routes (authentication required + rate limiting)
+app.use('/api/sonarr', authenticateToken, apiLimiter, sonarrRoutes);
+app.use('/api/radarr', authenticateToken, apiLimiter, radarrRoutes);
+app.use('/api/sabnzbd', authenticateToken, apiLimiter, sabnzbdRoutes);
+app.use('/api/deluge', authenticateToken, apiLimiter, delugeRoutes);
+app.use('/api/prowlarr', authenticateToken, apiLimiter, prowlarrRoutes);
+app.use('/api/unraid', authenticateToken, apiLimiter, unraidRoutes);
+app.use('/api/config', authenticateToken, apiLimiter, configRoutes);
+app.use('/api/system', authenticateToken, apiLimiter, systemRoutes);
+app.use('/api/tmdb', authenticateToken, apiLimiter, tmdbRoutes);
 
 // Health check endpoint (before wildcard route)
 app.get('/health', (req, res) => {

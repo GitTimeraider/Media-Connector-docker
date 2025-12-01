@@ -197,6 +197,11 @@ router.get('/:mediaType/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid media type. Must be "movie" or "tv"' });
     }
 
+    // Validate ID is numeric to prevent path traversal
+    if (!/^\d+$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
+    }
+
     const response = await axios.get(`${TMDB_BASE_URL}/${mediaType}/${id}`, {
       params: {
         api_key: TMDB_API_KEY,
@@ -221,6 +226,11 @@ router.get('/:mediaType/:id/videos', async (req, res) => {
     const { mediaType, id } = req.params;
     if (mediaType !== 'movie' && mediaType !== 'tv') {
       return res.status(400).json({ error: 'Invalid media type. Must be "movie" or "tv"' });
+    }
+
+    // Validate ID is numeric to prevent path traversal
+    if (!/^\d+$/.test(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' });
     }
 
     const response = await axios.get(`${TMDB_BASE_URL}/${mediaType}/${id}/videos`, {
