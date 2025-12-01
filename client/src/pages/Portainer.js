@@ -9,7 +9,6 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  LinearProgress,
   IconButton,
   Tooltip,
   Button,
