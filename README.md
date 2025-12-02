@@ -1,5 +1,9 @@
 # Media Connector .. UNDER DEV, do NOT use yet!
 
+
+<p align="center" width="100%">
+    <img width="33%" src="https://github.com/GitTimeraider/Assets/blob/main/Media-Connector-docker/img/MediaConnector_Icon.png">
+</p>
 <div align="center">
 
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector/docker-publish.yml)
