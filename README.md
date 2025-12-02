@@ -7,7 +7,7 @@
 
 **A comprehensive web-based media server manager**
 
-Manage your entire media stack from one beautiful web interface. Control Sonarr, Radarr, download clients, and more with real-time monitoring and an intuitive interface.
+Manage your entire media stack from one web interface. Control Sonarr, Radarr, download clients, and more with real-time monitoring and an intuitive interface.
 
 [Features](#features) • [Installation](#installation) • [Configuration](#configuration)
 
