@@ -247,14 +247,6 @@ function Search() {
             return b.seeders - a.seeders;
           }
           return 0;
-        })
-        .map(result => {
-          // Fix category display if it's an object
-          let categoryDisplay = result.categoryDisplay;
-          if (typeof categoryDisplay === 'object' && categoryDisplay !== null) {
-            categoryDisplay = categoryDisplay.label || categoryDisplay.name || categoryDisplay.value || 'Unknown';
-          }
-          return { ...result, categoryDisplay };
         });
       
       setSearchResults(relevantResults);
@@ -434,7 +426,7 @@ function Search() {
                       {result.categoryDisplay && (
                         <Chip 
                           icon={<CategoryIcon />}
-                          label={typeof result.categoryDisplay === 'object' ? result.categoryDisplay.label || result.categoryDisplay.name || 'Unknown' : result.categoryDisplay} 
+                          label={result.categoryDisplay} 
                           size="small" 
                           color="secondary"
                           sx={{ fontWeight: 600 }}

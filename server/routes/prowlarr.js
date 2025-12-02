@@ -98,10 +98,16 @@ router.get('/search/:instanceId', async (req, res) => {
         .map(catId => categoryMap[Number(catId)] || `Category ${catId}`)
         .filter(Boolean);
       
+      // Ensure categoryDisplay is a string, not an object or array
+      let categoryDisplay = 'Unknown';
+      if (categoryNames.length > 0) {
+        categoryDisplay = String(categoryNames.join(', '));
+      }
+      
       return {
         ...result,
         categoryNames,
-        categoryDisplay: categoryNames.length > 0 ? categoryNames.join(', ') : 'Unknown',
+        categoryDisplay,
         // Cover/poster images from various possible fields
         coverUrl: result.posterUrl || result.cover || result.downloadUrl?.match(/https?:\/\/.*\.(jpg|jpeg|png|gif)/i)?.[0] || null
       };
