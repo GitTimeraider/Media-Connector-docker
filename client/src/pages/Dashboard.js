@@ -501,15 +501,6 @@ function Dashboard() {
             transformOrigin: 'center center',
             willChange: 'transform',
             contain: 'layout style paint',
-            '@media (hover: hover) and (pointer: fine)': {
-              '.media-card-wrapper:hover &': {
-                transform: 'scale(1.05)',
-                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-                zIndex: 10,
-                border: '1px solid rgba(255,255,255,0.3)',
-                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-              }
-            },
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -522,6 +513,13 @@ function Dashboard() {
               zIndex: 1
             },
             '@media (hover: hover) and (pointer: fine)': {
+              '.media-card-wrapper:hover &': {
+                transform: 'scale(1.05)',
+                boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
+                zIndex: 10,
+                border: '1px solid rgba(255,255,255,0.3)',
+                background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
+              },
               '.media-card-wrapper:hover &::before': {
                 animation: 'shine 0.75s ease-in-out',
               }
