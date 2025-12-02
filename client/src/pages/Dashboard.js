@@ -410,7 +410,6 @@ function Dashboard() {
     const [isDragging, setIsDragging] = useState(false);
     const [imageLoaded, setImageLoaded] = useState(false);
     const dragStartPos = useRef(null);
-    const hoverTimeoutRef = useRef(null);
     const [forceStable, setForceStable] = useState(false);
     
     useEffect(() => {
