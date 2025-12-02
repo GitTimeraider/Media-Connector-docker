@@ -447,8 +447,8 @@ function Dashboard() {
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 3,
           '&:hover': {
-            transform: 'translateY(-12px) scale(1.03)',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+            transform: 'translateY(-8px)',
+            boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
             zIndex: 10,
             border: '1px solid rgba(255,255,255,0.3)',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
@@ -506,19 +506,23 @@ function Dashboard() {
                   display: 'block'
                 }}
               />
-              <Fade in={isHovered}>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    p: 2
-                  }}
-                >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  p: 2,
+                  opacity: 0,
+                  transition: 'opacity 0.3s ease-out',
+                  '.MuiCard-root:hover &': {
+                    opacity: 1
+                  }
+                }}
+              >
                   <Box display="flex" gap={1}>
                     <Tooltip title="View Details" arrow TransitionComponent={Zoom}>
                       <IconButton 
@@ -607,7 +611,6 @@ function Dashboard() {
                     )}
                   </Box>
                 </Box>
-              </Fade>
             </Box>
             <CardContent sx={{ flexGrow: 1, pb: 2 }}>
               <Typography 
