@@ -440,15 +440,15 @@ function Dashboard() {
           flexDirection: 'column',
           position: 'relative',
           overflow: 'hidden',
-          transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: 'all 0.3s ease-out',
           cursor: 'pointer',
           background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.1)',
           borderRadius: 3,
           '&:hover': {
-            transform: 'translateY(-16px) scale(1.05)',
-            boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
+            transform: 'translateY(-12px) scale(1.03)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
             zIndex: 10,
             border: '1px solid rgba(255,255,255,0.3)',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
@@ -461,12 +461,15 @@ function Dashboard() {
             width: '100%',
             height: '100%',
             background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-            transition: 'left 0.5s',
             pointerEvents: 'none',
             zIndex: 1
           },
           '&:hover::before': {
-            left: '100%'
+            animation: 'shine 0.75s ease-in-out',
+          },
+          '@keyframes shine': {
+            '0%': { left: '-100%' },
+            '100%': { left: '100%' }
           }
         }}
         onMouseEnter={() => setIsHovered(true)}
