@@ -408,32 +408,8 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [imageLoaded, setImageLoaded] = useState(false);
     const dragStartPos = useRef(null);
-    const [forceStable, setForceStable] = useState(false);
-    const mountTimeRef = useRef(Date.now());
-    
-    useEffect(() => {
-      // Force stable state after 90 seconds as absolute maximum
-      const timer = setTimeout(() => {
-        setForceStable(true);
-      }, 90000);
-      return () => clearTimeout(timer);
-    }, []);
-    
-    useEffect(() => {
-      if (imageLoaded) {
-        // Wait after image loads to ensure layout is stable
-        // But ensure at least 500ms has passed since mount to avoid premature stabilization
-        const timeSinceMount = Date.now() - mountTimeRef.current;
-        const additionalDelay = Math.max(0, 500 - timeSinceMount);
-        
-        const timer = setTimeout(() => {
-          setForceStable(true);
-        }, additionalDelay + 300);
-        return () => clearTimeout(timer);
-      }
-    }, [imageLoaded]);
+    const cardRef = useRef(null);
     
     const handleCardMouseDown = (e) => {
       dragStartPos.current = { x: e.clientX, y: e.clientY };
@@ -466,10 +442,6 @@ function Dashboard() {
       handleOpenDialog(item);
     };
     
-    const handleImageLoad = () => {
-      setImageLoaded(true);
-    };
-    
     const imageUrl = item.poster_path || item.posterUrl
       ? `https://image.tmdb.org/t/p/w500${item.poster_path || item.posterUrl}`
       : item.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image';
@@ -494,12 +466,16 @@ function Dashboard() {
     
     return (
       <Box
+        ref={cardRef}
         className="media-card-wrapper"
         sx={{ 
           width: '100%',
           height: '100%',
           position: 'relative',
           cursor: 'pointer !important',
+          isolation: 'isolate',
+          containIntrinsicSize: 'auto 450px',
+          contentVisibility: 'auto',
           '& *': {
             cursor: 'pointer !important'
           }
@@ -516,14 +492,16 @@ function Dashboard() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            transition: forceStable ? 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease' : 'none',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
             cursor: 'pointer !important',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
             transformOrigin: 'center center',
-            ...(forceStable && {
+            willChange: 'transform',
+            contain: 'layout style paint',
+            '@media (hover: hover) and (pointer: fine)': {
               '.media-card-wrapper:hover &': {
                 transform: 'scale(1.05)',
                 boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
@@ -531,7 +509,7 @@ function Dashboard() {
                 border: '1px solid rgba(255,255,255,0.3)',
                 background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
               }
-            }),
+            },
             '&::before': {
               content: '""',
               position: 'absolute',
@@ -543,11 +521,11 @@ function Dashboard() {
               pointerEvents: 'none',
               zIndex: 1
             },
-            ...(forceStable && {
+            '@media (hover: hover) and (pointer: fine)': {
               '.media-card-wrapper:hover &::before': {
                 animation: 'shine 0.75s ease-in-out',
               }
-            }),
+            },
             '@keyframes shine': {
               '0%': { left: '-100%' },
               '100%': { left: '100%' }
@@ -569,20 +547,20 @@ function Dashboard() {
               height: '100%',
               background: 'rgba(0,0,0,0.2)',
               opacity: 0,
-              transition: forceStable ? 'opacity 0.4s' : 'none',
+              transition: 'opacity 0.4s',
               pointerEvents: 'none'
             },
-            ...(forceStable && {
+            '@media (hover: hover) and (pointer: fine)': {
               '.media-card-wrapper:hover &::after': {
                 opacity: 1
               }
-            })
+            }
           }}>
               <CardMedia
                 component="img"
                 image={imageUrl}
                 alt={title}
-                onLoad={handleImageLoad}
+                loading="lazy"
                 sx={{ 
                   width: '100%',
                   height: '100%',
@@ -602,13 +580,13 @@ function Dashboard() {
                   alignItems: 'flex-end',
                   p: 2,
                   opacity: 0,
-                  transition: forceStable ? 'opacity 0.3s ease-out' : 'none',
+                  transition: 'opacity 0.3s ease-out',
                   zIndex: 2,
-                  ...(forceStable && {
+                  '@media (hover: hover) and (pointer: fine)': {
                     '.media-card-wrapper:hover &': {
                       opacity: 1
                     }
-                  })
+                  }
                 }}
               >
                   <Box display="flex" gap={1}>
