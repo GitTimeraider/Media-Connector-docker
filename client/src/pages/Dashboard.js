@@ -500,10 +500,7 @@ function Dashboard() {
                   height: '100%',
                   objectFit: 'cover',
                   objectPosition: 'center top',
-                  transition: 'transform 0.3s ease-out',
-                  transform: isHovered ? 'scale(1.08)' : 'scale(1)',
-                  display: 'block',
-                  filter: isHovered ? 'brightness(1.1) contrast(1.1)' : 'brightness(1)'
+                  display: 'block'
                 }}
               />
               <Fade in={isHovered}>

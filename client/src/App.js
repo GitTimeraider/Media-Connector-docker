@@ -207,9 +207,10 @@ function AppLayout() {
           ml: { sm: `${drawerWidth}px` },
           maxWidth: '100vw',
           boxSizing: 'border-box',
-          background: 'linear-gradient(135deg, rgba(25,118,210,0.95) 0%, rgba(156,39,176,0.95) 100%)',
+          background: 'linear-gradient(135deg, rgba(25,118,210,0.2) 0%, rgba(156,39,176,0.2) 100%)',
+          backgroundColor: 'rgba(18,18,18,0.95)',
           backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255,255,255,0.2)',
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
           boxShadow: '0 4px 30px rgba(0,0,0,0.3)'
         }}
       >
