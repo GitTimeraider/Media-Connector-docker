@@ -408,11 +408,13 @@ function Dashboard() {
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
     const [isDragging, setIsDragging] = useState(false);
-    const [isHovering, setIsHovering] = useState(false);
     const dragStartPos = useRef(null);
-    const hoverLayerRef = useRef(null);
     
     const handleCardMouseDown = (e) => {
+      // Don't interfere with button clicks
+      if (e.target.closest('button')) {
+        return;
+      }
       dragStartPos.current = { x: e.clientX, y: e.clientY };
       setIsDragging(false);
     };
@@ -429,10 +431,19 @@ function Dashboard() {
     };
     
     const handleCardMouseUp = (e) => {
+      // Don't interfere with button clicks
+      if (e.target.closest('button')) {
+        dragStartPos.current = null;
+        return;
+      }
       dragStartPos.current = null;
     };
     
     const handleCardClick = (e) => {
+      // Don't interfere with button clicks
+      if (e.target.closest('button')) {
+        return;
+      }
       // Only allow click if not dragging
       if (isDragging) {
         e.preventDefault();
@@ -468,34 +479,16 @@ function Dashboard() {
     return (
       <Box
         className="media-card-wrapper"
+        onMouseDown={handleCardMouseDown}
+        onMouseMove={handleCardMouseMove}
+        onMouseUp={handleCardMouseUp}
         sx={{ 
           width: '100%',
           height: '100%',
           position: 'relative',
-          cursor: 'pointer !important',
-          '& *': {
-            cursor: 'pointer !important'
-          }
+          cursor: 'pointer'
         }}
       >
-        {/* Stable hover detection layer - prevents layout shifts from affecting hover */}
-        <Box
-          ref={hoverLayerRef}
-          onMouseEnter={() => setIsHovering(true)}
-          onMouseLeave={() => setIsHovering(false)}
-          onMouseDown={handleCardMouseDown}
-          onMouseMove={handleCardMouseMove}
-          onMouseUp={handleCardMouseUp}
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            zIndex: 100,
-            pointerEvents: 'auto'
-          }}
-        />
         <Card 
           sx={{ 
             width: '100%',
@@ -503,40 +496,12 @@ function Dashboard() {
             display: 'flex', 
             flexDirection: 'column',
             position: 'relative',
-            overflow: 'hidden',
-            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
-            cursor: 'pointer !important',
+            overflow: 'visible',
+            cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: 3,
-            transformOrigin: 'center center',
-            pointerEvents: 'none',
-            ...(isHovering && {
-              transform: 'scale(1.05)',
-              boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
-              zIndex: 10,
-              border: '1px solid rgba(255,255,255,0.3)',
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.02) 100%)',
-            }),
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: '-100%',
-              width: '100%',
-              height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-              pointerEvents: 'none',
-              zIndex: 1,
-              ...(isHovering && {
-                animation: 'shine 0.75s ease-in-out',
-              })
-            },
-            '@keyframes shine': {
-              '0%': { left: '-100%' },
-              '100%': { left: '100%' }
-            }
+            borderRadius: 3
           }}
         >
         <CardActionArea onClick={handleCardClick}>
@@ -544,19 +509,7 @@ function Dashboard() {
             position: 'relative', 
             overflow: 'hidden', 
             height: { xs: 200, sm: 225, md: 250 }, 
-            width: '100%',
-            '&::after': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              background: 'rgba(0,0,0,0.2)',
-              opacity: isHovering ? 1 : 0,
-              transition: 'opacity 0.4s',
-              pointerEvents: 'none'
-            }
+            width: '100%'
           }}>
               <CardMedia
                 component="img"
@@ -571,43 +524,42 @@ function Dashboard() {
                   display: 'block'
                 }}
               />
+              {/* Action buttons - always visible, positioned at bottom */}
               <Box
                 sx={{
                   position: 'absolute',
-                  top: 0,
+                  bottom: 0,
                   left: 0,
                   right: 0,
-                  bottom: 0,
                   display: 'flex',
-                  alignItems: 'flex-end',
-                  p: 2,
-                  opacity: isHovering ? 1 : 0,
-                  transition: 'opacity 0.3s ease-out',
-                  zIndex: 2,
-                  pointerEvents: 'none',
-                  '& > *': {
-                    pointerEvents: 'auto'
-                  }
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  p: 1,
+                  background: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 50%, transparent 100%)',
+                  zIndex: 2
                 }}
               >
-                  <Box display="flex" gap={1}>
+                  <Box display="flex" gap={0.5}>
                     <Tooltip title="View Details" arrow TransitionComponent={Zoom}>
                       <IconButton 
                         size="small" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          handleOpenDialog(item);
+                        }}
                         sx={{ 
-                          bgcolor: 'rgba(33,150,243,0.9)', 
+                          bgcolor: 'rgba(33,150,243,0.95)', 
                           color: 'white',
-                          backdropFilter: 'blur(10px)',
-                          boxShadow: '0 4px 15px rgba(33,150,243,0.4)',
-                          transition: 'all 0.3s',
+                          width: 32,
+                          height: 32,
                           '&:hover': { 
-                            bgcolor: 'primary.main',
-                            transform: 'scale(1.15) rotate(5deg)',
-                            boxShadow: '0 6px 20px rgba(33,150,243,0.6)'
+                            bgcolor: 'rgba(33,150,243,1)',
+                            transform: 'scale(1.1)'
                           }
                         }}
                       >
-                        <Info />
+                        <Info fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Play Trailer" arrow TransitionComponent={Zoom}>
@@ -632,19 +584,17 @@ function Dashboard() {
                           }
                         }}
                         sx={{ 
-                          bgcolor: 'rgba(76,175,80,0.9)', 
+                          bgcolor: 'rgba(76,175,80,0.95)', 
                           color: 'white',
-                          backdropFilter: 'blur(10px)',
-                          boxShadow: '0 4px 15px rgba(76,175,80,0.4)',
-                          transition: 'all 0.3s',
+                          width: 32,
+                          height: 32,
                           '&:hover': { 
-                            bgcolor: 'success.main',
-                            transform: 'scale(1.15) rotate(-5deg)',
-                            boxShadow: '0 6px 20px rgba(76,175,80,0.6)'
+                            bgcolor: 'rgba(76,175,80,1)',
+                            transform: 'scale(1.1)'
                           }
                         }}
                       >
-                        <PlayArrow />
+                        <PlayArrow fontSize="small" />
                       </IconButton>
                     </Tooltip>
                     {!isInLibrary && (
@@ -660,19 +610,17 @@ function Dashboard() {
                             handleOpenAddDialog(item, mediaType);
                           }}
                           sx={{ 
-                            bgcolor: 'rgba(255,87,34,0.9)', 
+                            bgcolor: 'rgba(255,87,34,0.95)', 
                             color: 'white',
-                            backdropFilter: 'blur(10px)',
-                            boxShadow: '0 4px 15px rgba(255,87,34,0.4)',
-                            transition: 'all 0.3s',
+                            width: 32,
+                            height: 32,
                             '&:hover': { 
-                              bgcolor: 'warning.main',
-                              transform: 'scale(1.15) rotate(90deg)',
-                              boxShadow: '0 6px 20px rgba(255,87,34,0.6)'
+                              bgcolor: 'rgba(255,87,34,1)',
+                              transform: 'scale(1.1)'
                             }
                           }}
                         >
-                          <Add />
+                          <Add fontSize="small" />
                         </IconButton>
                       </Tooltip>
                     )}
