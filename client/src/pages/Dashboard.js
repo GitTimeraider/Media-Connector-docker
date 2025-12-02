@@ -427,38 +427,25 @@ function Dashboard() {
   };
 
   const MediaCard = ({ item, type, index, showReleaseDate, isDownloaded }) => {
-    const [isDragging, setIsDragging] = useState(false);
-    const dragStartPos = useRef(null);
+    const clickStartPos = useRef(null);
     
     const handleCardMouseDown = (e) => {
-      dragStartPos.current = { x: e.clientX, y: e.clientY };
-      setIsDragging(false);
-    };
-    
-    const handleCardMouseMove = (e) => {
-      if (dragStartPos.current) {
-        const deltaX = Math.abs(e.clientX - dragStartPos.current.x);
-        const deltaY = Math.abs(e.clientY - dragStartPos.current.y);
-        // If moved more than 5px, consider it a drag
-        if (deltaX > 5 || deltaY > 5) {
-          setIsDragging(true);
-        }
-      }
-    };
-    
-    const handleCardMouseUp = (e) => {
-      dragStartPos.current = null;
+      clickStartPos.current = { x: e.clientX, y: e.clientY, time: Date.now() };
     };
     
     const handleCardClick = (e) => {
-      // Only allow click if not dragging
-      if (isDragging) {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-        return;
+      // Only open dialog if this was a click (not a drag)
+      if (clickStartPos.current) {
+        const deltaX = Math.abs(e.clientX - clickStartPos.current.x);
+        const deltaY = Math.abs(e.clientY - clickStartPos.current.y);
+        const deltaTime = Date.now() - clickStartPos.current.time;
+        
+        // If moved less than 10px and took less than 300ms, it's a click
+        if (deltaX < 10 && deltaY < 10 && deltaTime < 300) {
+          handleOpenDialog(item);
+        }
       }
-      handleOpenDialog(item);
+      clickStartPos.current = null;
     };
     
     const imageUrl = item.poster_path || item.posterUrl
@@ -476,8 +463,6 @@ function Dashboard() {
     return (
       <Card 
         onMouseDown={handleCardMouseDown}
-        onMouseMove={handleCardMouseMove}
-        onMouseUp={handleCardMouseUp}
         onClick={handleCardClick}
         sx={{ 
           width: '100%',
