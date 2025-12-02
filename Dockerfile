@@ -32,7 +32,7 @@ COPY --from=backend-build /app/package*.json ./
 COPY --from=backend-build /app/server ./server
 
 # Copy frontend build from build stage
-COPY --from=frontend-build /app/client ./client
+COPY --from=frontend-build /app/client/build ./client/build
 
 # Create config directory with proper permissions
 RUN mkdir -p /config
