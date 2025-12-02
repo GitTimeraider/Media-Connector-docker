@@ -450,21 +450,15 @@ function Dashboard() {
     const formattedDate = releaseDate ? releaseDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : null;
     
     return (
-      <Box
-        className="media-card-wrapper"
+      <Card 
         onMouseDown={handleCardMouseDown}
         onMouseMove={handleCardMouseMove}
         onMouseUp={handleCardMouseUp}
+        onClick={handleCardClick}
         sx={{ 
           width: '100%',
           height: '100%',
-          position: 'relative',
-          cursor: 'pointer'
-        }}
-      >
-        <Card 
-          onClick={handleCardClick}
-          sx={{ 
+          cursor: 'pointer', 
             width: '100%',
             height: '100%', 
             display: 'flex', 
@@ -554,7 +548,7 @@ function Dashboard() {
                     sx={{ fontSize: '0.7rem' }}
                   />
                 )}
-                {item.genres && Array.isArray(item.genres) && item.genres.length > 0 && typeof item.genres[0] === 'object' && (
+                {!item.genre_ids && item.genres && Array.isArray(item.genres) && item.genres.length > 0 && typeof item.genres[0] === 'object' && (
                   <Chip 
                     label={item.genres[0].name || ''} 
                     size="small"
@@ -594,7 +588,6 @@ function Dashboard() {
             )}
           </CardContent>
         </Card>
-      </Box>
     );
   };
 

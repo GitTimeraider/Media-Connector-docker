@@ -426,7 +426,7 @@ function Search() {
                       {result.categoryDisplay && (
                         <Chip 
                           icon={<CategoryIcon />}
-                          label={result.categoryDisplay} 
+                          label={typeof result.categoryDisplay === 'object' ? result.categoryDisplay.label || result.categoryDisplay.name || 'Unknown' : result.categoryDisplay} 
                           size="small" 
                           color="secondary"
                           sx={{ fontWeight: 600 }}
