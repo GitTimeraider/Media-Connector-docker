@@ -411,21 +411,26 @@ function Dashboard() {
     const [imageLoaded, setImageLoaded] = useState(false);
     const dragStartPos = useRef(null);
     const [forceStable, setForceStable] = useState(false);
+    const mountTimeRef = useRef(Date.now());
     
     useEffect(() => {
-      // Force stable state after image loads or 2 seconds, whichever comes first
+      // Force stable state after 90 seconds as absolute maximum
       const timer = setTimeout(() => {
         setForceStable(true);
-      }, 2000);
+      }, 90000);
       return () => clearTimeout(timer);
     }, []);
     
     useEffect(() => {
       if (imageLoaded) {
-        // Wait a bit after image loads to ensure layout is stable
+        // Wait after image loads to ensure layout is stable
+        // But ensure at least 500ms has passed since mount to avoid premature stabilization
+        const timeSinceMount = Date.now() - mountTimeRef.current;
+        const additionalDelay = Math.max(0, 500 - timeSinceMount);
+        
         const timer = setTimeout(() => {
           setForceStable(true);
-        }, 100);
+        }, additionalDelay + 300);
         return () => clearTimeout(timer);
       }
     }, [imageLoaded]);
