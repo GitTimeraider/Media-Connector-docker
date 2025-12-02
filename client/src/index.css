@@ -9,7 +9,11 @@ html, body {
   overflow-x: hidden;
   max-width: 100vw;
   box-sizing: border-box;
-  overflow-y: scroll !important;
+}
+
+/* Prevent layout shift when dialogs open by always showing scrollbar gutter */
+html {
+  scrollbar-gutter: stable;
 }
 
 #root {
