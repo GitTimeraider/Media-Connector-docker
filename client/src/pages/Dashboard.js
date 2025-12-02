@@ -435,15 +435,7 @@ function Dashboard() {
         sx={{ 
           width: '100%',
           height: '100%',
-          position: 'relative',
-          padding: '15px 15px 25px 15px',
-          margin: '-15px -15px -25px -15px',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'auto'
-          }
+          position: 'relative'
         }}
       >
         <Card 
@@ -454,19 +446,15 @@ function Dashboard() {
             flexDirection: 'column',
             position: 'relative',
             overflow: 'hidden',
-            transition: 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1), border 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-            transitionDelay: '0.05s',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease, background 0.3s ease',
             cursor: 'pointer',
             background: 'linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255,255,255,0.1)',
             borderRadius: 3,
-            willChange: 'transform',
-            backfaceVisibility: 'hidden',
-            WebkitBackfaceVisibility: 'hidden',
-            transform: 'translateZ(0)',
+            transformOrigin: 'center center',
             '.media-card-wrapper:hover &': {
-              transform: 'translateY(-8px) translateZ(0)',
+              transform: 'scale(1.05)',
               boxShadow: '0 16px 32px rgba(0,0,0,0.4)',
               zIndex: 10,
               border: '1px solid rgba(255,255,255,0.3)',
