@@ -1,10 +1,12 @@
-# Build stage for React frontend
-FROM node:25-alpine AS frontend-build
+# Build stage for React frontend (only on amd64)
+FROM --platform=$BUILDPLATFORM node:25-alpine AS frontend-build
+ARG TARGETPLATFORM
 WORKDIR /app/client
 COPY client/package*.json ./
 RUN npm install --omit=dev
 COPY client/ ./
-RUN npm run build
+# Only build on amd64 to avoid QEMU issues
+RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then npm run build; fi
 
 # Build stage for backend
 FROM node:25-alpine AS backend-build
@@ -25,8 +27,9 @@ COPY --from=backend-build /app/node_modules ./node_modules
 COPY --from=backend-build /app/package*.json ./
 COPY --from=backend-build /app/server ./server
 
-# Copy frontend build
-COPY --from=frontend-build /app/client/build ./client/build
+# Copy frontend build - try from build stage first, fallback to local pre-built
+COPY --from=frontend-build /app/client/build* ./client/build* 2>/dev/null || true
+COPY client/build* ./client/build* 2>/dev/null || true
 
 # Create config directory with proper permissions
 RUN mkdir -p /config

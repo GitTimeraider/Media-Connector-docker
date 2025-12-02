@@ -3,8 +3,8 @@ node_modules/
 npm-debug.log
 yarn-error.log
 
-# Build files
-client/build/
+# Build files (allow client/build for pre-built ARM64 support)
+# client/build/
 dist/
 
 # Environment files
