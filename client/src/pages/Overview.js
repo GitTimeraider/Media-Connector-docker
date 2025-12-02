@@ -250,10 +250,20 @@ function Overview() {
         height: '100%',
         background: `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`,
         color: 'white',
-        transition: 'all 0.3s ease-in-out',
+        transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+        position: 'relative',
         '&:hover': {
           transform: 'translateY(-8px) scale(1.02)',
-          boxShadow: 6
+          boxShadow: 6,
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: '-15px',
+            left: '-15px',
+            right: '-15px',
+            bottom: '-15px',
+            pointerEvents: 'auto'
+          }
         }
       }}
     >

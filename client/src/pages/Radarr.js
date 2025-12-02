@@ -405,10 +405,20 @@ function Radarr() {
                   display: 'flex', 
                   flexDirection: 'column',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                  position: 'relative',
                   '&:hover': {
                     transform: 'translateY(-4px)',
-                    boxShadow: 4
+                    boxShadow: 4,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: '-10px',
+                      left: '-10px',
+                      right: '-10px',
+                      bottom: '-10px',
+                      pointerEvents: 'auto'
+                    }
                   }
                 }}
                 onClick={() => handleOpenDetail(movie)}

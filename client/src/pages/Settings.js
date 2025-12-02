@@ -170,11 +170,21 @@ function Settings() {
             background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            transition: 'all 0.3s ease',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease',
+            position: 'relative',
             '&:hover': {
               transform: 'translateY(-4px)',
               boxShadow: '0 12px 40px rgba(0,0,0,0.3)',
               border: '1px solid rgba(255, 255, 255, 0.2)',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: '-10px',
+                left: '-10px',
+                right: '-10px',
+                bottom: '-10px',
+                pointerEvents: 'auto'
+              }
             }
           }}
         >
