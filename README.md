@@ -2,7 +2,6 @@
 
 <div align="center">
 
-![Docker Pulls](https://img.shields.io/docker/pulls/gittimerider/media-connector)
 ![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/GitTimeraider/media-connector/docker-publish.yml)
 ![License](https://img.shields.io/github/license/GitTimeraider/media-connector)
 
@@ -10,7 +9,7 @@
 
 Manage your entire media stack from one beautiful web interface. Control Sonarr, Radarr, download clients, and more with real-time monitoring and an intuitive interface.
 
-[Features](#features) • [Installation](#installation) • [Configuration](#configuration) • [Screenshots](#screenshots) • [Contributing](#contributing)
+[Features](#features) • [Installation](#installation) • [Configuration](#configuration)
 
 </div>
 
@@ -51,9 +50,10 @@ Manage your entire media stack from one beautiful web interface. Control Sonarr,
 ### Server Management
 - **Unraid** - Server management and Docker control
   - Real-time system monitoring (CPU, Memory, Uptime)
-  - Docker container management
-  - Start/Stop/Restart containers
+  - Start/Stop containers
   - View array and disk information
+- **Portainer** - Server management and Docker control
+  - Start/Stop/Restart containers
 
 ### Authentication & Security
 - **User Management** - Create and manage multiple users
@@ -73,7 +73,7 @@ Manage your entire media stack from one beautiful web interface. Control Sonarr,
 
 ## Quick Start
 
-### Using Docker (Recommended)
+### Using Docker
 
 ```bash
 docker run -d \
@@ -114,86 +114,6 @@ Then run:
 ```bash
 docker-compose up -d
 ```
-
----
-
-## Installation
-
-### Prerequisites
-- Docker (recommended) OR
-- Node.js 18+ and npm
-
-### Method 1: Docker (Recommended)
-
-The easiest way to run Media Connector is using Docker. The image is automatically built and published to GitHub Container Registry.
-
-1. Pull the latest image:
-```bash
-docker pull ghcr.io/gittimerider/media-connector:latest
-```
-
-2. Run the container:
-```bash
-docker run -d \
-  --name=media-connector \
-  -p 3001:3001 \
-  -v $(pwd)/config:/config \
-  --restart unless-stopped \
-  ghcr.io/gittimerider/media-connector:latest
-```
-
-3. Access the web interface at `http://localhost:3001`
-
-#### Default Credentials
-On first run, a default admin account is automatically created:
-- **Username**: `admin`
-- **Password**: `admin`
-
-**⚠️ IMPORTANT**: Change the default password immediately after logging in!
-
-### Method 2: Docker Compose
-
-1. Download the `docker-compose.yml` file
-2. Create a `config` directory in the same location
-3. Run:
-```bash
-docker-compose up -d
-```
-
-### Method 3: Manual Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/GitTimeraider/media-connector.git
-cd media-connector
-```
-
-2. Install backend dependencies:
-```bash
-npm install
-```
-
-3. Install frontend dependencies:
-```bash
-cd client
-npm install
-cd ..
-```
-
-4. Build the frontend:
-```bash
-cd client
-npm run build
-cd ..
-```
-
-5. Start the server:
-```bash
-npm start
-```
-
-6. Access at `http://localhost:3001`
-
 ---
 
 ## Configuration
@@ -314,16 +234,6 @@ docker restart media-connector
 
 ### Environment Variables
 
-Create a `.env` file in the root directory:
-
-```env
-NODE_ENV=production
-PORT=3001
-JWT_SECRET=your-secret-key-change-this-in-production
-TMDB_API_KEY=your-tmdb-api-key-here
-DISABLE_AUTH=false
-```
-
 **Docker-Specific Environment Variables:**
 
 | Variable | Default | Description |
@@ -347,110 +257,6 @@ Then use those values in your docker run command or docker-compose.yml:
 ```bash
 -e PUID=1000 -e PGID=100
 ```
-
-### Supported Services Configuration
-
-#### Sonarr / Radarr
-- **URL**: `http://your-server:port`
-- **API Key**: Found in Settings → General → Security
-- Full CRUD operations: Create, Read, Update, Delete
-- Quality profile management
-- Monitor status control
-
-#### SABnzbd
-- **URL**: `http://your-server:port`
-- **API Key**: Found in Config → General → API Key
-- Queue monitoring and management
-- Pause/resume/delete operations
-
-#### Deluge
-- **URL**: `http://your-server:port`
-- **Password**: Your Deluge web UI password
-- Add torrents by URL
-- Monitor torrent status
-
-#### Prowlarr
-- **URL**: `http://your-server:port`
-- **API Key**: Found in Settings → General → Security
-- Multi-indexer search capability
-
-#### Unraid
-- **URL**: `http://your-server` (typically port 80 or 443)
-- **API Key**: Your Unraid API key for GraphQL
-- Real-time system monitoring
-- Docker container control
-
----
-
-## Screenshots
-
-### Dashboard
-Beautiful overview of your entire media stack with statistics and quick access.
-
-### TV Shows & Movies
-Browse your library, search for new content, and monitor downloads.
-
-### Downloads
-Real-time view of active downloads with progress bars and queue management.
-
-### Settings
-Easy configuration of all your services with connection testing.
-
----
-
-## Development
-
-### Local Development Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/GitTimeraider/media-connector.git
-cd media-connector
-```
-
-2. Install dependencies:
-```bash
-npm install
-cd client && npm install && cd ..
-```
-
-3. Start development servers:
-```bash
-npm run dev
-```
-
-This runs both the backend (port 3001) and frontend (port 3000) in development mode.
-
-### Project Structure
-
-```
-media-connector/
-├── client/                 # React frontend
-│   ├── public/
-│   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── services/      # API service layer
-│   │   ├── App.js
-│   │   └── index.js
-│   └── package.json
-├── server/                # Node.js backend
-│   ├── config/           # Configuration management
-│   ├── routes/           # API route handlers
-│   ├── utils/            # Utility functions
-│   └── index.js
-├── .github/
-│   └── workflows/        # GitHub Actions
-├── Dockerfile
-├── docker-compose.yml
-└── package.json
-```
-
-### Building Docker Image Locally
-
-```bash
-docker build -t media-connector .
-```
-
 ---
 
 ## Automatic Docker Builds
@@ -459,43 +265,14 @@ This repository is configured with GitHub Actions to automatically build and pus
 
 ### Automated Builds Trigger On:
 - **Push to main branch** → Builds `latest` tag
-- **New version tags** (e.g., `v1.0.0`) → Builds version-specific tags
 - **Pull requests** → Builds test images (not pushed)
 
 ### Available Image Tags:
 - `ghcr.io/gittimerider/media-connector:latest` - Latest stable release
-- `ghcr.io/gittimerider/media-connector:v1.0.0` - Specific version
 - `ghcr.io/gittimerider/media-connector:main` - Latest main branch
 
 ### Multi-Architecture Support:
 Images are built for both `linux/amd64` and `linux/arm64` platforms.
-
----
-
-## Security
-
-- All API communications use HTTPS when configured
-- API keys are stored securely in configuration files
-- No credentials are logged or exposed in the interface
-- Configuration files should be protected with appropriate file permissions
-
-### Recommendations:
-- Use reverse proxy (nginx, Traefik) with SSL/TLS
-- Enable authentication in your reverse proxy
-- Keep services on internal network when possible
-- Regular backups of configuration files
-
----
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
 
 ---
 
@@ -510,13 +287,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by [nzb360](https://nzb360.com/) - The excellent Android app
 - Built with [React](https://reactjs.org/), [Node.js](https://nodejs.org/), and [Material-UI](https://mui.com/)
 - Thanks to all the developers of Sonarr, Radarr, and other *arr applications
-
----
-
-## Support
-
-- **Issues**: [GitHub Issues](https://github.com/GitTimeraider/media-connector/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/GitTimeraider/media-connector/discussions)
 
 ---
 
