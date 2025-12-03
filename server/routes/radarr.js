@@ -173,29 +173,43 @@ router.get('/add/:instanceId', async (req, res) => {
     }
     
     // Get the complete movie object from lookup
-    const movieData = lookupResults[0];
+    const lookupMovie = lookupResults[0];
     
-    // Override with user-selected options
-    movieData.qualityProfileId = parseInt(req.query.qualityProfileId);
-    movieData.rootFolderPath = req.query.rootFolderPath;
-    movieData.monitored = req.query.monitored === 'true';
+    // Build the movie object for adding - only include required/allowed fields
+    const movieData = {
+      title: lookupMovie.title,
+      titleSlug: lookupMovie.titleSlug,
+      tmdbId: lookupMovie.tmdbId,
+      qualityProfileId: parseInt(req.query.qualityProfileId),
+      rootFolderPath: req.query.rootFolderPath,
+      monitored: req.query.monitored === 'true',
+      tags: [],
+      addOptions: {
+        searchForMovie: req.query.searchForMovie === 'true'
+      }
+    };
+    
+    // Include optional fields if they exist in the lookup
+    if (lookupMovie.images) movieData.images = lookupMovie.images;
+    if (lookupMovie.year) movieData.year = lookupMovie.year;
+    if (lookupMovie.path) movieData.path = lookupMovie.path;
+    if (lookupMovie.imdbId) movieData.imdbId = lookupMovie.imdbId;
     
     // Handle tags - only add if provided and not empty
     if (req.query.tags && req.query.tags.trim()) {
       movieData.tags = req.query.tags.split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
-    } else {
-      movieData.tags = [];
     }
     
-    movieData.addOptions = {
-      searchForMovie: req.query.searchForMovie === 'true'
-    };
+    console.log('Adding movie to Radarr:', JSON.stringify(movieData, null, 2));
 
     const result = await client.addMovie(movieData);
     res.json(result);
   } catch (error) {
     console.error('Radarr add error:', error.response?.data || error.message);
-    res.status(500).json({ error: error.response?.data?.message || error.message });
+    const errorDetail = error.response?.data || error.message;
+    res.status(500).json({ 
+      error: typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail)
+    });
   }
 });
 

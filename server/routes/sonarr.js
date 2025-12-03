@@ -199,30 +199,46 @@ router.get('/add/:instanceId', async (req, res) => {
     }
     
     // Get the complete series object from lookup
-    const seriesData = lookupResults[0];
+    const lookupSeries = lookupResults[0];
     
-    // Override with user-selected options
-    seriesData.qualityProfileId = parseInt(req.query.qualityProfileId);
-    seriesData.rootFolderPath = req.query.rootFolderPath;
-    seriesData.monitored = req.query.monitored === 'true';
-    seriesData.seasonFolder = req.query.seasonFolder === 'true';
+    // Build the series object for adding - only include required/allowed fields
+    const seriesData = {
+      title: lookupSeries.title,
+      titleSlug: lookupSeries.titleSlug,
+      tvdbId: lookupSeries.tvdbId,
+      qualityProfileId: parseInt(req.query.qualityProfileId),
+      rootFolderPath: req.query.rootFolderPath,
+      monitored: req.query.monitored === 'true',
+      seasonFolder: req.query.seasonFolder === 'true',
+      tags: [],
+      addOptions: {
+        searchForMissingEpisodes: req.query.searchForMissingEpisodes === 'true'
+      }
+    };
+    
+    // Include optional fields if they exist in the lookup
+    if (lookupSeries.images) seriesData.images = lookupSeries.images;
+    if (lookupSeries.seasons) seriesData.seasons = lookupSeries.seasons;
+    if (lookupSeries.year) seriesData.year = lookupSeries.year;
+    if (lookupSeries.path) seriesData.path = lookupSeries.path;
+    if (lookupSeries.tvMazeId) seriesData.tvMazeId = lookupSeries.tvMazeId;
+    if (lookupSeries.imdbId) seriesData.imdbId = lookupSeries.imdbId;
     
     // Handle tags - only add if provided and not empty
     if (req.query.tags && req.query.tags.trim()) {
       seriesData.tags = req.query.tags.split(',').map(t => parseInt(t.trim())).filter(t => !isNaN(t));
-    } else {
-      seriesData.tags = [];
     }
     
-    seriesData.addOptions = {
-      searchForMissingEpisodes: req.query.searchForMissingEpisodes === 'true'
-    };
+    console.log('Adding series to Sonarr:', JSON.stringify(seriesData, null, 2));
 
     const result = await client.addSeries(seriesData);
     res.json(result);
   } catch (error) {
     console.error('Sonarr add error:', error.response?.data || error.message);
-    res.status(500).json({ error: error.response?.data?.message || error.message });
+    const errorDetail = error.response?.data || error.message;
+    res.status(500).json({ 
+      error: typeof errorDetail === 'string' ? errorDetail : JSON.stringify(errorDetail)
+    });
   }
 });
 
