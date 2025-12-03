@@ -333,7 +333,7 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     // Get the container name (first name without leading slash)
     const containerName = (container.names[0] || '').replace(/^\//, '');
     
-    // Use GraphQL mutation for docker actions
+    // Use GraphQL mutation for docker actions with variables (prevents injection)
     // Try multiple mutation formats to find the one Unraid accepts
     const actionCap = action.charAt(0).toUpperCase() + action.slice(1);
     
@@ -342,16 +342,16 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     // - Argument "id" of type "PrefixedID!" is required
     // - Unknown argument "name"
     const mutationFormats = [
-      // Format 1: With ID and subfields (what the API wants)
-      `mutation { docker { ${action}(id: "${containerId}") { id name state } } }`,
+      // Format 1: With ID and subfields using variables (secure)
+      { query: `mutation DockerAction($id: String!) { docker { ${action}(id: $id) { id name state } } }`, variables: { id: containerId } },
       // Format 2: Try with just id and name as subfields
-      `mutation { docker { ${action}(id: "${containerId}") { id name } } }`,
+      { query: `mutation DockerAction($id: String!) { docker { ${action}(id: $id) { id name } } }`, variables: { id: containerId } },
       // Format 3: Try with all possible subfields
-      `mutation { docker { ${action}(id: "${containerId}") { id names image state status autoStart } } }`,
+      { query: `mutation DockerAction($id: String!) { docker { ${action}(id: $id) { id names image state status autoStart } } }`, variables: { id: containerId } },
       // Format 4: Try capitalized action
-      `mutation { docker { ${actionCap}(id: "${containerId}") { id name state } } }`,
+      { query: `mutation DockerAction($id: String!) { docker { ${actionCap}(id: $id) { id name state } } }`, variables: { id: containerId } },
       // Format 5: Try different subfield selection
-      `mutation { docker { ${action}(id: "${containerId}") { id } } }`,
+      { query: `mutation DockerAction($id: String!) { docker { ${action}(id: $id) { id } } }`, variables: { id: containerId } },
     ];
 
     console.log('[Unraid Docker] Action on container:', action, containerName);
@@ -361,11 +361,11 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     
     try {
       for (let i = 0; i < mutationFormats.length; i++) {
-        const mutation = mutationFormats[i];
+        const mutationData = mutationFormats[i];
         
         try {
           response = await axios.post(`${instance.url}/graphql`,
-            { query: mutation },
+            mutationData,
             { headers, timeout: 10000 }
           );
           
