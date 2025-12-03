@@ -331,17 +331,46 @@ function Dashboard() {
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
         // First lookup the series in Sonarr to get the correct TVDB ID
         const seriesTitle = itemToAdd.name || itemToAdd.title;
+        const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
         const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
         
+        console.log('Searching for series:', { title: seriesTitle, year: itemYear, tmdbId: itemToAdd.id });
+        console.log('Sonarr lookup results:', lookupResults);
+        
         // Find the best match from lookup results
-        const matchedSeries = lookupResults.find(s => 
-          s.title?.toLowerCase() === seriesTitle.toLowerCase() ||
-          s.tvdbId === itemToAdd.tvdbId
-        ) || lookupResults[0];
+        // Priority: 1. Exact title + year match, 2. TVDB ID match, 3. Exact title match, 4. First result
+        let matchedSeries = null;
+        
+        // Try to match by title and year (most reliable for shows with same name)
+        if (itemYear) {
+          matchedSeries = lookupResults.find(s => 
+            s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
+            s.year === itemYear
+          );
+        }
+        
+        // If no year match, try TVDB ID if available
+        if (!matchedSeries && itemToAdd.tvdbId) {
+          matchedSeries = lookupResults.find(s => s.tvdbId === itemToAdd.tvdbId);
+        }
+        
+        // Try exact title match
+        if (!matchedSeries) {
+          matchedSeries = lookupResults.find(s => 
+            s.title?.toLowerCase() === seriesTitle.toLowerCase()
+          );
+        }
+        
+        // Last resort: first result
+        if (!matchedSeries) {
+          matchedSeries = lookupResults[0];
+        }
         
         if (!matchedSeries) {
           throw new Error('Could not find series in Sonarr lookup');
         }
+        
+        console.log('Matched series:', matchedSeries);
         
         await api.addSonarrSeries(services.sonarr[0].id, {
           tvdbId: matchedSeries.tvdbId,
