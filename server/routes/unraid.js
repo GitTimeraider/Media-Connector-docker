@@ -276,6 +276,8 @@ router.post('/docker/action/:instanceId', async (req, res) => {
 
     const { containerId, action } = req.body;
     
+    console.log('[Unraid Docker] Received action request:', { containerId, action, type: typeof containerId });
+    
     // Validate action to prevent GraphQL injection
     const validActions = ['start', 'stop'];
     if (!validActions.includes(action)) {
@@ -283,14 +285,23 @@ router.post('/docker/action/:instanceId', async (req, res) => {
     }
     
     // Validate containerId - must be provided and be a non-empty string
-    // Unraid uses PrefixedID format like "docker/container/abc123"
+    // Unraid uses PrefixedID format like "docker/container/abc123" or Docker hashes
     if (!containerId || typeof containerId !== 'string' || containerId.trim().length === 0) {
-      return res.status(400).json({ error: 'Container ID is required' });
+      console.error('[Unraid Docker] Invalid containerId:', containerId);
+      return res.status(400).json({ error: 'Container ID is required', received: containerId });
     }
     
-    // Validate containerId format - allow alphanumeric, slashes, underscores, hyphens, dots
-    if (!/^[a-zA-Z0-9_\-\.\/]+$/.test(containerId)) {
-      return res.status(400).json({ error: 'Invalid container ID format' });
+    // Validate containerId format - be permissive but block obvious injection attempts
+    // Allow: alphanumeric, slashes, underscores, hyphens, dots, colons, @, spaces (container names can have spaces)
+    // Block: quotes, semicolons, backticks, angle brackets (GraphQL/command injection)
+    if (/['"`;><\\{}[\]|&$()!*?]/.test(containerId)) {
+      console.error('[Unraid Docker] Container ID contains forbidden characters:', containerId);
+      return res.status(400).json({ error: 'Container ID contains invalid characters', received: containerId });
+    }
+    
+    // Additional length check to prevent abuse
+    if (containerId.length > 200) {
+      return res.status(400).json({ error: 'Container ID too long' });
     }
     
     // First get the container to find its actual name

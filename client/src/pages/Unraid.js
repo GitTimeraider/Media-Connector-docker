@@ -172,11 +172,14 @@ function UnraidContent() {
 
   const handleDockerAction = async (containerId, action) => {
     try {
+      console.log('Docker action:', { containerId, action });
       await api.unraidDockerAction(selectedInstance, containerId, action);
       loadUnraidData();
     } catch (error) {
       console.error('Error performing action:', error);
-      alert(`Failed to ${action} container: ${error.response?.data?.error || error.message}`);
+      console.error('Error details:', error.response?.data);
+      const errorMessage = error.response?.data?.error || error.response?.data?.message || error.message;
+      alert(`Failed to ${action} container: ${errorMessage}`);
     }
   };
 
