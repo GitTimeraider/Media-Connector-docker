@@ -25,6 +25,8 @@ Manage your entire media stack from one web interface. Control Sonarr, Radarr, d
 
 ## Features
 
+https://github.com/user-attachments/assets/1277647d-a4b6-4ba2-bde2-cdcad6565889
+
 ### Media Management
 - **Sonarr** - TV show management and monitoring
   - Browse your TV library with detailed information
