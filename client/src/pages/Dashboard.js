@@ -368,11 +368,47 @@ function Dashboard() {
         
         console.log('All available series options:', allResults);
         
-        // Filter to most relevant results (same title or year)
-        let relevantResults = allResults.filter(s => 
-          s.title?.toLowerCase().includes(seriesTitle.toLowerCase()) || 
-          (itemYear && s.year === itemYear)
-        );
+        // Filter to relevant results - be strict to avoid unrelated shows
+        // Extract the core title (remove special characters for comparison)
+        const normalizeTitle = (title) => title.toLowerCase().replace(/[^a-z0-9]/g, '');
+        const searchTitleNormalized = normalizeTitle(seriesTitle);
+        
+        let relevantResults = allResults.filter(s => {
+          if (!s.title) return false;
+          
+          const resultTitleNormalized = normalizeTitle(s.title);
+          const resultTitle = s.title.toLowerCase();
+          const searchTitle = seriesTitle.toLowerCase();
+          
+          // Exact match (case-insensitive)
+          if (resultTitle === searchTitle) return true;
+          
+          // Normalized exact match (ignoring special chars)
+          if (resultTitleNormalized === searchTitleNormalized) return true;
+          
+          // The search title starts with the result title or vice versa
+          // (e.g., "Hunted" matches "Hunter" but not "Hunt")
+          const minLength = Math.min(searchTitleNormalized.length, resultTitleNormalized.length);
+          if (minLength >= 5) { // Only for titles of reasonable length
+            if (searchTitleNormalized.startsWith(resultTitleNormalized) || 
+                resultTitleNormalized.startsWith(searchTitleNormalized)) {
+              // Additional check: difference in length shouldn't be too large
+              const lengthDiff = Math.abs(searchTitleNormalized.length - resultTitleNormalized.length);
+              if (lengthDiff <= 3) return true;
+            }
+          }
+          
+          // Same year is a good indicator
+          if (itemYear && s.year === itemYear) {
+            // But still require some title similarity
+            const words = searchTitle.split(/\s+/);
+            const resultWords = resultTitle.split(/\s+/);
+            const matchingWords = words.filter(w => resultWords.some(rw => rw.includes(w) || w.includes(rw)));
+            if (matchingWords.length > 0) return true;
+          }
+          
+          return false;
+        });
         
         if (relevantResults.length === 0) {
           relevantResults = allResults;
