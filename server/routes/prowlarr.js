@@ -89,19 +89,33 @@ router.get('/search/:instanceId', async (req, res) => {
       // Handle both number and array of categories
       let categoryIds = [];
       if (Array.isArray(result.categories)) {
-        categoryIds = result.categories;
+        // Extract numeric values from objects or convert directly
+        categoryIds = result.categories.map(cat => {
+          if (typeof cat === 'object' && cat !== null) {
+            return Number(cat.id || cat.value || cat.categoryId || 0);
+          }
+          return Number(cat);
+        }).filter(id => !isNaN(id) && id > 0);
       } else if (typeof result.categories === 'number') {
         categoryIds = [result.categories];
+      } else if (typeof result.categories === 'object' && result.categories !== null) {
+        const catId = Number(result.categories.id || result.categories.value || result.categories.categoryId || 0);
+        if (!isNaN(catId) && catId > 0) {
+          categoryIds = [catId];
+        }
       }
       
       const categoryNames = categoryIds
-        .map(catId => categoryMap[Number(catId)] || `Category ${catId}`)
+        .map(catId => categoryMap[catId] || null)
         .filter(Boolean);
       
       // Ensure categoryDisplay is a string, not an object or array
       let categoryDisplay = 'Unknown';
       if (categoryNames.length > 0) {
-        categoryDisplay = String(categoryNames.join(', '));
+        categoryDisplay = categoryNames.join(', ');
+      } else if (categoryIds.length > 0) {
+        // Fallback to showing IDs if no name found
+        categoryDisplay = categoryIds.map(id => `Category ${id}`).join(', ');
       }
       
       return {
