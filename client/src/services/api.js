@@ -149,6 +149,11 @@ class ApiService {
     return response.data;
   }
 
+  async lookupSonarrByTmdb(instanceId, tmdbId) {
+    const response = await this.client.get(`/sonarr/lookup/tmdb/${instanceId}/${tmdbId}`);
+    return response.data;
+  }
+
   async addSonarrSeries(instanceId, data) {
     const response = await this.client.post(`/sonarr/series/${instanceId}`, data);
     return response.data;

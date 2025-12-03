@@ -101,6 +101,25 @@ router.get('/series/:instanceId/:seriesId', async (req, res) => {
   }
 });
 
+// Lookup series by TMDB ID (most accurate)
+router.get('/lookup/tmdb/:instanceId/:tmdbId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('sonarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    
+    if (!instance) {
+      return res.status(404).json({ error: 'Instance not found' });
+    }
+
+    const client = new ApiClient(instance.url, instance.apiKey);
+    // Use tmdb: prefix for TMDB ID lookup in Sonarr
+    const results = await client.searchSeries({ term: `tmdb:${req.params.tmdbId}` });
+    res.json(results);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Search for series
 router.get('/search/:instanceId', async (req, res) => {
   try {

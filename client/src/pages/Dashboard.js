@@ -329,41 +329,50 @@ function Dashboard() {
         });
         alert(`Added "${itemToAdd.title}" to Radarr!`);
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
-        // First lookup the series in Sonarr to get the correct TVDB ID
-        const seriesTitle = itemToAdd.name || itemToAdd.title;
-        const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
-        const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
+        // Lookup the series in Sonarr using TMDB ID for 100% accurate match
+        console.log('Looking up series by TMDB ID:', itemToAdd.id);
         
-        console.log('Searching for series:', { title: seriesTitle, year: itemYear, tmdbId: itemToAdd.id });
-        console.log('Sonarr lookup results:', lookupResults);
-        
-        // Find the best match from lookup results
-        // Priority: 1. Exact title + year match, 2. TVDB ID match, 3. Exact title match, 4. First result
         let matchedSeries = null;
         
-        // Try to match by title and year (most reliable for shows with same name)
-        if (itemYear) {
-          matchedSeries = lookupResults.find(s => 
-            s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
-            s.year === itemYear
-          );
+        // Try TMDB ID lookup first (most accurate)
+        if (itemToAdd.id) {
+          try {
+            const tmdbResults = await api.lookupSonarrByTmdb(services.sonarr[0].id, itemToAdd.id);
+            console.log('TMDB lookup results:', tmdbResults);
+            matchedSeries = tmdbResults[0];
+          } catch (error) {
+            console.warn('TMDB lookup failed, falling back to title search:', error);
+          }
         }
         
-        // If no year match, try TVDB ID if available
-        if (!matchedSeries && itemToAdd.tvdbId) {
-          matchedSeries = lookupResults.find(s => s.tvdbId === itemToAdd.tvdbId);
-        }
-        
-        // Try exact title match
+        // Fallback to title search if TMDB lookup fails
         if (!matchedSeries) {
-          matchedSeries = lookupResults.find(s => 
-            s.title?.toLowerCase() === seriesTitle.toLowerCase()
-          );
-        }
-        
-        // Last resort: first result
-        if (!matchedSeries) {
-          matchedSeries = lookupResults[0];
+          const seriesTitle = itemToAdd.name || itemToAdd.title;
+          const itemYear = itemToAdd.first_air_date ? new Date(itemToAdd.first_air_date).getFullYear() : null;
+          const lookupResults = await api.searchSonarr(services.sonarr[0].id, seriesTitle);
+          
+          console.log('Title search fallback:', { title: seriesTitle, year: itemYear });
+          console.log('Search results:', lookupResults);
+          
+          // Match by title and year
+          if (itemYear) {
+            matchedSeries = lookupResults.find(s => 
+              s.title?.toLowerCase() === seriesTitle.toLowerCase() && 
+              s.year === itemYear
+            );
+          }
+          
+          // Fallback to exact title
+          if (!matchedSeries) {
+            matchedSeries = lookupResults.find(s => 
+              s.title?.toLowerCase() === seriesTitle.toLowerCase()
+            );
+          }
+          
+          // Last resort
+          if (!matchedSeries) {
+            matchedSeries = lookupResults[0];
+          }
         }
         
         if (!matchedSeries) {
