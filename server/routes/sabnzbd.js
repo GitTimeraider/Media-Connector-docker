@@ -91,16 +91,47 @@ router.get('/add/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     let { url } = req.query;
+    console.log(`SABnzbd: Adding to instance ${req.params.instanceId}: ${url}`);
     
-    // If URL is a relative path (proxied download), convert to absolute URL
+    // If URL is a proxied download path, we need to fetch it server-side first
     if (url && url.startsWith('/api/prowlarr/download/')) {
-      const protocol = req.protocol;
-      const host = req.get('host');
-      url = `${protocol}://${host}${url}`;
-      console.log(`SABnzbd: Converting relative URL to absolute: ${url}`);
+      // Extract the prowlarr instance ID and original URL from the path
+      const match = url.match(/\/api\/prowlarr\/download\/([^?]+)\?url=(.+)/);
+      if (match) {
+        const prowlarrInstanceId = match[1];
+        const encodedUrl = match[2];
+        const originalUrl = decodeURIComponent(encodedUrl);
+        
+        console.log(`SABnzbd: Fetching NZB file from Prowlarr instance ${prowlarrInstanceId}`);
+        
+        // Get Prowlarr instance config
+        const prowlarrInstances = await configManager.getServices('prowlarr');
+        const prowlarrInstance = prowlarrInstances.find(i => i.id === prowlarrInstanceId);
+        
+        if (prowlarrInstance) {
+          // Fetch the NZB file content from Prowlarr
+          const fileResponse = await axios.get(originalUrl, {
+            headers: { 'X-Api-Key': prowlarrInstance.apiKey },
+            responseType: 'arraybuffer'
+          });
+          
+          // Convert to base64 and send to SABnzbd
+          const base64Content = Buffer.from(fileResponse.data).toString('base64');
+          const response = await axios.get(`${instance.url}/api`, {
+            params: { 
+              mode: 'addfile', 
+              name: base64Content,
+              output: 'json', 
+              apikey: instance.apiKey 
+            }
+          });
+          console.log(`SABnzbd: Response:`, response.data);
+          return res.json(response.data);
+        }
+      }
     }
     
-    console.log(`SABnzbd: Adding URL to instance ${req.params.instanceId}: ${url}`);
+    // Fallback to URL method for direct URLs (magnet links, etc.)
     const response = await axios.get(`${instance.url}/api`, {
       params: { mode: 'addurl', name: url, output: 'json', apikey: instance.apiKey }
     });

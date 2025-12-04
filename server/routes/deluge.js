@@ -59,16 +59,8 @@ router.get('/add/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     let { url } = req.query;
+    console.log(`Deluge: Adding to instance ${req.params.instanceId}: ${url}`);
     
-    // If URL is a relative path (proxied download), convert to absolute URL
-    if (url && url.startsWith('/api/prowlarr/download/')) {
-      const protocol = req.protocol;
-      const host = req.get('host');
-      url = `${protocol}://${host}${url}`;
-      console.log(`Deluge: Converting relative URL to absolute: ${url}`);
-    }
-    
-    console.log(`Deluge: Adding URL to instance ${req.params.instanceId}: ${url}`);
     const axios = require('axios');
     
     // Authenticate first to get session
@@ -83,17 +75,62 @@ router.get('/add/:instanceId', async (req, res) => {
     const cookies = authResponse.headers['set-cookie'];
     const sessionCookie = cookies ? cookies[0].split(';')[0] : '';
 
-    // Add torrent by URL
-    const addResponse = await axios.post(`${instance.url}/json`, {
-      method: 'web.add_torrents',
-      params: [[{ path: url, options: {} }]],
-      id: 2
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Cookie': sessionCookie
+    // If URL is a proxied download path, fetch the torrent file first
+    let torrentData = null;
+    if (url && url.startsWith('/api/prowlarr/download/')) {
+      // Extract the prowlarr instance ID and original URL from the path
+      const match = url.match(/\/api\/prowlarr\/download\/([^?]+)\?url=(.+)/);
+      if (match) {
+        const prowlarrInstanceId = match[1];
+        const encodedUrl = match[2];
+        const originalUrl = decodeURIComponent(encodedUrl);
+        
+        console.log(`Deluge: Fetching torrent file from Prowlarr instance ${prowlarrInstanceId}`);
+        
+        // Get Prowlarr instance config
+        const prowlarrInstances = await configManager.getServices('prowlarr');
+        const prowlarrInstance = prowlarrInstances.find(i => i.id === prowlarrInstanceId);
+        
+        if (prowlarrInstance) {
+          // Fetch the torrent file content from Prowlarr
+          const fileResponse = await axios.get(originalUrl, {
+            headers: { 'X-Api-Key': prowlarrInstance.apiKey },
+            responseType: 'arraybuffer'
+          });
+          
+          // Convert to base64 for Deluge
+          torrentData = Buffer.from(fileResponse.data).toString('base64');
+        }
       }
-    });
+    }
+
+    // Add torrent by file data or URL
+    let addResponse;
+    if (torrentData) {
+      // Add by file data
+      addResponse = await axios.post(`${instance.url}/json`, {
+        method: 'core.add_torrent_file',
+        params: ['', torrentData, {}],
+        id: 2
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': sessionCookie
+        }
+      });
+    } else {
+      // Add by URL (for magnet links)
+      addResponse = await axios.post(`${instance.url}/json`, {
+        method: 'web.add_torrents',
+        params: [[{ path: url, options: {} }]],
+        id: 2
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': sessionCookie
+        }
+      });
+    }
 
     console.log(`Deluge: Response:`, addResponse.data);
     res.json({ success: true, data: addResponse.data });
