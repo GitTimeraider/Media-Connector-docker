@@ -112,27 +112,28 @@ router.get('/add/:instanceId', async (req, res) => {
               headers: { 'X-Api-Key': prowlarrInstance.apiKey },
               responseType: 'arraybuffer'
             });
-          
-          // Extract filename from Content-Disposition header or URL
-          const contentDisposition = fileResponse.headers['content-disposition'];
-          if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (filenameMatch) {
-              filename = filenameMatch[1];
-            }
-          } else {
-            // Try to extract from URL file parameter
-            const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
-            if (urlMatch) {
-              filename = decodeURIComponent(urlMatch[1]);
-              if (!filename.endsWith('.torrent')) {
-                filename += '.torrent';
+            
+            // Extract filename from Content-Disposition header or URL
+            const contentDisposition = fileResponse.headers['content-disposition'];
+            if (contentDisposition) {
+              const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+              if (filenameMatch) {
+                filename = filenameMatch[1];
+              }
+            } else {
+              // Try to extract from URL file parameter
+              const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
+              if (urlMatch) {
+                filename = decodeURIComponent(urlMatch[1]);
+                if (!filename.endsWith('.torrent')) {
+                  filename += '.torrent';
+                }
               }
             }
+            
+            // Convert to base64 for Deluge
+            torrentData = Buffer.from(fileResponse.data).toString('base64');
           }
-          
-          // Convert to base64 for Deluge
-          torrentData = Buffer.from(fileResponse.data).toString('base64');
         }
       }
     }
