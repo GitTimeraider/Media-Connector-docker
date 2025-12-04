@@ -58,7 +58,17 @@ router.get('/add/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const { url } = req.query;
+    let { url } = req.query;
+    
+    // If URL is a relative path (proxied download), convert to absolute URL
+    if (url && url.startsWith('/api/prowlarr/download/')) {
+      const protocol = req.protocol;
+      const host = req.get('host');
+      url = `${protocol}://${host}${url}`;
+      console.log(`Deluge: Converting relative URL to absolute: ${url}`);
+    }
+    
+    console.log(`Deluge: Adding URL to instance ${req.params.instanceId}: ${url}`);
     const axios = require('axios');
     
     // Authenticate first to get session
@@ -85,6 +95,7 @@ router.get('/add/:instanceId', async (req, res) => {
       }
     });
 
+    console.log(`Deluge: Response:`, addResponse.data);
     res.json({ success: true, data: addResponse.data });
   } catch (error) {
     res.status(500).json({ error: error.message });

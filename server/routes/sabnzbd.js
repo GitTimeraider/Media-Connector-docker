@@ -90,10 +90,21 @@ router.get('/add/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const { url } = req.query;
+    let { url } = req.query;
+    
+    // If URL is a relative path (proxied download), convert to absolute URL
+    if (url && url.startsWith('/api/prowlarr/download/')) {
+      const protocol = req.protocol;
+      const host = req.get('host');
+      url = `${protocol}://${host}${url}`;
+      console.log(`SABnzbd: Converting relative URL to absolute: ${url}`);
+    }
+    
+    console.log(`SABnzbd: Adding URL to instance ${req.params.instanceId}: ${url}`);
     const response = await axios.get(`${instance.url}/api`, {
       params: { mode: 'addurl', name: url, output: 'json', apikey: instance.apiKey }
     });
+    console.log(`SABnzbd: Response:`, response.data);
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
