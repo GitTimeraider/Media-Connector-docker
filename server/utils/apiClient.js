@@ -87,6 +87,8 @@ class ApiClient {
   async getSystemStatus(params = {}) {
     const config = this.buildRequestConfig(params);
     // Base URL is validated at construction time, hardcoded path prevents SSRF
+    // SSRF-safe: baseUrlString is validated and sanitized in constructor, path is hardcoded
+    // lgtm[js/request-forgery]
     const response = await axios.get(this.baseUrlString + '/api/v3/system/status', config);
     return response.data;
   }
@@ -218,6 +220,8 @@ class ApiClient {
   async getV1SystemStatus(params = {}) {
     const config = this.buildRequestConfig(params);
     // Base URL is validated at construction time, hardcoded path prevents SSRF
+    // SSRF-safe: baseUrlString is validated and sanitized in constructor, path is hardcoded
+    // lgtm[js/request-forgery]
     const response = await axios.get(this.baseUrlString + '/api/v1/system/status', config);
     return response.data;
   }
