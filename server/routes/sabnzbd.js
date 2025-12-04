@@ -128,40 +128,41 @@ router.get('/add/:instanceId', async (req, res) => {
               headers: { 'X-Api-Key': prowlarrInstance.apiKey },
               responseType: 'arraybuffer'
             });
-          
-          // Extract filename from Content-Disposition header or URL
-          let filename = 'download.nzb';
-          const contentDisposition = fileResponse.headers['content-disposition'];
-          if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-            if (filenameMatch) {
-              filename = filenameMatch[1];
-            }
-          } else {
-            // Try to extract from URL file parameter
-            const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
-            if (urlMatch) {
-              filename = decodeURIComponent(urlMatch[1]);
-              if (!filename.endsWith('.nzb')) {
-                filename += '.nzb';
+            
+            // Extract filename from Content-Disposition header or URL
+            let filename = 'download.nzb';
+            const contentDisposition = fileResponse.headers['content-disposition'];
+            if (contentDisposition) {
+              const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+              if (filenameMatch) {
+                filename = filenameMatch[1];
+              }
+            } else {
+              // Try to extract from URL file parameter
+              const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
+              if (urlMatch) {
+                filename = decodeURIComponent(urlMatch[1]);
+                if (!filename.endsWith('.nzb')) {
+                  filename += '.nzb';
+                }
               }
             }
+            
+            // Send NZB file to SABnzbd via POST with multipart/form-data
+            const FormData = require('form-data');
+            const form = new FormData();
+            form.append('name', Buffer.from(fileResponse.data), {
+              filename: filename,
+              contentType: 'application/x-nzb'
+            });
+            form.append('output', 'json');
+            form.append('apikey', instance.apiKey);
+            
+            const response = await axios.post(`${instance.url}/api?mode=addfile`, form, {
+              headers: form.getHeaders()
+            });
+            return res.json(response.data);
           }
-          
-          // Send NZB file to SABnzbd via POST with multipart/form-data
-          const FormData = require('form-data');
-          const form = new FormData();
-          form.append('name', Buffer.from(fileResponse.data), {
-            filename: filename,
-            contentType: 'application/x-nzb'
-          });
-          form.append('output', 'json');
-          form.append('apikey', instance.apiKey);
-          
-          const response = await axios.post(`${instance.url}/api?mode=addfile`, form, {
-            headers: form.getHeaders()
-          });
-          return res.json(response.data);
         }
       }
     }
