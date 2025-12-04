@@ -64,13 +64,13 @@ router.delete('/services/:type/:id', async (req, res) => {
 });
 
 // Test service connection
-// Using GET to avoid reverse proxy POST blocking issues
-router.get('/test/:type', async (req, res) => {
+// Changed to POST to avoid exposing sensitive data (API keys, passwords) in URL/logs
+router.post('/test/:type', async (req, res) => {
   try {
     const ApiClient = require('../utils/apiClient');
     const urlValidator = require('../utils/urlValidator');
-    // Read from query params instead of body for GET request
-    const { url, apiKey, password } = req.query;
+    // Read from body to keep sensitive data out of URL/logs
+    const { url, apiKey, password } = req.body;
     
     if (!url || !apiKey) {
       return res.status(400).json({ success: false, error: 'Missing url or apiKey' });

@@ -78,23 +78,40 @@ router.get('/add/:instanceId', async (req, res) => {
     let torrentData = null;
     let filename = 'download.torrent';
     if (url && url.startsWith('/api/prowlarr/download/')) {
-      // Extract the prowlarr instance ID and original URL from the path
-      const match = url.match(/\/api\/prowlarr\/download\/([^?]+)\?url=(.+)/);
-      if (match) {
-        const prowlarrInstanceId = match[1];
-        const encodedUrl = match[2];
-        const originalUrl = decodeURIComponent(encodedUrl);
+      // Extract the prowlarr instance ID and original URL using safer parsing
+      const urlParts = url.split('?');
+      if (urlParts.length === 2) {
+        const pathPart = urlParts[0];
+        const queryPart = urlParts[1];
+        const prowlarrInstanceId = pathPart.split('/').pop();
+        const urlParams = new URLSearchParams(queryPart);
+        const originalUrl = urlParams.get('url');
         
-        // Get Prowlarr instance config
-        const prowlarrInstances = await configManager.getServices('prowlarr');
-        const prowlarrInstance = prowlarrInstances.find(i => i.id === prowlarrInstanceId);
-        
-        if (prowlarrInstance) {
-          // Fetch the torrent file content from Prowlarr
-          const fileResponse = await axios.get(originalUrl, {
-            headers: { 'X-Api-Key': prowlarrInstance.apiKey },
-            responseType: 'arraybuffer'
-          });
+        if (prowlarrInstanceId && originalUrl) {
+          // Get Prowlarr instance config
+          const prowlarrInstances = await configManager.getServices('prowlarr');
+          const prowlarrInstance = prowlarrInstances.find(i => i.id === prowlarrInstanceId);
+          
+          if (prowlarrInstance) {
+            // Validate that the URL belongs to the configured Prowlarr instance (SSRF protection)
+            const urlValidator = require('../utils/urlValidator');
+            const validation = urlValidator.validateServiceUrl(originalUrl);
+            if (!validation.valid) {
+              return res.status(400).json({ error: 'Invalid download URL: ' + validation.error });
+            }
+            
+            // Ensure the URL is from the configured Prowlarr instance
+            const prowlarrBaseUrl = new URL(prowlarrInstance.url);
+            const downloadUrl = new URL(originalUrl);
+            if (downloadUrl.origin !== prowlarrBaseUrl.origin) {
+              return res.status(400).json({ error: 'Download URL does not match configured Prowlarr instance' });
+            }
+            
+            // Fetch the torrent file content from Prowlarr
+            const fileResponse = await axios.get(originalUrl, {
+              headers: { 'X-Api-Key': prowlarrInstance.apiKey },
+              responseType: 'arraybuffer'
+            });
           
           // Extract filename from Content-Disposition header or URL
           const contentDisposition = fileResponse.headers['content-disposition'];

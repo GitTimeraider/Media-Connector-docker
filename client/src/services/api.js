@@ -128,8 +128,8 @@ class ApiService {
   }
 
   async testService(type, data) {
-    // Use GET with query params to avoid proxy POST restrictions
-    const response = await this.client.get(`/config/test/${type}`, { params: data });
+    // Use POST to keep sensitive data (API keys, passwords) out of URL/logs
+    const response = await this.client.post(`/config/test/${type}`, data);
     return response.data;
   }
 

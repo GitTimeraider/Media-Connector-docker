@@ -162,6 +162,20 @@ router.get('/download/:instanceId', async (req, res) => {
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: 'URL parameter required' });
 
+    // Validate that the URL belongs to the configured Prowlarr instance (SSRF protection)
+    const urlValidator = require('../utils/urlValidator');
+    const validation = urlValidator.validateServiceUrl(url);
+    if (!validation.valid) {
+      return res.status(400).json({ error: 'Invalid download URL: ' + validation.error });
+    }
+    
+    // Ensure the URL is from the configured Prowlarr instance to prevent SSRF
+    const prowlarrBaseUrl = new URL(instance.url);
+    const downloadUrl = new URL(url);
+    if (downloadUrl.origin !== prowlarrBaseUrl.origin) {
+      return res.status(400).json({ error: 'Download URL does not match configured Prowlarr instance' });
+    }
+
     const axios = require('axios');
     
     // Fetch the file from Prowlarr and stream it back
