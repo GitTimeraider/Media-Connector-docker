@@ -59,7 +59,6 @@ router.get('/add/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     let { url } = req.query;
-    console.log(`Deluge: Adding to instance ${req.params.instanceId}: ${url}`);
     
     const axios = require('axios');
     
@@ -77,6 +76,7 @@ router.get('/add/:instanceId', async (req, res) => {
 
     // If URL is a proxied download path, fetch the torrent file first
     let torrentData = null;
+    let filename = 'download.torrent';
     if (url && url.startsWith('/api/prowlarr/download/')) {
       // Extract the prowlarr instance ID and original URL from the path
       const match = url.match(/\/api\/prowlarr\/download\/([^?]+)\?url=(.+)/);
@@ -84,8 +84,6 @@ router.get('/add/:instanceId', async (req, res) => {
         const prowlarrInstanceId = match[1];
         const encodedUrl = match[2];
         const originalUrl = decodeURIComponent(encodedUrl);
-        
-        console.log(`Deluge: Fetching torrent file from Prowlarr instance ${prowlarrInstanceId}`);
         
         // Get Prowlarr instance config
         const prowlarrInstances = await configManager.getServices('prowlarr');
@@ -98,25 +96,37 @@ router.get('/add/:instanceId', async (req, res) => {
             responseType: 'arraybuffer'
           });
           
+          // Extract filename from Content-Disposition header or URL
+          const contentDisposition = fileResponse.headers['content-disposition'];
+          if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch) {
+              filename = filenameMatch[1];
+            }
+          } else {
+            // Try to extract from URL file parameter
+            const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
+            if (urlMatch) {
+              filename = decodeURIComponent(urlMatch[1]);
+              if (!filename.endsWith('.torrent')) {
+                filename += '.torrent';
+              }
+            }
+          }
+          
           // Convert to base64 for Deluge
           torrentData = Buffer.from(fileResponse.data).toString('base64');
-          console.log(`Deluge: Fetched ${fileResponse.data.length} bytes as base64 (${torrentData.length} chars)`);
-        } else {
-          console.error(`Deluge: Prowlarr instance ${prowlarrInstanceId} not found`);
         }
-      } else {
-        console.error(`Deluge: Could not parse proxied URL: ${url}`);
       }
     }
 
     // Add torrent by file data or URL
     let addResponse;
     if (torrentData) {
-      // Add by file data
-      console.log(`Deluge: Using core.add_torrent_file method`);
+      // Add by file data with proper filename
       addResponse = await axios.post(`${instance.url}/json`, {
         method: 'core.add_torrent_file',
-        params: ['', torrentData, {}],
+        params: [filename, torrentData, {}],
         id: 2
       }, {
         headers: {
@@ -126,7 +136,6 @@ router.get('/add/:instanceId', async (req, res) => {
       });
     } else {
       // Add by URL (for magnet links)
-      console.log(`Deluge: Using web.add_torrents method for: ${url}`);
       addResponse = await axios.post(`${instance.url}/json`, {
         method: 'web.add_torrents',
         params: [[{ path: url, options: {} }]],
@@ -139,7 +148,6 @@ router.get('/add/:instanceId', async (req, res) => {
       });
     }
 
-    console.log(`Deluge: Add response:`, addResponse.data);
     res.json({ success: true, data: addResponse.data });
   } catch (error) {
     res.status(500).json({ error: error.message });

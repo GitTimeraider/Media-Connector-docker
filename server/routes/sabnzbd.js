@@ -91,7 +91,6 @@ router.get('/add/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     let { url } = req.query;
-    console.log(`SABnzbd: Adding to instance ${req.params.instanceId}: ${url}`);
     
     // If URL is a proxied download path, we need to fetch it server-side first
     if (url && url.startsWith('/api/prowlarr/download/')) {
@@ -101,8 +100,6 @@ router.get('/add/:instanceId', async (req, res) => {
         const prowlarrInstanceId = match[1];
         const encodedUrl = match[2];
         const originalUrl = decodeURIComponent(encodedUrl);
-        
-        console.log(`SABnzbd: Fetching NZB file from Prowlarr instance ${prowlarrInstanceId}`);
         
         // Get Prowlarr instance config
         const prowlarrInstances = await configManager.getServices('prowlarr');
@@ -115,12 +112,30 @@ router.get('/add/:instanceId', async (req, res) => {
             responseType: 'arraybuffer'
           });
           
+          // Extract filename from Content-Disposition header or URL
+          let filename = 'download.nzb';
+          const contentDisposition = fileResponse.headers['content-disposition'];
+          if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+            if (filenameMatch) {
+              filename = filenameMatch[1];
+            }
+          } else {
+            // Try to extract from URL file parameter
+            const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
+            if (urlMatch) {
+              filename = decodeURIComponent(urlMatch[1]);
+              if (!filename.endsWith('.nzb')) {
+                filename += '.nzb';
+              }
+            }
+          }
+          
           // Send NZB file to SABnzbd via POST with multipart/form-data
-          console.log(`SABnzbd: Sending ${fileResponse.data.length} bytes as file upload`);
           const FormData = require('form-data');
           const form = new FormData();
           form.append('name', Buffer.from(fileResponse.data), {
-            filename: 'download.nzb',
+            filename: filename,
             contentType: 'application/x-nzb'
           });
           form.append('output', 'json');
@@ -129,22 +144,15 @@ router.get('/add/:instanceId', async (req, res) => {
           const response = await axios.post(`${instance.url}/api?mode=addfile`, form, {
             headers: form.getHeaders()
           });
-          console.log(`SABnzbd: Add file response:`, response.data);
           return res.json(response.data);
-        } else {
-          console.error(`SABnzbd: Prowlarr instance ${prowlarrInstanceId} not found`);
         }
-      } else {
-        console.error(`SABnzbd: Could not parse proxied URL: ${url}`);
       }
     }
     
     // Fallback to URL method for direct URLs (magnet links, etc.)
-    console.log(`SABnzbd: Using addurl method for: ${url}`);
     const response = await axios.get(`${instance.url}/api`, {
       params: { mode: 'addurl', name: url, output: 'json', apikey: instance.apiKey }
     });
-    console.log(`SABnzbd: Add URL response:`, response.data);
     res.json(response.data);
   } catch (error) {
     res.status(500).json({ error: error.message });
