@@ -1,5 +1,5 @@
 # Media Connector (Dockerized)
-# Still in heavy development, but safe to use
+# Still in heavy development, can break
 
 <p align="center" width="100%">
     <img width="33%" src="https://github.com/GitTimeraider/Assets/blob/main/Media-Connector-docker/img/MediaConnector_Logo.png">
