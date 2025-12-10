@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   media-connector-docker:
-    image: ghcr.io/gittimerider/media-connector-docker:latest
+    image: ghcr.io/gittimeraider/media-connector-docker:latest
     container_name: media-connector-docker
     restart: unless-stopped
     ports:
@@ -23,4 +23,5 @@ services:
       timeout: 10s
       retries: 2
       start_period: 40s
+
 
