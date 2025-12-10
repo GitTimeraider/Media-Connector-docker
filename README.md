@@ -93,7 +93,7 @@ docker run -d \
   -e JWT_SECRET=your-secret-key-here \
   -v /path/to/data:/app/server/data \
   --restart unless-stopped \
-  ghcr.io/gittimerider/media-connector-docker:latest
+  ghcr.io/gittimeraider/media-connector-docker:latest
 ```
 
 ### Using Docker Compose
@@ -103,7 +103,7 @@ version: '3.8'
 
 services:
   media-connector-docker:
-    image: ghcr.io/gittimerider/media-connector-docker:latest
+    image: ghcr.io/gittimeraider/media-connector-docker:latest
     container_name: media-connector-docker
     restart: unless-stopped
     ports:
@@ -277,8 +277,8 @@ This repository is configured with GitHub Actions to automatically build and pus
 - **Pull requests** → Builds test images (not pushed)
 
 ### Available Image Tags:
-- `ghcr.io/gittimerider/media-connector-docker:latest` - Latest stable release
-- `ghcr.io/gittimerider/media-connector-docker:main` - Latest main branch
+- `ghcr.io/gittimeraider/media-connector-docker:latest` - Latest stable release
+- `ghcr.io/gittimeraider/media-connector-docker:main` - Latest main branch
 
 ### Multi-Architecture Support:
 Images are built for both `linux/amd64` and `linux/arm64` platforms.
