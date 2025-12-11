@@ -322,7 +322,6 @@ function UnraidContent() {
                       sx={{ mt: 1 }}
                     />
                   </>
-                  </>
                 ) : (
                   <>
                     <Typography variant="h4">{formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}</Typography>
