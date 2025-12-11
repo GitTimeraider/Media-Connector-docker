@@ -26,6 +26,15 @@ import {
 import { Search, Add, Delete, Close, ViewModule, ViewList, FilterList, Sort, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
 
+// Helper function to format bytes to human-readable size
+const formatBytes = (bytes) => {
+  if (!bytes || bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
+};
+
 function Sonarr() {
   const [loading, setLoading] = useState(true);
   const [instances, setInstances] = useState([]);
@@ -563,9 +572,14 @@ function Sonarr() {
                   {seriesToView.episodeFileCount > 0 && (
                     <>
                       <Typography variant="h6" gutterBottom>Downloaded Episodes</Typography>
-                      <Typography variant="body2" color="text.secondary" paragraph>
+                      <Typography variant="body2" color="text.secondary">
                         {seriesToView.episodeFileCount} / {seriesToView.episodeCount} episodes
                       </Typography>
+                      {seriesToView.sizeOnDisk && (
+                        <Typography variant="body2" color="text.secondary" paragraph>
+                          <strong>Total Size:</strong> {formatBytes(seriesToView.sizeOnDisk)}
+                        </Typography>
+                      )}
                     </>
                   )}
                   
