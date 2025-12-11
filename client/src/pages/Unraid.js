@@ -287,29 +287,37 @@ function UnraidContent() {
                   <>
                     <Typography variant="h4">
                       {(() => {
-                        // Calculate actual memory usage excluding ZFS cache
-                        // Use 'available' memory to get true usage: (total - available) / total
+                        // Use Unraid's provided percentTotal if available, otherwise calculate
+                        // Unraid includes System + ZFS cache + Docker in usage calculation
+                        if (systemStats.memory?.percentTotal !== undefined) {
+                          return safeNumber(systemStats.memory.percentTotal).toFixed(1);
+                        }
+                        // Fallback: Calculate using free memory: (total - free) / total
+                        // This matches Unraid's calculation (System + ZFS + Docker)
                         const total = safeNumber(systemStats.memory?.total) || 1;
-                        const available = safeNumber(systemStats.memory?.available);
-                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
-                        return ((actualUsed / total) * 100).toFixed(1);
+                        const free = safeNumber(systemStats.memory?.free);
+                        const used = total - free;
+                        return ((used / total) * 100).toFixed(1);
                       })()}%
                     </Typography>
                     <Typography variant="caption">
                       {(() => {
                         const total = safeNumber(systemStats.memory?.total) || 1;
-                        const available = safeNumber(systemStats.memory?.available);
-                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
-                        return formatBytes(actualUsed);
+                        const free = safeNumber(systemStats.memory?.free);
+                        const used = total - free;
+                        return formatBytes(used);
                       })()} / {formatBytes(safeNumber(systemStats.memory?.total))}
                     </Typography>
                     <LinearProgress 
                       variant="determinate" 
                       value={(() => {
+                        if (systemStats.memory?.percentTotal !== undefined) {
+                          return Math.min(safeNumber(systemStats.memory.percentTotal), 100);
+                        }
                         const total = safeNumber(systemStats.memory?.total) || 1;
-                        const available = safeNumber(systemStats.memory?.available);
-                        const actualUsed = available > 0 ? total - available : safeNumber(systemStats.memory?.used);
-                        return Math.min((actualUsed / total) * 100, 100);
+                        const free = safeNumber(systemStats.memory?.free);
+                        const used = total - free;
+                        return Math.min((used / total) * 100, 100);
                       })()} 
                       sx={{ mt: 1 }}
                     />
