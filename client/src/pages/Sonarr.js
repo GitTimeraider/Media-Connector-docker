@@ -632,6 +632,14 @@ function Sonarr() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>
+              {seriesToView?.tmdbId && (
+                <Button 
+                  variant="outlined"
+                  onClick={() => window.open(`https://www.themoviedb.org/tv/${seriesToView.tmdbId}`, '_blank')}
+                >
+                  View on TMDB
+                </Button>
+              )}
               {editMode ? (
                 <>
                   <Button onClick={() => setEditMode(false)}>Cancel</Button>
