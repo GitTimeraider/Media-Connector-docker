@@ -905,6 +905,16 @@ function Dashboard() {
               <Button onClick={handleCloseDialog}>Close</Button>
               <Button 
                 variant="outlined"
+                onClick={() => {
+                  const mediaType = selectedItem.media_type || (selectedItem.title ? 'movie' : 'tv');
+                  const tmdbId = selectedItem.tmdbId || selectedItem.id;
+                  window.open(`https://www.themoviedb.org/${mediaType}/${tmdbId}`, '_blank');
+                }}
+              >
+                View on TMDB
+              </Button>
+              <Button 
+                variant="outlined"
                 startIcon={<PlayArrow />}
                 onClick={async () => {
                   try {

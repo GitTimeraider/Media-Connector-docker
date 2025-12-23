@@ -751,6 +751,14 @@ function Radarr() {
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>
+              {movieToView.tmdbId && (
+                <Button 
+                  variant="outlined"
+                  onClick={() => window.open(`https://www.themoviedb.org/movie/${movieToView.tmdbId}`, '_blank')}
+                >
+                  View on TMDB
+                </Button>
+              )}
               {editMode ? (
                 <>
                   <Button onClick={() => setEditMode(false)}>Cancel</Button>
