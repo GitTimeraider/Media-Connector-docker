@@ -446,6 +446,18 @@ function Dashboard() {
       const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
       const tmdbId = item.tmdbId || item.id;
       
+      // Fetch full details including cast if not already present
+      if (!item.cast || item.cast.length === 0) {
+        try {
+          const details = await api.getTMDBDetails(tmdbId, mediaType);
+          if (details.credits?.cast) {
+            sanitizedItem.cast = details.credits.cast.slice(0, 10);
+          }
+        } catch (error) {
+          console.warn('Error fetching TMDB cast:', error);
+        }
+      }
+      
       if (mediaType === 'movie' && services.radarr?.length > 0) {
         try {
           const movies = await api.getRadarrMovies(services.radarr[0].id);
@@ -636,10 +648,10 @@ function Dashboard() {
                     }} 
                   />
                 )}
-                {item.vote_average && (
+                {Number.isFinite(item.vote_average) && Number(item.vote_average) > 0 && (
                   <Chip 
                     icon={<Star sx={{ fontSize: 16, color: '#FFD700 !important' }} />}
-                    label={item.vote_average.toFixed(1)} 
+                    label={Number(item.vote_average).toFixed(1)} 
                     size="small" 
                     sx={{ 
                       fontWeight: 600,
@@ -847,10 +859,10 @@ function Dashboard() {
                         color="primary"
                       />
                     )}
-                    {selectedItem.vote_average && (
+                    {Number.isFinite(selectedItem.vote_average) && Number(selectedItem.vote_average) > 0 && (
                       <Chip 
                         icon={<Star sx={{ color: '#FFD700 !important' }} />}
-                        label={`${selectedItem.vote_average.toFixed(1)} / 10`}
+                        label={`${Number(selectedItem.vote_average).toFixed(1)} / 10`}
                         color="warning"
                       />
                     )}
