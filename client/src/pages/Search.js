@@ -459,20 +459,20 @@ function Search() {
             {selectedCategory !== 'all' && ` in ${categories.find(c => c.value === selectedCategory)?.label}`}
             {protocolFilter !== 'both' && ` (${protocolFilter === 'torrent' ? 'Torrent' : 'Usenet'} only)`}
           </Alert>
-          <Grid container spacing={2}>
+          <Box sx={{ width: '100%' }}>
             {filteredResults.map((result, index) => {
               // Try to find a cover image from various possible fields
               const coverImage = result.coverUrl || result.posterUrl || result.poster || result.cover || result.bannerUrl || null;
               
               return (
-            <Grid item xs={12} key={index}>
-              <Card sx={{ 
+              <Card key={index} sx={{ 
                 border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
                         result.relevanceScore >= 50 ? '2px solid #2196f3' : 
                         '1px solid rgba(255,255,255,0.1)',
                 display: 'flex',
                 flexDirection: 'row',
-                width: '100%'
+                width: '100%',
+                mb: 2
               }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                   <CardContent sx={{ flex: '1 0 auto' }}>
@@ -574,10 +574,9 @@ function Search() {
                   </Box>
                 )}
               </Card>
-            </Grid>
               );
             })}
-          </Grid>
+          </Box>
         </>
         );
       })()}      {searchResults.length === 0 && searchQuery && !searching && (

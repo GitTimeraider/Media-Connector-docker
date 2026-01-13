@@ -304,13 +304,12 @@ function Radarr() {
           </Box>
           
           {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Monitor Status</InputLabel>
             <Select
               value={monitoredFilter}
               label="Monitor Status"
               onChange={(e) => setMonitoredFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="monitored">Monitored</MenuItem>
@@ -319,13 +318,12 @@ function Radarr() {
           </FormControl>
           
           {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Download Status</InputLabel>
             <Select
               value={downloadedFilter}
               label="Download Status"
               onChange={(e) => setDownloadedFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="downloaded">Downloaded</MenuItem>
@@ -334,13 +332,12 @@ function Radarr() {
           </FormControl>
           
           {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130, width: 130 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}
               label="Sort By"
               onChange={(e) => setSortBy(e.target.value)}
-              startAdornment={<Sort sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="newest">Newest First</MenuItem>
@@ -541,7 +538,7 @@ function Radarr() {
                     component="img"
                     image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={movie.title}
-                    sx={{ aspectRatio: '2/3', objectFit: 'cover', objectPosition: 'top', maxHeight: 400, width: '100%' }}
+                    sx={{ width: '100%', height: 'auto', aspectRatio: '2/3', objectFit: 'contain', objectPosition: 'top' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
