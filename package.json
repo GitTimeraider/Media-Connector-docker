@@ -25,7 +25,7 @@
     "ws": "^8.16.0",
     "node-schedule": "^2.1.1",
     "winston": "^3.11.0",
-    "bcryptjs": "^2.4.3",
+    "bcryptjs": "^3.0.3",
     "jsonwebtoken": "^9.0.2",
     "sqlite3": "^5.1.7"
   },
