@@ -121,6 +121,8 @@ function Dashboard() {
   
   // Ref to track if component is mounted (for cancelling background operations)
   const isMountedRef = useRef(true);
+  // Ref to track if dialog is open (for cancelling background updates after close)
+  const dialogOpenRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -444,6 +446,7 @@ function Dashboard() {
     // Open dialog immediately to prevent perceived lag
     setSelectedItem(sanitizedItem);
     setDialogOpen(true);
+    dialogOpenRef.current = true;
     
     // Check if this item is already in Radarr/Sonarr library (background check)
     const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
@@ -501,7 +504,7 @@ function Dashboard() {
       }
       
       // Only update if dialog is still open with same item
-      if (isMountedRef.current) {
+      if (isMountedRef.current && dialogOpenRef.current) {
         setSelectedItem(prev => prev?.id === item.id || prev?.tmdbId === item.id ? updatedItem : prev);
       }
     };
@@ -511,6 +514,7 @@ function Dashboard() {
   };
 
   const handleCloseDialog = () => {
+    dialogOpenRef.current = false;
     setDialogOpen(false);
     setTimeout(() => setSelectedItem(null), 200);
   };
