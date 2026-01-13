@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -435,7 +435,7 @@ function Dashboard() {
     }
   };
 
-  const handleOpenDialog = async (item) => {
+  const handleOpenDialog = useCallback(async (item) => {
     // Ensure cast and genres are arrays
     let sanitizedItem = {
       ...item,
@@ -511,13 +511,13 @@ function Dashboard() {
     
     // Run in background
     fetchAdditionalDetails();
-  };
+  }, [services]);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     dialogOpenRef.current = false;
     setDialogOpen(false);
     setTimeout(() => setSelectedItem(null), 200);
-  };
+  }, []);
 
   if (loading) {
     return (
