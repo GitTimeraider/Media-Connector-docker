@@ -17,9 +17,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CardMedia
+  CardMedia,
+  Dialog,
+  DialogContent,
+  IconButton
 } from '@mui/material';
-import { Search as SearchIcon, Download, Category as CategoryIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Download, Category as CategoryIcon, Close } from '@mui/icons-material';
 import api from '../services/api';
 
 function Search() {
@@ -32,6 +35,8 @@ function Search() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [protocolFilter, setProtocolFilter] = useState('both'); // 'both', 'torrent', 'usenet'
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const categories = [
     { value: 'all', label: 'All' },
@@ -462,21 +467,8 @@ function Search() {
                         result.relevanceScore >= 50 ? '2px solid #2196f3' : 
                         '1px solid rgba(255,255,255,0.1)',
                 display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' }
+                flexDirection: 'row'
               }}>
-                {result.coverUrl && (
-                  <CardMedia
-                    component="img"
-                    sx={{ 
-                      width: { xs: '100%', sm: 140 },
-                      height: { xs: 200, sm: 'auto' },
-                      objectFit: 'cover'
-                    }}
-                    image={result.coverUrl}
-                    alt={result.title}
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                )}
                 <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                   <CardContent sx={{ flex: '1 0 auto' }}>
                     <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
@@ -543,6 +535,31 @@ function Search() {
                     </Button>
                   </CardActions>
                 </Box>
+                {result.coverUrl && (
+                  <Box 
+                    sx={{ 
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      '&:hover': { opacity: 0.8 }
+                    }}
+                    onClick={() => {
+                      setSelectedImage(result.coverUrl);
+                      setImageDialogOpen(true);
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      sx={{ 
+                        width: 100,
+                        height: 150,
+                        objectFit: 'cover'
+                      }}
+                      image={result.coverUrl}
+                      alt={result.title}
+                      onError={(e) => { e.target.style.display = 'none'; }}
+                    />
+                  </Box>
+                )}
               </Card>
             </Grid>
             ))}
@@ -554,6 +571,45 @@ function Search() {
           No results found. Try adjusting your search query or category.
         </Alert>
       )}
+
+      {/* Image Preview Dialog */}
+      <Dialog 
+        open={imageDialogOpen} 
+        onClose={() => setImageDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setImageDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'white',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.7)'
+              },
+              zIndex: 1
+            }}
+          >
+            <Close />
+          </IconButton>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Full size preview"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'block'
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }
