@@ -835,7 +835,7 @@ function Dashboard() {
             </DialogTitle>
             <DialogContent dividers>
               <Grid container spacing={3}>
-                <Grid item xs={4}>
+                <Grid item xs={12} sm={4} md={4}>
                   <CardMedia
                     component="img"
                     image={
@@ -847,7 +847,7 @@ function Dashboard() {
                     sx={{ borderRadius: 2, width: '100%', maxHeight: 400, objectFit: 'contain' }}
                   />
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={12} sm={8} md={8}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     {(selectedItem.release_date || selectedItem.first_air_date || selectedItem.year) && (
                       <Chip 
