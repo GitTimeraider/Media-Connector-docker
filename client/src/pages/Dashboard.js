@@ -434,38 +434,45 @@ function Dashboard() {
   };
 
   const handleOpenDialog = async (item) => {
-    try {
-      // Ensure cast and genres are arrays
-      let sanitizedItem = {
-        ...item,
-        cast: Array.isArray(item.cast) ? item.cast : [],
-        genres: Array.isArray(item.genres) ? item.genres : []
-      };
-      
-      // Check if this item is already in Radarr/Sonarr library
-      const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
-      const tmdbId = item.tmdbId || item.id;
+    // Ensure cast and genres are arrays
+    let sanitizedItem = {
+      ...item,
+      cast: Array.isArray(item.cast) ? item.cast : [],
+      genres: Array.isArray(item.genres) ? item.genres : []
+    };
+    
+    // Open dialog immediately to prevent perceived lag
+    setSelectedItem(sanitizedItem);
+    setDialogOpen(true);
+    
+    // Check if this item is already in Radarr/Sonarr library (background check)
+    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+    const tmdbId = item.tmdbId || item.id;
+    
+    // Fetch additional details in background without blocking
+    const fetchAdditionalDetails = async () => {
+      let updatedItem = { ...sanitizedItem };
       
       // Fetch full details including cast if not already present
       if (!item.cast || item.cast.length === 0) {
         try {
           const details = await api.getTMDBDetails(tmdbId, mediaType);
           if (details.credits?.cast) {
-            sanitizedItem.cast = details.credits.cast.slice(0, 10);
+            updatedItem.cast = details.credits.cast.slice(0, 10);
           }
         } catch (error) {
           console.warn('Error fetching TMDB cast:', error);
         }
       }
       
+      // Check library status without triggering any visible state changes
       if (mediaType === 'movie' && services.radarr?.length > 0) {
         try {
           const movies = await api.getRadarrMovies(services.radarr[0].id);
           const existingMovie = movies.find(m => m.tmdbId === tmdbId);
           if (existingMovie) {
-            // Item exists in library - add flags to prevent showing "Add to Library"
-            sanitizedItem = {
-              ...sanitizedItem,
+            updatedItem = {
+              ...updatedItem,
               monitored: existingMovie.monitored,
               hasFile: existingMovie.hasFile,
               id: existingMovie.id,
@@ -480,9 +487,8 @@ function Dashboard() {
           const series = await api.getSonarrSeries(services.sonarr[0].id);
           const existingSeries = series.find(s => s.tmdbId === tmdbId);
           if (existingSeries) {
-            // Item exists in library - add flags to prevent showing "Add to Library"
-            sanitizedItem = {
-              ...sanitizedItem,
+            updatedItem = {
+              ...updatedItem,
               monitored: existingSeries.monitored,
               tvdbId: existingSeries.tvdbId,
               id: existingSeries.id,
@@ -494,11 +500,14 @@ function Dashboard() {
         }
       }
       
-      setSelectedItem(sanitizedItem);
-      setDialogOpen(true);
-    } catch (error) {
-      console.error('Error opening dialog:', error);
-    }
+      // Only update if dialog is still open with same item
+      if (isMountedRef.current) {
+        setSelectedItem(prev => prev?.id === item.id || prev?.tmdbId === item.id ? updatedItem : prev);
+      }
+    };
+    
+    // Run in background
+    fetchAdditionalDetails();
   };
 
   const handleCloseDialog = () => {

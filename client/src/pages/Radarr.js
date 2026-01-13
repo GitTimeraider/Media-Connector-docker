@@ -630,18 +630,18 @@ function Radarr() {
               </Box>
             </DialogTitle>
             <DialogContent dividers>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+                <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 150 }, maxWidth: { xs: 200, sm: 150 } }}>
                   {movieToView.images?.find(img => img.coverType === 'poster') && (
                     <CardMedia
                       component="img"
                       image={movieToView.images.find(img => img.coverType === 'poster').remoteUrl}
                       alt={movieToView.title}
-                      sx={{ borderRadius: 2, width: '100%' }}
+                      sx={{ borderRadius: 2, width: '100%', maxHeight: 225, objectFit: 'contain' }}
                     />
                   )}
-                </Grid>
-                <Grid item xs={12} sm={8}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     <Chip label={movieToView.year} />
                     {movieToView.hasFile && (
@@ -728,8 +728,8 @@ function Radarr() {
                       </Box>
                     </FormControl>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>
