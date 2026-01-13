@@ -135,13 +135,39 @@ router.get('/search/:instanceId', async (req, res) => {
         downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(originalDownloadUrl)}`;
       }
       
+      // Helper function to check if a URL is a valid public image URL
+      const isValidPublicImageUrl = (url) => {
+        if (!url) return false;
+        // Must be a valid http/https URL
+        if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
+        // Exclude internal/docker hostnames
+        if (url.includes('prowlarr:') || url.includes('localhost:') || url.includes('127.0.0.1')) return false;
+        // Exclude download URLs (they're not images)
+        if (url.includes('/download?') || url.includes('/api/')) return false;
+        // Should look like an actual image URL or be from known image hosts
+        const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(url) ||
+                              url.includes('image.tmdb.org') ||
+                              url.includes('thetvdb.com') ||
+                              url.includes('fanart.tv');
+        return looksLikeImage;
+      };
+      
+      // Only use cover URLs that are publicly accessible
+      let coverUrl = null;
+      if (isValidPublicImageUrl(result.posterUrl)) {
+        coverUrl = result.posterUrl;
+      } else if (isValidPublicImageUrl(result.cover)) {
+        coverUrl = result.cover;
+      } else if (isValidPublicImageUrl(result.bannerUrl)) {
+        coverUrl = result.bannerUrl;
+      }
+      
       return {
         ...result,
         downloadUrl,
         categoryNames,
         categoryDisplay,
-        // Cover/poster images from various possible fields
-        coverUrl: result.posterUrl || result.cover || result.downloadUrl?.match(/https?:\/\/.*\.(jpg|jpeg|png|gif)/i)?.[0] || null
+        coverUrl
       };
     });
     
