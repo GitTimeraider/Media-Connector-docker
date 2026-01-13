@@ -403,7 +403,7 @@ function Sonarr() {
                     component="img"
                     image={show.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={show.title}
-                    sx={{ width: '100%', height: { xs: 250, sm: 350, md: 400 }, objectFit: 'cover', objectPosition: 'center top' }}
+                    sx={{ width: '100%', height: { xs: 200, sm: 250, md: 300 }, objectFit: 'cover', objectPosition: 'center top' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>

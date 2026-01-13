@@ -835,7 +835,7 @@ function Dashboard() {
             </DialogTitle>
             <DialogContent dividers>
               <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={4}>
                   <CardMedia
                     component="img"
                     image={
@@ -844,10 +844,10 @@ function Dashboard() {
                         : selectedItem.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image'
                     }
                     alt={selectedItem.title || selectedItem.name}
-                    sx={{ borderRadius: 2, width: '100%', maxHeight: 450, objectFit: 'contain' }}
+                    sx={{ borderRadius: 2, width: '100%', maxHeight: 400, objectFit: 'contain' }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={8}>
+                <Grid item xs={8}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     {(selectedItem.release_date || selectedItem.first_air_date || selectedItem.year) && (
                       <Chip 
@@ -893,25 +893,25 @@ function Dashboard() {
                       </Box>
                     </>
                   )}
+                  {selectedItem.cast && Array.isArray(selectedItem.cast) && selectedItem.cast.length > 0 && (
+                    <>
+                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+                        Cast
+                      </Typography>
+                      <Box display="flex" gap={1} flexWrap="wrap">
+                        {selectedItem.cast.slice(0, 5).map((actor, index) => (
+                          <Chip 
+                            key={index} 
+                            label={typeof actor === 'string' ? actor : actor?.name || ''} 
+                            variant="outlined" 
+                            size="small" 
+                          />
+                        ))}
+                      </Box>
+                    </>
+                  )}
                 </Grid>
               </Grid>
-              {selectedItem.cast && Array.isArray(selectedItem.cast) && selectedItem.cast.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
-                    Cast
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap">
-                    {selectedItem.cast.slice(0, 5).map((actor, index) => (
-                      <Chip 
-                        key={index} 
-                        label={typeof actor === 'string' ? actor : actor?.name || ''} 
-                        variant="outlined" 
-                        size="small" 
-                      />
-                    ))}
-                  </Box>
-                </Box>
-              )}
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
