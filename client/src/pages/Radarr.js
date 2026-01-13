@@ -277,7 +277,7 @@ function Radarr() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
+    <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Typography variant="h4">
           Movies
@@ -538,7 +538,7 @@ function Radarr() {
                     component="img"
                     image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={movie.title}
-                    sx={{ width: '100%', height: { xs: 200, sm: 250, md: 300 }, objectFit: 'cover', objectPosition: 'center top' }}
+                    sx={{ width: '100%', height: { xs: 180, sm: 200, md: 225 }, objectFit: 'cover', objectPosition: 'center top' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>

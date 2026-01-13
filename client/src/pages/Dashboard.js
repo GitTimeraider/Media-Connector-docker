@@ -833,9 +833,9 @@ function Dashboard() {
                 <Close />
               </IconButton>
             </DialogTitle>
-            <DialogContent dividers>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4} md={4}>
+            <DialogContent dividers sx={{ minHeight: 400 }}>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={4}>
                   <CardMedia
                     component="img"
                     image={
@@ -844,10 +844,10 @@ function Dashboard() {
                         : selectedItem.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image'
                     }
                     alt={selectedItem.title || selectedItem.name}
-                    sx={{ borderRadius: 2, width: '100%', maxHeight: 400, objectFit: 'contain' }}
+                    sx={{ borderRadius: 2, width: '100%', maxHeight: 350, objectFit: 'contain' }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={8} md={8}>
+                <Grid item xs={12} sm={8}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     {(selectedItem.release_date || selectedItem.first_air_date || selectedItem.year) && (
                       <Chip 
