@@ -844,7 +844,7 @@ function Dashboard() {
                         : selectedItem.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image'
                     }
                     alt={selectedItem.title || selectedItem.name}
-                    sx={{ borderRadius: 2, width: '100%' }}
+                    sx={{ borderRadius: 2, width: '100%', maxHeight: 450, objectFit: 'contain' }}
                   />
                 </Grid>
                 <Grid item xs={12} sm={8}>
@@ -881,7 +881,7 @@ function Dashboard() {
                       <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
                         Genres
                       </Typography>
-                      <Box display="flex" gap={1} flexWrap="wrap">
+                      <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                         {selectedItem.genres.map((genre, index) => (
                           <Chip 
                             key={index} 
@@ -893,25 +893,25 @@ function Dashboard() {
                       </Box>
                     </>
                   )}
-                  {selectedItem.cast && Array.isArray(selectedItem.cast) && selectedItem.cast.length > 0 && (
-                    <>
-                      <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
-                        Cast
-                      </Typography>
-                      <Box display="flex" gap={1} flexWrap="wrap">
-                        {selectedItem.cast.slice(0, 5).map((actor, index) => (
-                          <Chip 
-                            key={index} 
-                            label={typeof actor === 'string' ? actor : actor?.name || ''} 
-                            variant="outlined" 
-                            size="small" 
-                          />
-                        ))}
-                      </Box>
-                    </>
-                  )}
                 </Grid>
               </Grid>
+              {selectedItem.cast && Array.isArray(selectedItem.cast) && selectedItem.cast.length > 0 && (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ fontWeight: 600 }}>
+                    Cast
+                  </Typography>
+                  <Box display="flex" gap={1} flexWrap="wrap">
+                    {selectedItem.cast.slice(0, 5).map((actor, index) => (
+                      <Chip 
+                        key={index} 
+                        label={typeof actor === 'string' ? actor : actor?.name || ''} 
+                        variant="outlined" 
+                        size="small" 
+                      />
+                    ))}
+                  </Box>
+                </Box>
+              )}
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
