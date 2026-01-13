@@ -460,19 +460,24 @@ function Search() {
             {protocolFilter !== 'both' && ` (${protocolFilter === 'torrent' ? 'Torrent' : 'Usenet'} only)`}
           </Alert>
           <Grid container spacing={2}>
-            {filteredResults.map((result, index) => (
+            {filteredResults.map((result, index) => {
+              // Try to find a cover image from various possible fields
+              const coverImage = result.coverUrl || result.posterUrl || result.poster || result.cover || result.bannerUrl || null;
+              
+              return (
             <Grid item xs={12} key={index}>
               <Card sx={{ 
                 border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
                         result.relevanceScore >= 50 ? '2px solid #2196f3' : 
                         '1px solid rgba(255,255,255,0.1)',
                 display: 'flex',
-                flexDirection: 'row'
+                flexDirection: 'row',
+                width: '100%'
               }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                   <CardContent sx={{ flex: '1 0 auto' }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                      <Typography variant="h6" sx={{ flex: 1, pr: 2 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1} flexWrap="wrap">
+                      <Typography variant="h6" sx={{ flex: 1, pr: 2, wordBreak: 'break-word' }}>
                         {result.title}
                       </Typography>
                       {result.relevanceScore >= 100 && (
@@ -510,12 +515,16 @@ function Search() {
                       )}
                     </Box>
                     {result.infoUrl && (
-                      <Typography variant="body2" color="text.secondary" noWrap>
+                      <Typography variant="body2" color="text.secondary" sx={{ 
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
                         Source: {result.infoUrl}
                       </Typography>
                     )}
                   </CardContent>
-                  <CardActions>
+                  <CardActions sx={{ flexWrap: 'wrap' }}>
                     <Button
                       size="small"
                       variant="contained"
@@ -535,15 +544,18 @@ function Search() {
                     </Button>
                   </CardActions>
                 </Box>
-                {result.coverUrl && (
+                {coverImage && (
                   <Box 
                     sx={{ 
                       flexShrink: 0,
                       cursor: 'pointer',
-                      '&:hover': { opacity: 0.8 }
+                      transition: 'opacity 0.2s',
+                      '&:hover': { opacity: 0.8 },
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
                     onClick={() => {
-                      setSelectedImage(result.coverUrl);
+                      setSelectedImage(coverImage);
                       setImageDialogOpen(true);
                     }}
                   >
@@ -552,17 +564,19 @@ function Search() {
                       sx={{ 
                         width: 100,
                         height: 150,
-                        objectFit: 'cover'
+                        objectFit: 'cover',
+                        borderRadius: 1
                       }}
-                      image={result.coverUrl}
+                      image={coverImage}
                       alt={result.title}
-                      onError={(e) => { e.target.style.display = 'none'; }}
+                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
                     />
                   </Box>
                 )}
               </Card>
             </Grid>
-            ))}
+              );
+            })}
           </Grid>
         </>
         );

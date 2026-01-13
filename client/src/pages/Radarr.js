@@ -541,7 +541,7 @@ function Radarr() {
                     component="img"
                     image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
                     alt={movie.title}
-                    sx={{ aspectRatio: '2/3', objectFit: 'cover', objectPosition: 'top', height: 'auto', width: '100%' }}
+                    sx={{ aspectRatio: '2/3', objectFit: 'cover', objectPosition: 'top', maxHeight: 400, width: '100%' }}
                   />
                 )}
                 <CardContent sx={{ flexGrow: 1 }}>
