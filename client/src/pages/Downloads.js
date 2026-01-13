@@ -113,66 +113,68 @@ function Downloads() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
+    <Container maxWidth="xl">
       <Typography variant="h4" gutterBottom>
         Downloads
       </Typography>
 
-      <Grid container spacing={2} sx={{ mt: 2 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
         {downloads.map((item, index) => (
-          <Grid item xs={12} key={index}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Box flexGrow={1}>
-                    <Typography variant="h6" gutterBottom>
-                      {item.filename || item.name}
-                    </Typography>
-                    <Box display="flex" gap={1} mb={1}>
-                      <Chip label={item.service} size="small" color="primary" />
-                      <Chip label={item.instanceName} size="small" />
-                      <Chip 
-                        label={item.status || 'Downloading'} 
-                        size="small" 
-                        color={item.status === 'Downloading' ? 'success' : 'default'} 
-                      />
-                    </Box>
-                  </Box>
-                  <Box display="flex" gap={1}>
-                    <IconButton size="small" onClick={() => handlePause(item)}>
-                      <Pause />
-                    </IconButton>
-                    <IconButton size="small" color="error" onClick={() => handleDelete(item)}>
-                      <Delete />
-                    </IconButton>
-                  </Box>
-                </Box>
-
-                <Box mb={1}>
-                  <Box display="flex" justifyContent="space-between" mb={0.5}>
-                    <Typography variant="body2">
-                      {parseFloat(item.percentage || item.progress || 0).toFixed(1)}% complete
-                    </Typography>
-                    <Typography variant="body2">
-                      {item.mb ? `${item.mb} MB` : formatBytes(item.size || item.total_size || 0)}
-                    </Typography>
-                  </Box>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={parseFloat(item.percentage || item.progress || 0)} 
-                  />
-                </Box>
-
-                {item.timeleft && (
-                  <Typography variant="body2" color="text.secondary">
-                    Time remaining: {item.timeleft}
+          <Card key={index} sx={{ width: '100%' }}>
+            <CardContent>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+                <Box sx={{ flex: 1, minWidth: 0, pr: 2 }}>
+                  <Typography variant="h6" gutterBottom sx={{ 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap' 
+                  }}>
+                    {item.filename || item.name}
                   </Typography>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
+                  <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
+                    <Chip label={item.service} size="small" color="primary" />
+                    <Chip label={item.instanceName} size="small" />
+                    <Chip 
+                      label={item.status || 'Downloading'} 
+                      size="small" 
+                      color={item.status === 'Downloading' ? 'success' : 'default'} 
+                    />
+                  </Box>
+                </Box>
+                <Box display="flex" gap={1} sx={{ flexShrink: 0 }}>
+                  <IconButton size="small" onClick={() => handlePause(item)}>
+                    <Pause />
+                  </IconButton>
+                  <IconButton size="small" color="error" onClick={() => handleDelete(item)}>
+                    <Delete />
+                  </IconButton>
+                </Box>
+              </Box>
+
+              <Box mb={1}>
+                <Box display="flex" justifyContent="space-between" mb={0.5}>
+                  <Typography variant="body2">
+                    {parseFloat(item.percentage || item.progress || 0).toFixed(1)}% complete
+                  </Typography>
+                  <Typography variant="body2">
+                    {item.mb ? `${item.mb} MB` : formatBytes(item.size || item.total_size || 0)}
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={parseFloat(item.percentage || item.progress || 0)} 
+                />
+              </Box>
+
+              {item.timeleft && (
+                <Typography variant="body2" color="text.secondary">
+                  Time remaining: {item.timeleft}
+                </Typography>
+              )}
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 }
