@@ -506,70 +506,55 @@ function Radarr() {
           <CircularProgress />
         </Box>
       ) : viewMode === 'cards' ? (
-        <Grid container spacing={3}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 2,
+          '& > *': {
+            flexBasis: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' },
+            maxWidth: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' }
+          }
+        }}>
           {filteredMovies.map((movie) => (
-            <Grid item xs={6} sm={6} md={4} lg={3} key={movie.id}>
-              <Card 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  position: 'relative',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: '-10px',
-                      left: '-10px',
-                      right: '-10px',
-                      bottom: '-10px',
-                      pointerEvents: 'auto'
-                    }
-                  }
-                }}
-                onClick={() => handleOpenDetail(movie)}
-              >
-                {movie.images?.find(img => img.coverType === 'poster') && (
-                  <CardMedia
-                    component="img"
-                    image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
-                    alt={movie.title}
-                    sx={{ width: '100%', height: { xs: 180, sm: 200, md: 225 }, objectFit: 'cover', objectPosition: 'center top' }}
+            <Card 
+              key={movie.id}
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4
+                }
+              }}
+              onClick={() => handleOpenDetail(movie)}
+            >
+              {movie.images?.find(img => img.coverType === 'poster') && (
+                <CardMedia
+                  component="img"
+                  image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
+                  alt={movie.title}
+                  sx={{ width: '100%', height: 220, objectFit: 'cover', objectPosition: 'center top' }}
+                />
+              )}
+              <CardContent sx={{ flexGrow: 1, p: 1.5 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  {movie.title}
+                </Typography>
+                <Box display="flex" gap={0.5} flexWrap="wrap">
+                  <Chip label={movie.year} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
+                  <Chip 
+                    label={movie.hasFile ? "DL" : "Missing"} 
+                    size="small" 
+                    color={movie.hasFile ? "success" : "default"}
+                    sx={{ height: 20, fontSize: '0.7rem' }}
                   />
-                )}
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {movie.title}
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
-                    <Chip label={movie.year} size="small" />
-                    <Chip 
-                      icon={movie.hasFile ? <CloudDownload /> : <CloudOff />}
-                      label={movie.hasFile ? "Downloaded" : "Not Downloaded"} 
-                      size="small" 
-                      color={movie.hasFile ? "success" : "default"}
-                      variant={movie.hasFile ? "filled" : "outlined"}
-                    />
-                    <Chip 
-                      icon={movie.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
-                      label={movie.monitored ? "Monitored" : "Unmonitored"} 
-                      size="small" 
-                      color={movie.monitored ? "primary" : "default"}
-                      variant={movie.monitored ? "filled" : "outlined"}
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {movie.overview?.substring(0, 150)}...
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       ) : (
         /* List View */
         <Box>
