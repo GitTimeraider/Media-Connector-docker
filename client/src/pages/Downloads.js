@@ -9,7 +9,6 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Grid,
   IconButton
 } from '@mui/material';
 import { Pause, Delete } from '@mui/icons-material';
