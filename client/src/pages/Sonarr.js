@@ -23,7 +23,7 @@ import {
   MenuItem,
   OutlinedInput
 } from '@mui/material';
-import { Search, Add, Delete, Close, ViewModule, ViewList, FilterList, Sort, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
+import { Search, Add, Delete, Close, ViewModule, ViewList, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
 
 // Helper function to format bytes to human-readable size

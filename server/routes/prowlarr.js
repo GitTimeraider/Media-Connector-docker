@@ -138,18 +138,38 @@ router.get('/search/:instanceId', async (req, res) => {
       // Helper function to check if a URL is a valid public image URL
       const isValidPublicImageUrl = (url) => {
         if (!url) return false;
-        // Must be a valid http/https URL
-        if (!url.startsWith('http://') && !url.startsWith('https://')) return false;
-        // Exclude internal/docker hostnames
-        if (url.includes('prowlarr:') || url.includes('localhost:') || url.includes('127.0.0.1')) return false;
-        // Exclude download URLs (they're not images)
-        if (url.includes('/download?') || url.includes('/api/')) return false;
-        // Should look like an actual image URL or be from known image hosts
-        const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(url) ||
-                              url.includes('image.tmdb.org') ||
-                              url.includes('thetvdb.com') ||
-                              url.includes('fanart.tv');
-        return looksLikeImage;
+        
+        try {
+          const parsedUrl = new URL(url);
+          
+          // Must be a valid http/https URL
+          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') return false;
+          
+          // Exclude internal/docker hostnames using proper hostname comparison
+          const hostname = parsedUrl.hostname.toLowerCase();
+          const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+          if (blockedHosts.includes(hostname)) return false;
+          
+          // Exclude hostnames containing 'prowlarr' as subdomain or service name
+          if (hostname === 'prowlarr' || hostname.split('.').includes('prowlarr')) return false;
+          
+          // Exclude private IP ranges
+          if (/^10\./.test(hostname) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) || /^192\.168\./.test(hostname)) return false;
+          
+          // Exclude download URLs (they're not images) - check path
+          const path = parsedUrl.pathname + parsedUrl.search;
+          if (path.includes('/download') || path.includes('/api/')) return false;
+          
+          // Should look like an actual image URL or be from known image hosts
+          const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(path) ||
+                                hostname.includes('image.tmdb.org') ||
+                                hostname.includes('thetvdb.com') ||
+                                hostname.includes('fanart.tv');
+          return looksLikeImage;
+        } catch (error) {
+          // Invalid URL
+          return false;
+        }
       };
       
       // Only use cover URLs that are publicly accessible
@@ -196,10 +216,23 @@ router.get('/download/:instanceId', async (req, res) => {
     }
     
     // Ensure the URL is from the configured Prowlarr instance to prevent SSRF
+    // Use strict origin, hostname, and port comparison
     const prowlarrBaseUrl = new URL(instance.url);
     const downloadUrl = new URL(url);
-    if (downloadUrl.origin !== prowlarrBaseUrl.origin) {
-      return res.status(400).json({ error: 'Download URL does not match configured Prowlarr instance' });
+    
+    // Verify protocol matches
+    if (downloadUrl.protocol !== prowlarrBaseUrl.protocol) {
+      return res.status(400).json({ error: 'Download URL protocol does not match configured Prowlarr instance' });
+    }
+    
+    // Verify hostname matches (case-insensitive)
+    if (downloadUrl.hostname.toLowerCase() !== prowlarrBaseUrl.hostname.toLowerCase()) {
+      return res.status(400).json({ error: 'Download URL hostname does not match configured Prowlarr instance' });
+    }
+    
+    // Verify port matches
+    if (downloadUrl.port !== prowlarrBaseUrl.port) {
+      return res.status(400).json({ error: 'Download URL port does not match configured Prowlarr instance' });
     }
 
     const axios = require('axios');
