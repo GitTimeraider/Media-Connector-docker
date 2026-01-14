@@ -160,11 +160,18 @@ router.get('/search/:instanceId', async (req, res) => {
           const path = parsedUrl.pathname + parsedUrl.search;
           if (path.includes('/download') || path.includes('/api/')) return false;
           
+          // Check if hostname is from trusted image hosts (using exact domain matching)
+          const trustedImageHosts = [
+            'image.tmdb.org',
+            'thetvdb.com',
+            'fanart.tv'
+          ];
+          const isTrustedHost = trustedImageHosts.some(trustedHost => {
+            return hostname === trustedHost || hostname.endsWith('.' + trustedHost);
+          });
+          
           // Should look like an actual image URL or be from known image hosts
-          const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(path) ||
-                                hostname.includes('image.tmdb.org') ||
-                                hostname.includes('thetvdb.com') ||
-                                hostname.includes('fanart.tv');
+          const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(path) || isTrustedHost;
           return looksLikeImage;
         } catch (error) {
           // Invalid URL
