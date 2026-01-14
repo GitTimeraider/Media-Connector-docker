@@ -107,6 +107,7 @@ function AppLayout() {
           variant="h6" 
           noWrap 
           component="div"
+          onClick={() => navigate('/')}
           sx={{
             fontWeight: 700,
             fontSize: '1.1rem',
@@ -114,7 +115,11 @@ function AppLayout() {
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
-            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8
+            }
           }}
         >
           Media Connector

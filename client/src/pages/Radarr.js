@@ -277,7 +277,7 @@ function Radarr() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
+    <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Typography variant="h4">
           Movies
@@ -304,13 +304,12 @@ function Radarr() {
           </Box>
           
           {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Monitor Status</InputLabel>
             <Select
               value={monitoredFilter}
               label="Monitor Status"
               onChange={(e) => setMonitoredFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="monitored">Monitored</MenuItem>
@@ -319,13 +318,12 @@ function Radarr() {
           </FormControl>
           
           {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Download Status</InputLabel>
             <Select
               value={downloadedFilter}
               label="Download Status"
               onChange={(e) => setDownloadedFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="downloaded">Downloaded</MenuItem>
@@ -334,13 +332,12 @@ function Radarr() {
           </FormControl>
           
           {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130, width: 130 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}
               label="Sort By"
               onChange={(e) => setSortBy(e.target.value)}
-              startAdornment={<Sort sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="newest">Newest First</MenuItem>
@@ -509,70 +506,55 @@ function Radarr() {
           <CircularProgress />
         </Box>
       ) : viewMode === 'cards' ? (
-        <Grid container spacing={3}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 2,
+          '& > *': {
+            flexBasis: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' },
+            maxWidth: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' }
+          }
+        }}>
           {filteredMovies.map((movie) => (
-            <Grid item xs={6} sm={6} md={4} lg={3} key={movie.id}>
-              <Card 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  position: 'relative',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: '-10px',
-                      left: '-10px',
-                      right: '-10px',
-                      bottom: '-10px',
-                      pointerEvents: 'auto'
-                    }
-                  }
-                }}
-                onClick={() => handleOpenDetail(movie)}
-              >
-                {movie.images?.find(img => img.coverType === 'poster') && (
-                  <CardMedia
-                    component="img"
-                    image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
-                    alt={movie.title}
-                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
+            <Card 
+              key={movie.id}
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4
+                }
+              }}
+              onClick={() => handleOpenDetail(movie)}
+            >
+              {movie.images?.find(img => img.coverType === 'poster') && (
+                <CardMedia
+                  component="img"
+                  image={movie.images.find(img => img.coverType === 'poster').remoteUrl}
+                  alt={movie.title}
+                  sx={{ width: '100%', height: 220, objectFit: 'cover', objectPosition: 'center top' }}
+                />
+              )}
+              <CardContent sx={{ flexGrow: 1, p: 1.5 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  {movie.title}
+                </Typography>
+                <Box display="flex" gap={0.5} flexWrap="wrap">
+                  <Chip label={movie.year} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
+                  <Chip 
+                    label={movie.hasFile ? "DL" : "Missing"} 
+                    size="small" 
+                    color={movie.hasFile ? "success" : "default"}
+                    sx={{ height: 20, fontSize: '0.7rem' }}
                   />
-                )}
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {movie.title}
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
-                    <Chip label={movie.year} size="small" />
-                    <Chip 
-                      icon={movie.hasFile ? <CloudDownload /> : <CloudOff />}
-                      label={movie.hasFile ? "Downloaded" : "Not Downloaded"} 
-                      size="small" 
-                      color={movie.hasFile ? "success" : "default"}
-                      variant={movie.hasFile ? "filled" : "outlined"}
-                    />
-                    <Chip 
-                      icon={movie.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
-                      label={movie.monitored ? "Monitored" : "Unmonitored"} 
-                      size="small" 
-                      color={movie.monitored ? "primary" : "default"}
-                      variant={movie.monitored ? "filled" : "outlined"}
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {movie.overview?.substring(0, 150)}...
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       ) : (
         /* List View */
         <Box>
@@ -648,18 +630,18 @@ function Radarr() {
               </Box>
             </DialogTitle>
             <DialogContent dividers>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+                <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 150 }, maxWidth: { xs: 200, sm: 150 } }}>
                   {movieToView.images?.find(img => img.coverType === 'poster') && (
                     <CardMedia
                       component="img"
                       image={movieToView.images.find(img => img.coverType === 'poster').remoteUrl}
                       alt={movieToView.title}
-                      sx={{ borderRadius: 2, width: '100%' }}
+                      sx={{ borderRadius: 2, width: '100%', maxHeight: 225, objectFit: 'contain' }}
                     />
                   )}
-                </Grid>
-                <Grid item xs={12} sm={8}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     <Chip label={movieToView.year} />
                     {movieToView.hasFile && (
@@ -746,8 +728,8 @@ function Radarr() {
                       </Box>
                     </FormControl>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>

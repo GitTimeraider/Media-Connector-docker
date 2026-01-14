@@ -17,9 +17,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  CardMedia
+  CardMedia,
+  Dialog,
+  DialogContent,
+  IconButton
 } from '@mui/material';
-import { Search as SearchIcon, Download, Category as CategoryIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Download, Category as CategoryIcon, Close } from '@mui/icons-material';
 import api from '../services/api';
 
 function Search() {
@@ -32,6 +35,8 @@ function Search() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [protocolFilter, setProtocolFilter] = useState('both'); // 'both', 'torrent', 'usenet'
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
+  const [imageDialogOpen, setImageDialogOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const categories = [
     { value: 'all', label: 'All' },
@@ -454,33 +459,25 @@ function Search() {
             {selectedCategory !== 'all' && ` in ${categories.find(c => c.value === selectedCategory)?.label}`}
             {protocolFilter !== 'both' && ` (${protocolFilter === 'torrent' ? 'Torrent' : 'Usenet'} only)`}
           </Alert>
-          <Grid container spacing={2}>
-            {filteredResults.map((result, index) => (
-            <Grid item xs={12} key={index}>
-              <Card sx={{ 
+          <Box sx={{ width: '100%' }}>
+            {filteredResults.map((result, index) => {
+              // Try to find a cover image from various possible fields
+              const coverImage = result.coverUrl || result.posterUrl || result.poster || result.cover || result.bannerUrl || null;
+              
+              return (
+              <Card key={index} sx={{ 
                 border: result.relevanceScore >= 100 ? '2px solid #4caf50' : 
                         result.relevanceScore >= 50 ? '2px solid #2196f3' : 
                         '1px solid rgba(255,255,255,0.1)',
                 display: 'flex',
-                flexDirection: { xs: 'column', sm: 'row' }
+                flexDirection: 'row',
+                width: '100%',
+                mb: 2
               }}>
-                {result.coverUrl && (
-                  <CardMedia
-                    component="img"
-                    sx={{ 
-                      width: { xs: '100%', sm: 140 },
-                      height: { xs: 200, sm: 'auto' },
-                      objectFit: 'cover'
-                    }}
-                    image={result.coverUrl}
-                    alt={result.title}
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                  />
-                )}
-                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
                   <CardContent sx={{ flex: '1 0 auto' }}>
-                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
-                      <Typography variant="h6" sx={{ flex: 1, pr: 2 }}>
+                    <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1} flexWrap="wrap">
+                      <Typography variant="h6" sx={{ flex: 1, pr: 2, wordBreak: 'break-word' }}>
                         {result.title}
                       </Typography>
                       {result.relevanceScore >= 100 && (
@@ -518,12 +515,16 @@ function Search() {
                       )}
                     </Box>
                     {result.infoUrl && (
-                      <Typography variant="body2" color="text.secondary" noWrap>
+                      <Typography variant="body2" color="text.secondary" sx={{ 
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
                         Source: {result.infoUrl}
                       </Typography>
                     )}
                   </CardContent>
-                  <CardActions>
+                  <CardActions sx={{ flexWrap: 'wrap' }}>
                     <Button
                       size="small"
                       variant="contained"
@@ -543,10 +544,39 @@ function Search() {
                     </Button>
                   </CardActions>
                 </Box>
+                {coverImage && (
+                  <Box 
+                    sx={{ 
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                      transition: 'opacity 0.2s',
+                      '&:hover': { opacity: 0.8 },
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                    onClick={() => {
+                      setSelectedImage(coverImage);
+                      setImageDialogOpen(true);
+                    }}
+                  >
+                    <CardMedia
+                      component="img"
+                      sx={{ 
+                        width: 100,
+                        height: 150,
+                        objectFit: 'cover',
+                        borderRadius: 1
+                      }}
+                      image={coverImage}
+                      alt={result.title}
+                      onError={(e) => { e.target.parentElement.style.display = 'none'; }}
+                    />
+                  </Box>
+                )}
               </Card>
-            </Grid>
-            ))}
-          </Grid>
+              );
+            })}
+          </Box>
         </>
         );
       })()}      {searchResults.length === 0 && searchQuery && !searching && (
@@ -554,6 +584,45 @@ function Search() {
           No results found. Try adjusting your search query or category.
         </Alert>
       )}
+
+      {/* Image Preview Dialog */}
+      <Dialog 
+        open={imageDialogOpen} 
+        onClose={() => setImageDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+      >
+        <DialogContent sx={{ p: 0, position: 'relative' }}>
+          <IconButton
+            onClick={() => setImageDialogOpen(false)}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: 8,
+              color: 'white',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.7)'
+              },
+              zIndex: 1
+            }}
+          >
+            <Close />
+          </IconButton>
+          {selectedImage && (
+            <Box
+              component="img"
+              src={selectedImage}
+              alt="Full size preview"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                display: 'block'
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 }

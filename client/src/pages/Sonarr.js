@@ -272,7 +272,7 @@ function Sonarr() {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ overflowX: 'hidden', width: '100%' }}>
+    <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
         <Typography variant="h4">
           TV Shows
@@ -299,13 +299,12 @@ function Sonarr() {
           </Box>
           
           {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 140 }}>
+          <FormControl size="small" sx={{ minWidth: 140 }}>
             <InputLabel>Monitor Status</InputLabel>
             <Select
               value={monitoredFilter}
               label="Monitor Status"
               onChange={(e) => setMonitoredFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="monitored">Monitored</MenuItem>
@@ -314,13 +313,12 @@ function Sonarr() {
           </FormControl>
           
           {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 140, width: 150 }}>
+          <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Download Status</InputLabel>
             <Select
               value={downloadedFilter}
               label="Download Status"
               onChange={(e) => setDownloadedFilter(e.target.value)}
-              startAdornment={<FilterList sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="all">All</MenuItem>
               <MenuItem value="downloaded">Downloaded</MenuItem>
@@ -329,13 +327,12 @@ function Sonarr() {
           </FormControl>
           
           {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130, width: 130 }}>
+          <FormControl size="small" sx={{ minWidth: 130 }}>
             <InputLabel>Sort By</InputLabel>
             <Select
               value={sortBy}
               label="Sort By"
               onChange={(e) => setSortBy(e.target.value)}
-              startAdornment={<Sort sx={{ mr: 1, color: 'action.active' }} />}
             >
               <MenuItem value="alphabetical">Alphabetical</MenuItem>
               <MenuItem value="newest">Newest First</MenuItem>
@@ -374,70 +371,55 @@ function Sonarr() {
           <CircularProgress />
         </Box>
       ) : viewMode === 'cards' ? (
-        <Grid container spacing={3}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexWrap: 'wrap', 
+          gap: 2,
+          '& > *': {
+            flexBasis: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' },
+            maxWidth: { xs: 'calc(50% - 8px)', sm: 'calc(33.333% - 11px)', md: 'calc(25% - 12px)', lg: 'calc(20% - 13px)' }
+          }
+        }}>
           {filteredSeries.map((show) => (
-            <Grid item xs={6} sm={6} md={4} lg={3} key={show.id}>
-              <Card 
-                sx={{ 
-                  height: '100%', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-                  position: 'relative',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: 4,
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: '-10px',
-                      left: '-10px',
-                      right: '-10px',
-                      bottom: '-10px',
-                      pointerEvents: 'auto'
-                    }
-                  }
-                }}
-                onClick={() => handleOpenDetail(show)}
-              >
-                {show.images?.find(img => img.coverType === 'poster') && (
-                  <CardMedia
-                    component="img"
-                    image={show.images.find(img => img.coverType === 'poster').remoteUrl}
-                    alt={show.title}
-                    sx={{ objectFit: 'cover', objectPosition: 'top', height: { xs: 125, sm: 300, md: 350 }, width: '100%' }}
+            <Card 
+              key={show.id}
+              sx={{ 
+                display: 'flex', 
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+                '&:hover': {
+                  transform: 'translateY(-4px)',
+                  boxShadow: 4
+                }
+              }}
+              onClick={() => handleOpenDetail(show)}
+            >
+              {show.images?.find(img => img.coverType === 'poster') && (
+                <CardMedia
+                  component="img"
+                  image={show.images.find(img => img.coverType === 'poster').remoteUrl}
+                  alt={show.title}
+                  sx={{ width: '100%', height: 220, objectFit: 'cover', objectPosition: 'center top' }}
+                />
+              )}
+              <CardContent sx={{ flexGrow: 1, p: 1.5 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+                  {show.title}
+                </Typography>
+                <Box display="flex" gap={0.5} flexWrap="wrap">
+                  <Chip label={show.year} size="small" sx={{ height: 20, fontSize: '0.7rem' }} />
+                  <Chip 
+                    label={(show.statistics?.episodeFileCount > 0) ? "Has Eps" : "Missing"} 
+                    size="small" 
+                    color={(show.statistics?.episodeFileCount > 0) ? "success" : "default"}
+                    sx={{ height: 20, fontSize: '0.7rem' }}
                   />
-                )}
-                <CardContent sx={{ flexGrow: 1 }}>
-                  <Typography variant="h6" gutterBottom>
-                    {show.title}
-                  </Typography>
-                  <Box display="flex" gap={1} flexWrap="wrap" mb={1}>
-                    <Chip label={show.year} size="small" />
-                    <Chip 
-                      icon={(show.statistics?.episodeFileCount > 0) ? <CloudDownload /> : <CloudOff />}
-                      label={(show.statistics?.episodeFileCount > 0) ? "Has Episodes" : "No Episodes"} 
-                      size="small" 
-                      color={(show.statistics?.episodeFileCount > 0) ? "success" : "default"}
-                      variant={(show.statistics?.episodeFileCount > 0) ? "filled" : "outlined"}
-                    />
-                    <Chip 
-                      icon={show.monitored ? <CheckCircle /> : <RadioButtonUnchecked />}
-                      label={show.monitored ? "Monitored" : "Unmonitored"} 
-                      size="small" 
-                      color={show.monitored ? "primary" : "default"}
-                      variant={show.monitored ? "filled" : "outlined"}
-                    />
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {show.overview?.substring(0, 150)}...
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+                </Box>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       ) : (
         /* List View */
         <Box>
@@ -520,18 +502,18 @@ function Sonarr() {
               </Box>
             </DialogTitle>
             <DialogContent dividers>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+                <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 150 }, maxWidth: { xs: 200, sm: 150 } }}>
                   {seriesToView.images?.find(img => img.coverType === 'poster') && (
                     <CardMedia
                       component="img"
                       image={seriesToView.images.find(img => img.coverType === 'poster').remoteUrl}
                       alt={seriesToView.title}
-                      sx={{ borderRadius: 2, width: '100%' }}
+                      sx={{ borderRadius: 2, width: '100%', maxHeight: 225, objectFit: 'contain' }}
                     />
                   )}
-                </Grid>
-                <Grid item xs={12} sm={8}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     <Chip label={`${seriesToView.seasons?.length || 0} Seasons`} />
                     {seriesToView.status && (
@@ -627,8 +609,8 @@ function Sonarr() {
                       </Box>
                     </FormControl>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </DialogContent>
             <DialogActions>
               <Button onClick={handleCloseDetail}>Close</Button>

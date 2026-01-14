@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -121,6 +121,8 @@ function Dashboard() {
   
   // Ref to track if component is mounted (for cancelling background operations)
   const isMountedRef = useRef(true);
+  // Ref to track if dialog is open (for cancelling background updates after close)
+  const dialogOpenRef = useRef(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -433,39 +435,47 @@ function Dashboard() {
     }
   };
 
-  const handleOpenDialog = async (item) => {
-    try {
-      // Ensure cast and genres are arrays
-      let sanitizedItem = {
-        ...item,
-        cast: Array.isArray(item.cast) ? item.cast : [],
-        genres: Array.isArray(item.genres) ? item.genres : []
-      };
-      
-      // Check if this item is already in Radarr/Sonarr library
-      const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
-      const tmdbId = item.tmdbId || item.id;
+  const handleOpenDialog = useCallback(async (item) => {
+    // Ensure cast and genres are arrays
+    let sanitizedItem = {
+      ...item,
+      cast: Array.isArray(item.cast) ? item.cast : [],
+      genres: Array.isArray(item.genres) ? item.genres : []
+    };
+    
+    // Open dialog immediately to prevent perceived lag
+    setSelectedItem(sanitizedItem);
+    setDialogOpen(true);
+    dialogOpenRef.current = true;
+    
+    // Check if this item is already in Radarr/Sonarr library (background check)
+    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+    const tmdbId = item.tmdbId || item.id;
+    
+    // Fetch additional details in background without blocking
+    const fetchAdditionalDetails = async () => {
+      let updatedItem = { ...sanitizedItem };
       
       // Fetch full details including cast if not already present
       if (!item.cast || item.cast.length === 0) {
         try {
           const details = await api.getTMDBDetails(tmdbId, mediaType);
           if (details.credits?.cast) {
-            sanitizedItem.cast = details.credits.cast.slice(0, 10);
+            updatedItem.cast = details.credits.cast.slice(0, 10);
           }
         } catch (error) {
           console.warn('Error fetching TMDB cast:', error);
         }
       }
       
+      // Check library status without triggering any visible state changes
       if (mediaType === 'movie' && services.radarr?.length > 0) {
         try {
           const movies = await api.getRadarrMovies(services.radarr[0].id);
           const existingMovie = movies.find(m => m.tmdbId === tmdbId);
           if (existingMovie) {
-            // Item exists in library - add flags to prevent showing "Add to Library"
-            sanitizedItem = {
-              ...sanitizedItem,
+            updatedItem = {
+              ...updatedItem,
               monitored: existingMovie.monitored,
               hasFile: existingMovie.hasFile,
               id: existingMovie.id,
@@ -480,9 +490,8 @@ function Dashboard() {
           const series = await api.getSonarrSeries(services.sonarr[0].id);
           const existingSeries = series.find(s => s.tmdbId === tmdbId);
           if (existingSeries) {
-            // Item exists in library - add flags to prevent showing "Add to Library"
-            sanitizedItem = {
-              ...sanitizedItem,
+            updatedItem = {
+              ...updatedItem,
               monitored: existingSeries.monitored,
               tvdbId: existingSeries.tvdbId,
               id: existingSeries.id,
@@ -494,17 +503,21 @@ function Dashboard() {
         }
       }
       
-      setSelectedItem(sanitizedItem);
-      setDialogOpen(true);
-    } catch (error) {
-      console.error('Error opening dialog:', error);
-    }
-  };
+      // Only update if dialog is still open with same item
+      if (isMountedRef.current && dialogOpenRef.current) {
+        setSelectedItem(prev => prev?.id === item.id || prev?.tmdbId === item.id ? updatedItem : prev);
+      }
+    };
+    
+    // Run in background
+    fetchAdditionalDetails();
+  }, [services]);
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
+    dialogOpenRef.current = false;
     setDialogOpen(false);
     setTimeout(() => setSelectedItem(null), 200);
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -834,8 +847,8 @@ function Dashboard() {
               </IconButton>
             </DialogTitle>
             <DialogContent dividers>
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={4}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 3 }}>
+                <Box sx={{ flexShrink: 0, width: { xs: '100%', sm: 200 } }}>
                   <CardMedia
                     component="img"
                     image={
@@ -844,10 +857,10 @@ function Dashboard() {
                         : selectedItem.images?.find(img => img.coverType === 'poster')?.remoteUrl || 'https://via.placeholder.com/300x450?text=No+Image'
                     }
                     alt={selectedItem.title || selectedItem.name}
-                    sx={{ borderRadius: 2, width: '100%' }}
+                    sx={{ borderRadius: 2, width: '100%', maxHeight: 300, objectFit: 'contain' }}
                   />
-                </Grid>
-                <Grid item xs={12} sm={8}>
+                </Box>
+                <Box sx={{ flex: 1 }}>
                   <Box display="flex" gap={1} mb={2} flexWrap="wrap">
                     {(selectedItem.release_date || selectedItem.first_air_date || selectedItem.year) && (
                       <Chip 
@@ -881,7 +894,7 @@ function Dashboard() {
                       <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
                         Genres
                       </Typography>
-                      <Box display="flex" gap={1} flexWrap="wrap">
+                      <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
                         {selectedItem.genres.map((genre, index) => (
                           <Chip 
                             key={index} 
@@ -910,8 +923,8 @@ function Dashboard() {
                       </Box>
                     </>
                   )}
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </DialogContent>
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseDialog}>Close</Button>
