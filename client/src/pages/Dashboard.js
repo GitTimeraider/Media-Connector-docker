@@ -23,7 +23,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Checkbox
+  Checkbox,
+  Snackbar
 } from '@mui/material';
 import {
   LiveTv,
@@ -44,6 +45,7 @@ function Dashboard() {
   const [services, setServices] = useState({});
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [trendingTV, setTrendingTV] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // Drag-to-scroll functionality with proper cleanup
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, slider: null });
@@ -256,7 +258,7 @@ function Dashboard() {
           monitored,
           addOptions: { searchForMovie: searchOnAdd }
         });
-        alert(`Added "${itemToAdd.title}" to Radarr!`);
+        setSnackbar({ open: true, message: `Added "${itemToAdd.title}" to Radarr!`, severity: 'success' });
       } else if (mediaType === 'tv' && services.sonarr?.length > 0) {
         // Lookup all available series in Sonarr and let user choose
         const seriesTitle = itemToAdd.name || itemToAdd.title;
@@ -396,7 +398,7 @@ function Dashboard() {
           
           const index = parseInt(choice) - 1;
           if (isNaN(index) || index < 0 || index >= seriesToShow.length) {
-            alert('Invalid selection');
+            setSnackbar({ open: true, message: 'Invalid selection', severity: 'warning' });
             return;
           }
           
@@ -420,7 +422,7 @@ function Dashboard() {
         });
         
         console.log('Sonarr add result:', result);
-        alert(`Added "${matchedSeries.title}" to Sonarr!`);
+        setSnackbar({ open: true, message: `Added "${matchedSeries.title}" to Sonarr!`, severity: 'success' });
       }
       
       setAddDialogOpen(false);
@@ -430,7 +432,7 @@ function Dashboard() {
       console.error('Error adding to library:', error);
       console.error('Error details:', error.response?.data);
       const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message;
-      alert(`Failed to add: ${errorMsg}`);
+      setSnackbar({ open: true, message: `Failed to add: ${errorMsg}`, severity: 'error' });
     }
   };
 
@@ -949,11 +951,11 @@ function Dashboard() {
                     if (trailer) {
                       window.open(`https://www.youtube.com/watch?v=${trailer.key}`, '_blank');
                     } else {
-                      alert('No trailer available');
+                      setSnackbar({ open: true, message: 'No trailer available', severity: 'info' });
                     }
                   } catch (error) {
                     console.error('Error loading trailer:', error);
-                    alert('Failed to load trailer');
+                    setSnackbar({ open: true, message: 'Failed to load trailer', severity: 'error' });
                   }
                 }}
               >
@@ -1343,6 +1345,22 @@ function Dashboard() {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
