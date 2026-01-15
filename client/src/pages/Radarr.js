@@ -21,7 +21,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  OutlinedInput
+  OutlinedInput,
+  Snackbar
 } from '@mui/material';
 import { Search, Add, Delete, Close, ViewModule, ViewList, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
@@ -58,6 +59,7 @@ function Radarr() {
   const [editMode, setEditMode] = useState(false);
   const [editQualityProfile, setEditQualityProfile] = useState('');
   const [editMonitored, setEditMonitored] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // View and filter states
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'list'
@@ -167,7 +169,7 @@ function Radarr() {
       });
     } catch (error) {
       console.error('Error updating movie:', error);
-      alert(`Failed to update movie: ${error.response?.data?.message || error.message}`);
+      setSnackbar({ open: true, message: `Failed to update movie: ${error.response?.data?.message || error.message}`, severity: 'error' });
     }
   };
 
@@ -184,7 +186,7 @@ function Radarr() {
       loadMovies();
     } catch (error) {
       console.error('Error deleting movie:', error);
-      alert(`Failed to delete movie: ${error.response?.data?.message || error.message}`);
+      setSnackbar({ open: true, message: `Failed to delete movie: ${error.response?.data?.message || error.message}`, severity: 'error' });
     }
   };
 
@@ -223,7 +225,7 @@ function Radarr() {
           searchForMovie: true
         }
       });
-      alert(`${selectedMovie.title} added successfully!`);
+      setSnackbar({ open: true, message: `${selectedMovie.title} added successfully!`, severity: 'success' });
       setAddDialogOpen(false);
       setSelectedMovie(null);
       setSearchResults([]);
@@ -231,7 +233,7 @@ function Radarr() {
       loadMovies();
     } catch (error) {
       console.error('Error adding movie:', error);
-      alert('Failed to add movie');
+      setSnackbar({ open: true, message: 'Failed to add movie', severity: 'error' });
     }
   };
 
@@ -771,6 +773,22 @@ function Radarr() {
           </>
         )}
       </Dialog>
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

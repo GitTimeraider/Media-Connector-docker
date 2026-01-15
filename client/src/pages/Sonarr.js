@@ -21,7 +21,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  OutlinedInput
+  OutlinedInput,
+  Snackbar
 } from '@mui/material';
 import { Search, Add, Delete, Close, ViewModule, ViewList, CheckCircle, RadioButtonUnchecked, CloudDownload, CloudOff } from '@mui/icons-material';
 import api from '../services/api';
@@ -57,6 +58,7 @@ function Sonarr() {
   const [editMode, setEditMode] = useState(false);
   const [editQualityProfile, setEditQualityProfile] = useState('');
   const [editMonitored, setEditMonitored] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   // View and filter states
   const [viewMode, setViewMode] = useState('cards'); // 'cards' or 'list'
@@ -165,7 +167,7 @@ function Sonarr() {
       });
     } catch (error) {
       console.error('Error updating series:', error);
-      alert(`Failed to update series: ${error.response?.data?.message || error.message}`);
+      setSnackbar({ open: true, message: `Failed to update series: ${error.response?.data?.message || error.message}`, severity: 'error' });
     }
   };
 
@@ -182,7 +184,7 @@ function Sonarr() {
       loadSeries();
     } catch (error) {
       console.error('Error deleting series:', error);
-      alert(`Failed to delete series: ${error.response?.data?.message || error.message}`);
+      setSnackbar({ open: true, message: `Failed to delete series: ${error.response?.data?.message || error.message}`, severity: 'error' });
     }
   };
 
@@ -241,7 +243,7 @@ function Sonarr() {
           searchForMissingEpisodes: true
         }
       });
-      alert(`${selectedSeries.title} added successfully!`);
+      setSnackbar({ open: true, message: `${selectedSeries.title} added successfully!`, severity: 'success' });
       setSearchOpen(false);
       setSelectedSeries(null);
       setSearchResults([]);
@@ -249,7 +251,7 @@ function Sonarr() {
       loadSeries();
     } catch (error) {
       console.error('Error adding series:', error);
-      alert('Failed to add series');
+      setSnackbar({ open: true, message: 'Failed to add series', severity: 'error' });
     }
   };
 
@@ -790,6 +792,22 @@ function Sonarr() {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }

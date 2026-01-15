@@ -20,7 +20,8 @@ import {
   CardMedia,
   Dialog,
   DialogContent,
-  IconButton
+  IconButton,
+  Snackbar
 } from '@mui/material';
 import { Search as SearchIcon, Download, Category as CategoryIcon, Close } from '@mui/icons-material';
 import api from '../services/api';
@@ -37,6 +38,7 @@ function Search() {
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
   const [imageDialogOpen, setImageDialogOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const categories = [
     { value: 'all', label: 'All' },
@@ -319,21 +321,21 @@ function Search() {
       if (protocol === 'usenet' && services.sabnzbd?.length > 0) {
         // Download via SABnzbd
         await api.addToSabnzbd(services.sabnzbd[0].id, result.downloadUrl);
-        alert('Added to SABnzbd!');
+        setSnackbar({ open: true, message: 'Added to SABnzbd!', severity: 'success' });
       } else if (protocol === 'torrent') {
         // Download via Deluge
         if (services.deluge?.length > 0) {
           await api.addToDeluge(services.deluge[0].id, result.downloadUrl);
-          alert('Added to Deluge!');
+          setSnackbar({ open: true, message: 'Added to Deluge!', severity: 'success' });
         } else {
-          alert('No torrent client configured!');
+          setSnackbar({ open: true, message: 'No torrent client configured!', severity: 'warning' });
         }
       } else if (protocol === 'usenet') {
-        alert('No Usenet client configured!');
+        setSnackbar({ open: true, message: 'No Usenet client configured!', severity: 'warning' });
       }
     } catch (error) {
       console.error('Error downloading:', error);
-      alert('Failed to add download: ' + error.message);
+      setSnackbar({ open: true, message: 'Failed to add download: ' + error.message, severity: 'error' });
     }
   };
 
@@ -623,6 +625,22 @@ function Search() {
           )}
         </DialogContent>
       </Dialog>
+      
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={() => setSnackbar({ ...snackbar, open: false })} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 }
