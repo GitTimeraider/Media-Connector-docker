@@ -88,8 +88,12 @@ app.get('/health', healthLimiter, (req, res) => {
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
   
-  // Wildcard route for React app (rate limited to prevent abuse)
-  app.get('*', healthLimiter, (req, res) => {
+  // Catch-all handler for React app (rate limited to prevent abuse)
+  app.use(healthLimiter, (req, res) => {
+    // Skip API routes and other specific paths
+    if (req.path.startsWith('/api/')) {
+      return res.status(404).json({ error: 'API endpoint not found' });
+    }
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
 }
