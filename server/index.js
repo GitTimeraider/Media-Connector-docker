@@ -89,7 +89,7 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../client/build')));
   
   // Wildcard route for React app (rate limited to prevent abuse)
-  app.get('*', healthLimiter, (req, res) => {
+  app.get('/*', healthLimiter, (req, res) => {
     res.sendFile(path.join(__dirname, '../client/build', 'index.html'));
   });
 }
