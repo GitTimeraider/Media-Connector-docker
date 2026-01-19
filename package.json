@@ -32,6 +32,6 @@
   },
   "devDependencies": {
     "nodemon": "^3.0.2",
-    "concurrently": "^8.2.2"
+    "concurrently": "^9.2.1"
   }
 }
