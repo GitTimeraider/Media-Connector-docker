@@ -53,7 +53,7 @@ function Radarr() {
   const [selectedQualityProfile, setSelectedQualityProfile] = useState('');
   const [selectedRootFolder, setSelectedRootFolder] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
-  const [minimumAvailability, setMinimumAvailability] = useState('released');
+  const [minimumAvailability, setMinimumAvailability] = useState('announced');
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [movieToView, setMovieToView] = useState(null);
   const [deleteFiles, setDeleteFiles] = useState(false);
@@ -232,7 +232,7 @@ function Radarr() {
       setSelectedMovie(null);
       setSearchResults([]);
       setMovieSearchQuery('');
-      setMinimumAvailability('released');
+      setMinimumAvailability('announced');
       loadMovies();
     } catch (error) {
       console.error('Error adding movie:', error);

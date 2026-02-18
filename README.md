@@ -10,7 +10,7 @@
 
 ### Disclaimers: 
 #### AI is responsible for over half of the coding. Also keep in mind that this software is mostly developed for personal use by myself and thus might not receive all feature requests desired.
-###################################################
+##################################################
 
 **A comprehensive web-based media server manager**
 
