@@ -351,9 +351,9 @@ function Overview() {
             <Typography variant="h5" gutterBottom sx={{ textTransform: 'capitalize' }}>
               {serviceType}
             </Typography>
-            <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid container spacing={2} sx={{ mt: 1 }}>
               {instances.map((instance) => (
-                <Grid item xs={12} sm={6} md={4} key={instance.id}>
+                <Grid item xs={12} sm={6} md={4} lg={3} xl={2} key={instance.id}>
                   <ServiceCard serviceType={serviceType} instance={instance} />
                 </Grid>
               ))}
