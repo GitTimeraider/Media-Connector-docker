@@ -181,8 +181,8 @@ function Overview() {
     const isOnline = status?.status === 'online';
 
     return (
-      <Card>
-        <CardContent>
+      <Card sx={{ height: '100%', minHeight: 200, display: 'flex', flexDirection: 'column' }}>
+        <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Typography variant="h6">
               {instance.name}
