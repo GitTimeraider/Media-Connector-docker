@@ -53,6 +53,7 @@ function Radarr() {
   const [selectedQualityProfile, setSelectedQualityProfile] = useState('');
   const [selectedRootFolder, setSelectedRootFolder] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [minimumAvailability, setMinimumAvailability] = useState('released');
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [movieToView, setMovieToView] = useState(null);
   const [deleteFiles, setDeleteFiles] = useState(false);
@@ -221,6 +222,7 @@ function Radarr() {
         rootFolderPath: selectedRootFolder,
         tags: selectedTags,
         monitored: true,
+        minimumAvailability,
         addOptions: {
           searchForMovie: true
         }
@@ -230,6 +232,7 @@ function Radarr() {
       setSelectedMovie(null);
       setSearchResults([]);
       setMovieSearchQuery('');
+      setMinimumAvailability('released');
       loadMovies();
     } catch (error) {
       console.error('Error adding movie:', error);
@@ -440,6 +443,20 @@ function Radarr() {
                           {folder.path} ({folder.freeSpace ? `${Math.round(folder.freeSpace / 1024 / 1024 / 1024)} GB free` : 'Unknown space'})
                         </MenuItem>
                       ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Minimum Availability</InputLabel>
+                    <Select
+                      value={minimumAvailability}
+                      label="Minimum Availability"
+                      onChange={(e) => setMinimumAvailability(e.target.value)}
+                    >
+                      <MenuItem value="announced">Announced</MenuItem>
+                      <MenuItem value="inCinemas">In Cinemas</MenuItem>
+                      <MenuItem value="released">Released</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>

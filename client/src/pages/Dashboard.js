@@ -119,6 +119,7 @@ function Dashboard() {
   const [monitored, setMonitored] = useState(true);
   const [searchOnAdd, setSearchOnAdd] = useState(true);
   const [showAllMatches, setShowAllMatches] = useState(false);
+  const [minimumAvailability, setMinimumAvailability] = useState('released');
   
   // Ref to track if component is mounted (for cancelling background operations)
   const isMountedRef = useRef(true);
@@ -221,6 +222,7 @@ function Dashboard() {
     console.log('Opening add dialog:', { item, mediaType, services });
     setItemToAdd({ ...item, mediaType });
     setAddDialogOpen(true);
+    setMinimumAvailability('released');
     
     // Load profiles and folders from Radarr/Sonarr
     try {
@@ -256,6 +258,7 @@ function Dashboard() {
           qualityProfileId: parseInt(selectedProfile),
           rootFolderPath: selectedFolder,
           monitored,
+          minimumAvailability,
           addOptions: { searchForMovie: searchOnAdd }
         });
         setSnackbar({ open: true, message: `Added "${itemToAdd.title}" to Radarr!`, severity: 'success' });
@@ -1292,6 +1295,21 @@ function Dashboard() {
                     ))}
                   </Select>
                 </FormControl>
+
+                {itemToAdd?.mediaType === 'movie' && (
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Minimum Availability</InputLabel>
+                    <Select
+                      value={minimumAvailability}
+                      label="Minimum Availability"
+                      onChange={(e) => setMinimumAvailability(e.target.value)}
+                    >
+                      <MenuItem value="announced">Announced</MenuItem>
+                      <MenuItem value="inCinemas">In Cinemas</MenuItem>
+                      <MenuItem value="released">Released</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
 
                 <TextField
                   fullWidth
