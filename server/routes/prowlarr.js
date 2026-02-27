@@ -135,67 +135,18 @@ router.get('/search/:instanceId', async (req, res) => {
         downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(originalDownloadUrl)}`;
       }
       
-      // Helper: check if a URL belongs to the configured Prowlarr instance
-      const isProwlarrInstanceUrl = (url) => {
-        if (!url) return false;
-        try {
-          const parsedUrl = new URL(url);
-          const baseUrl = new URL(instance.url);
-          return (
-            parsedUrl.protocol === baseUrl.protocol &&
-            parsedUrl.hostname.toLowerCase() === baseUrl.hostname.toLowerCase() &&
-            parsedUrl.port === baseUrl.port
-          );
-        } catch {
-          return false;
-        }
-      };
-
-      // Helper function to check if a URL is a safe public URL (for any image source,
-      // including CDN/extensionless URLs from niche or adult indexers).
-      // The browser's onError handler in Search.js hides images that fail to load.
-      const isValidPublicImageUrl = (url) => {
-        if (!url) return false;
-        
-        try {
-          const parsedUrl = new URL(url);
-          
-          // Must be http/https
-          if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') return false;
-          
-          const hostname = parsedUrl.hostname.toLowerCase();
-          const path = parsedUrl.pathname;
-
-          // Exclude clear download paths
-          if (path.includes('/download')) return false;
-
-          // Block loopback and private IP ranges (SSRF protection)
-          const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
-          if (blockedHosts.includes(hostname)) return false;
-          if (
-            /^10\./.test(hostname) ||
-            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
-            /^192\.168\./.test(hostname)
-          ) return false;
-
-          // Accept any remaining public URL — covers extensionless CDN thumbnails,
-          // adult/niche indexer artwork, etc. The frontend hides broken images via onError.
-          return true;
-        } catch (error) {
-          return false;
-        }
-      };
-
-      // Build a proxy URL for images that come from the Prowlarr instance itself
+      // Always proxy cover images through the backend:
+      // - Prowlarr-internal URLs (Docker service names, private IPs) can only be
+      //   reached by the server, not the browser.
+      // - External CDN URLs are proxied too so the browser only ever talks to us.
       const makeProxyImageUrl = (url) =>
         `/api/prowlarr/image/${req.params.instanceId}?url=${encodeURIComponent(url)}`;
-      
-      // Resolve cover URL: proxy Prowlarr-internal images, pass through public images
+
       const resolveImageUrl = (url) => {
         if (!url) return null;
-        if (isProwlarrInstanceUrl(url)) return makeProxyImageUrl(url);
-        if (isValidPublicImageUrl(url)) return url;
-        return null;
+        // Accept any http/https URL (validation is done in the proxy endpoint)
+        try { new URL(url); } catch { return null; }
+        return makeProxyImageUrl(url);
       };
 
       let coverUrl =
@@ -300,7 +251,10 @@ router.get('/image/:instanceId', async (req, res) => {
     const { url } = req.query;
     if (!url) return res.status(400).json({ error: 'URL parameter required' });
 
-    // SSRF protection: only proxy URLs that belong to this Prowlarr instance
+    // SSRF protection: allow URLs that either belong to the configured Prowlarr
+    // instance (including Docker-internal hostnames / private IPs) or are on
+    // publicly-routable addresses. Hard-block loopback and RFC-1918 ranges that
+    // are NOT the configured instance.
     let parsedUrl, baseUrl;
     try {
       parsedUrl = new URL(url);
@@ -309,17 +263,35 @@ router.get('/image/:instanceId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid URL' });
     }
 
-    if (
-      parsedUrl.protocol !== baseUrl.protocol ||
-      parsedUrl.hostname.toLowerCase() !== baseUrl.hostname.toLowerCase() ||
-      parsedUrl.port !== baseUrl.port
-    ) {
-      return res.status(403).json({ error: 'URL does not belong to the configured Prowlarr instance' });
+    if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+      return res.status(400).json({ error: 'Only http/https URLs are supported' });
+    }
+
+    const isInstanceUrl =
+      parsedUrl.hostname.toLowerCase() === baseUrl.hostname.toLowerCase() &&
+      parsedUrl.port === baseUrl.port;
+
+    if (!isInstanceUrl) {
+      // Block loopback and private IP ranges to prevent SSRF on non-instance URLs
+      const h = parsedUrl.hostname.toLowerCase();
+      const blocked = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
+      if (
+        blocked.includes(h) ||
+        /^10\./.test(h) ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(h) ||
+        /^192\.168\./.test(h)
+      ) {
+        return res.status(403).json({ error: 'Private/loopback URLs are not allowed for non-instance images' });
+      }
     }
 
     const axios = require('axios');
+    const headers = {};
+    // Only send the API key when fetching from the configured Prowlarr instance
+    if (isInstanceUrl) headers['X-Api-Key'] = instance.apiKey;
+
     const response = await axios.get(url, {
-      headers: { 'X-Api-Key': instance.apiKey },
+      headers,
       responseType: 'stream',
       timeout: 15000
     });
