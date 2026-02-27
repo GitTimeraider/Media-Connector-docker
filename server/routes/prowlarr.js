@@ -135,59 +135,75 @@ router.get('/search/:instanceId', async (req, res) => {
         downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(originalDownloadUrl)}`;
       }
       
-      // Helper function to check if a URL is a valid public image URL
+      // Helper: check if a URL belongs to the configured Prowlarr instance
+      const isProwlarrInstanceUrl = (url) => {
+        if (!url) return false;
+        try {
+          const parsedUrl = new URL(url);
+          const baseUrl = new URL(instance.url);
+          return (
+            parsedUrl.protocol === baseUrl.protocol &&
+            parsedUrl.hostname.toLowerCase() === baseUrl.hostname.toLowerCase() &&
+            parsedUrl.port === baseUrl.port
+          );
+        } catch {
+          return false;
+        }
+      };
+
+      // Helper function to check if a URL is a safe public URL (for any image source,
+      // including CDN/extensionless URLs from niche or adult indexers).
+      // The browser's onError handler in Search.js hides images that fail to load.
       const isValidPublicImageUrl = (url) => {
         if (!url) return false;
         
         try {
           const parsedUrl = new URL(url);
           
-          // Must be a valid http/https URL
+          // Must be http/https
           if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') return false;
           
-          // Exclude internal/docker hostnames using proper hostname comparison
           const hostname = parsedUrl.hostname.toLowerCase();
+          const path = parsedUrl.pathname;
+
+          // Exclude clear download paths
+          if (path.includes('/download')) return false;
+
+          // Block loopback and private IP ranges (SSRF protection)
           const blockedHosts = ['localhost', '127.0.0.1', '0.0.0.0', '::1'];
           if (blockedHosts.includes(hostname)) return false;
-          
-          // Exclude hostnames containing 'prowlarr' as subdomain or service name
-          if (hostname === 'prowlarr' || hostname.split('.').includes('prowlarr')) return false;
-          
-          // Exclude private IP ranges
-          if (/^10\./.test(hostname) || /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) || /^192\.168\./.test(hostname)) return false;
-          
-          // Exclude download URLs (they're not images) - check path
-          const path = parsedUrl.pathname + parsedUrl.search;
-          if (path.includes('/download') || path.includes('/api/')) return false;
-          
-          // Check if hostname is from trusted image hosts (using exact domain matching)
-          const trustedImageHosts = [
-            'image.tmdb.org',
-            'thetvdb.com',
-            'fanart.tv'
-          ];
-          const isTrustedHost = trustedImageHosts.some(trustedHost => {
-            return hostname === trustedHost || hostname.endsWith('.' + trustedHost);
-          });
-          
-          // Should look like an actual image URL or be from known image hosts
-          const looksLikeImage = /\.(jpg|jpeg|png|gif|webp)($|\?)/i.test(path) || isTrustedHost;
-          return looksLikeImage;
+          if (
+            /^10\./.test(hostname) ||
+            /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(hostname) ||
+            /^192\.168\./.test(hostname)
+          ) return false;
+
+          // Accept any remaining public URL — covers extensionless CDN thumbnails,
+          // adult/niche indexer artwork, etc. The frontend hides broken images via onError.
+          return true;
         } catch (error) {
-          // Invalid URL
           return false;
         }
       };
+
+      // Build a proxy URL for images that come from the Prowlarr instance itself
+      const makeProxyImageUrl = (url) =>
+        `/api/prowlarr/image/${req.params.instanceId}?url=${encodeURIComponent(url)}`;
       
-      // Only use cover URLs that are publicly accessible
-      let coverUrl = null;
-      if (isValidPublicImageUrl(result.posterUrl)) {
-        coverUrl = result.posterUrl;
-      } else if (isValidPublicImageUrl(result.cover)) {
-        coverUrl = result.cover;
-      } else if (isValidPublicImageUrl(result.bannerUrl)) {
-        coverUrl = result.bannerUrl;
-      }
+      // Resolve cover URL: proxy Prowlarr-internal images, pass through public images
+      const resolveImageUrl = (url) => {
+        if (!url) return null;
+        if (isProwlarrInstanceUrl(url)) return makeProxyImageUrl(url);
+        if (isValidPublicImageUrl(url)) return url;
+        return null;
+      };
+
+      let coverUrl =
+        resolveImageUrl(result.posterUrl) ||
+        resolveImageUrl(result.coverUrl) ||
+        resolveImageUrl(result.cover) ||
+        resolveImageUrl(result.bannerUrl) ||
+        null;
       
       return {
         ...result,
@@ -270,6 +286,55 @@ router.get('/download/:instanceId', async (req, res) => {
     response.data.pipe(res);
   } catch (error) {
     console.error('Prowlarr download proxy error:', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Image proxy endpoint - serves Prowlarr-internal cover/poster images to the browser
+router.get('/image/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('prowlarr');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ error: 'URL parameter required' });
+
+    // SSRF protection: only proxy URLs that belong to this Prowlarr instance
+    let parsedUrl, baseUrl;
+    try {
+      parsedUrl = new URL(url);
+      baseUrl = new URL(instance.url);
+    } catch {
+      return res.status(400).json({ error: 'Invalid URL' });
+    }
+
+    if (
+      parsedUrl.protocol !== baseUrl.protocol ||
+      parsedUrl.hostname.toLowerCase() !== baseUrl.hostname.toLowerCase() ||
+      parsedUrl.port !== baseUrl.port
+    ) {
+      return res.status(403).json({ error: 'URL does not belong to the configured Prowlarr instance' });
+    }
+
+    const axios = require('axios');
+    const response = await axios.get(url, {
+      headers: { 'X-Api-Key': instance.apiKey },
+      responseType: 'stream',
+      timeout: 15000
+    });
+
+    // Forward image content headers
+    const contentType = response.headers['content-type'] || 'image/jpeg';
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    if (response.headers['content-length']) {
+      res.setHeader('Content-Length', response.headers['content-length']);
+    }
+
+    response.data.pipe(res);
+  } catch (error) {
+    console.error('Prowlarr image proxy error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
