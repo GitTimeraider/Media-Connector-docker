@@ -95,6 +95,17 @@ router.get('/search/:instanceId', async (req, res) => {
     };
     
     const enrichedResults = response.data.map(result => {
+      // Debug: log image fields for the first result to help diagnose
+      if (response.data.indexOf(result) === 0) {
+        console.log('[Prowlarr search] First result image fields:', {
+          posterUrl: result.posterUrl,
+          cover: result.cover,
+          coverUrl: result.coverUrl,
+          bannerUrl: result.bannerUrl,
+          tmdbId: result.tmdbId,
+          imdbId: result.imdbId
+        });
+      }
       // Handle both number and array of categories
       let categoryIds = [];
       if (Array.isArray(result.categories)) {
@@ -144,9 +155,19 @@ router.get('/search/:instanceId', async (req, res) => {
 
       const resolveImageUrl = (url) => {
         if (!url) return null;
-        // Accept any http/https URL (validation is done in the proxy endpoint)
-        try { new URL(url); } catch { return null; }
-        return makeProxyImageUrl(url);
+        // Handle relative URLs (e.g. /api/v1/mediacover/123/poster.jpg) by
+        // prepending the configured Prowlarr instance base URL.
+        let absoluteUrl = url;
+        if (url.startsWith('/') || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+          try {
+            absoluteUrl = new URL(url, instance.url).toString();
+          } catch {
+            return null;
+          }
+        } else {
+          try { new URL(url); } catch { return null; }
+        }
+        return makeProxyImageUrl(absoluteUrl);
       };
 
       let coverUrl =
@@ -164,7 +185,167 @@ router.get('/search/:instanceId', async (req, res) => {
         coverUrl
       };
     });
-    
+
+    // -----------------------------------------------------------------------
+    // TMDB fallback: for results still missing a cover image, attempt to fetch
+    // a poster via TMDB using tmdbId, imdbId, or tvdbId.
+    // Movie categories: 2000–2999. TV categories: 5000–5999. Everything else
+    // tries movie first, then TV.
+    // We cap at 30 lookups (prioritising results that already have an ID) to
+    // keep the response time acceptable.
+    // -----------------------------------------------------------------------
+    const TMDB_API_KEY = process.env.TMDB_API_KEY;
+    const TMDB_BASE = 'https://api.themoviedb.org/3';
+
+    if (TMDB_API_KEY) {
+      const needsImage = enrichedResults
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => !r.coverUrl && (r.tmdbId || r.imdbId || r.tvdbId))
+        .slice(0, 30); // cap concurrent lookups
+
+      const getPosterPath = async ({ r }) => {
+        const firstCatId = Array.isArray(r.categories)
+          ? Number(r.categories[0]?.id ?? r.categories[0] ?? 0)
+          : Number(r.categories ?? 0);
+        const isMovie = firstCatId >= 2000 && firstCatId < 3000;
+        const isTV    = firstCatId >= 5000 && firstCatId < 6000;
+
+        try {
+          // 1. Direct TMDB ID lookup
+          if (r.tmdbId) {
+            const type = isTV ? 'tv' : 'movie';
+            const res1 = await axios.get(`${TMDB_BASE}/${type}/${r.tmdbId}`, {
+              params: { api_key: TMDB_API_KEY },
+              timeout: 8000
+            });
+            if (res1.data.poster_path) return res1.data.poster_path;
+            // If the type guess was wrong, try the other
+            if (!isMovie && !isTV) {
+              const alt = type === 'movie' ? 'tv' : 'movie';
+              const res2 = await axios.get(`${TMDB_BASE}/${alt}/${r.tmdbId}`, {
+                params: { api_key: TMDB_API_KEY },
+                timeout: 8000
+              });
+              if (res2.data.poster_path) return res2.data.poster_path;
+            }
+          }
+
+          // 2. IMDB ID lookup via /find
+          if (r.imdbId) {
+            const imdbStr = String(r.imdbId).startsWith('tt') ? r.imdbId : `tt${String(r.imdbId).padStart(7, '0')}`;
+            const res3 = await axios.get(`${TMDB_BASE}/find/${imdbStr}`, {
+              params: { api_key: TMDB_API_KEY, external_source: 'imdb_id' },
+              timeout: 8000
+            });
+            const hit =
+              res3.data.movie_results?.[0] ||
+              res3.data.tv_results?.[0] ||
+              res3.data.tv_episode_results?.[0];
+            if (hit?.poster_path) return hit.poster_path;
+          }
+
+          // 3. TVDB ID lookup via /find
+          if (r.tvdbId) {
+            const res4 = await axios.get(`${TMDB_BASE}/find/${r.tvdbId}`, {
+              params: { api_key: TMDB_API_KEY, external_source: 'tvdb_id' },
+              timeout: 8000
+            });
+            const hit2 = res4.data.tv_results?.[0] || res4.data.movie_results?.[0];
+            if (hit2?.poster_path) return hit2.poster_path;
+          }
+        } catch {
+          // Silently ignore TMDB errors — images are best-effort
+        }
+        return null;
+      };
+
+      const lookupResults = await Promise.allSettled(needsImage.map(getPosterPath));
+
+      lookupResults.forEach((outcome, idx) => {
+        if (outcome.status === 'fulfilled' && outcome.value) {
+          const posterPath = outcome.value;
+          const imageUrl = `https://image.tmdb.org/t/p/w300${posterPath}`;
+          enrichedResults[needsImage[idx].i].coverUrl = imageUrl;
+        }
+      });
+    }
+    // -----------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------
+    // Indexer page scrape fallback: for results still missing a cover, fetch
+    // the infoUrl page and extract og:image / twitter:image / first <img>.
+    // This catches thumbnails on adult/niche indexer pages that have no
+    // TMDB/IMDB/TVDB IDs.
+    // -----------------------------------------------------------------------
+    const stillNeedsImage = enrichedResults
+      .map((r, i) => ({ r, i }))
+      .filter(({ r }) => !r.coverUrl && r.infoUrl)
+      .slice(0, 30);
+
+    if (stillNeedsImage.length > 0) {
+      const scrapeImage = async (url) => {
+        try {
+          const pageRes = await axios.get(url, {
+            timeout: 8000,
+            maxContentLength: 512 * 1024, // 512 KB — enough for any <head>
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+              'Accept': 'text/html,application/xhtml+xml',
+            },
+            // Only follow a small number of redirects
+            maxRedirects: 3,
+          });
+
+          const html = typeof pageRes.data === 'string' ? pageRes.data : '';
+
+          // 1. og:image
+          const ogMatch = html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)
+                       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+          if (ogMatch?.[1]) return ogMatch[1];
+
+          // 2. twitter:image
+          const twMatch = html.match(/<meta[^>]+name=["']twitter:image(?::src)?["'][^>]+content=["']([^"']+)["']/i)
+                       || html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image(?::src)?["']/i);
+          if (twMatch?.[1]) return twMatch[1];
+
+          // 3. First <img> with a reasonable src (skip tiny icons / tracking pixels)
+          const imgMatches = [...html.matchAll(/<img[^>]+src=["']([^"']+)["'][^>]*>/gi)];
+          for (const m of imgMatches) {
+            const src = m[1];
+            // Skip data URIs, very short paths (icons), and common tracker patterns
+            if (src.startsWith('data:')) continue;
+            if (src.length < 10) continue;
+            if (/\/(icon|logo|favicon|pixel|tracker|spacer|blank|clear|1x1)/i.test(src)) continue;
+            // Prefer paths that look like images
+            return src;
+          }
+        } catch {
+          // Silently skip failed scrapes
+        }
+        return null;
+      };
+
+      const scrapeResults = await Promise.allSettled(
+        stillNeedsImage.map(({ r }) => scrapeImage(r.infoUrl))
+      );
+
+      scrapeResults.forEach((outcome, idx) => {
+        if (outcome.status === 'fulfilled' && outcome.value) {
+          let imageUrl = outcome.value;
+          // Resolve relative URLs against the infoUrl origin
+          if (!imageUrl.startsWith('http://') && !imageUrl.startsWith('https://')) {
+            try {
+              imageUrl = new URL(imageUrl, stillNeedsImage[idx].r.infoUrl).toString();
+            } catch {
+              return;
+            }
+          }
+          enrichedResults[stillNeedsImage[idx].i].coverUrl = imageUrl;
+        }
+      });
+    }
+    // -----------------------------------------------------------------------
+
     res.json(enrichedResults);
   } catch (error) {
     console.error('Prowlarr search error:', error.response?.data || error.message);
