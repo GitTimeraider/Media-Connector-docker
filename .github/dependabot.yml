@@ -9,18 +9,22 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "develop"
 
   - package-ecosystem: "npm"
     directory: "/client"
     schedule:
       interval: "weekly"
+    target-branch: "develop"
 
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "develop"
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+    target-branch: "develop"
