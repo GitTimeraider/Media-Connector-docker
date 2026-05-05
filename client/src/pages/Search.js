@@ -32,8 +32,6 @@ function Search() {
   const [selectedSubcategory, setSelectedSubcategory] = useState('all');
   const [protocolFilter, setProtocolFilter] = useState('both'); // 'both', 'torrent', 'usenet'
   const [prowlarrInstance, setProwlarrInstance] = useState(null);
-  const [appliedCategory, setAppliedCategory] = useState('all');
-  const [appliedSubcategory, setAppliedSubcategory] = useState('all');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
   const categories = [
@@ -172,8 +170,6 @@ function Search() {
     if (!searchQuery.trim() || !prowlarrInstance) return;
 
     setSearching(true);
-    setAppliedCategory(selectedCategory);
-    setAppliedSubcategory(selectedSubcategory);
     try {
       const params = {
         query: searchQuery,
@@ -483,30 +479,12 @@ function Search() {
                       )}
                     </Box>
                     <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-                      {appliedCategory !== 'all' && (
+                      {result.categoryDisplay && result.categoryDisplay !== 'Unknown' && (
                         <Chip
                           icon={<CategoryIcon />}
-                          label={categories.find(c => c.value === appliedCategory)?.label || appliedCategory}
+                          label={result.categoryDisplay}
                           size="small"
                           color="secondary"
-                          sx={{ fontWeight: 600 }}
-                        />
-                      )}
-                      {appliedCategory !== 'all' && appliedSubcategory !== 'all' && (
-                        <Chip
-                          label={categories.find(c => c.value === appliedCategory)?.subcategories?.find(s => s.value === appliedSubcategory)?.label || appliedSubcategory}
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
-                          sx={{ fontWeight: 600 }}
-                        />
-                      )}
-                      {appliedCategory !== 'all' && appliedSubcategory === 'all' && (
-                        <Chip
-                          label="All"
-                          size="small"
-                          color="secondary"
-                          variant="outlined"
                           sx={{ fontWeight: 600 }}
                         />
                       )}
