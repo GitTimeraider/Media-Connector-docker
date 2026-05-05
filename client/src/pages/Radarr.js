@@ -283,11 +283,16 @@ function Radarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="flex-end" mb={3} flexWrap="wrap" gap={2}>
-        <Typography variant="h4">
-          Movies
-        </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap" alignItems="flex-end">
+      {/* Row 1: Title + Add button */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+        <Typography variant="h4">Movies</Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
+          Add Movie
+        </Button>
+      </Box>
+
+      {/* Row 2: View toggle + filters — mt:3 gives floating InputLabels room above */}
+      <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" sx={{ mt: 3, mb: 3 }}>
           {/* View Mode Toggle */}
           <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Button
@@ -349,11 +354,6 @@ function Radarr() {
               <MenuItem value="oldest">Oldest First</MenuItem>
             </Select>
           </FormControl>
-          
-          <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
-            Add Movie
-          </Button>
-        </Box>
       </Box>
 
       <Dialog open={addDialogOpen} onClose={() => setAddDialogOpen(false)} maxWidth="md" fullWidth>
