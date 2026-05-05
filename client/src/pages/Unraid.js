@@ -248,7 +248,7 @@ function UnraidContent() {
                 <Typography variant="body2" color="text.secondary">
                   {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}
                 </Typography>
-                <Typography variant="caption" display="block" sx={{ mt: 1 }}>
+                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
                   Uptime: {(() => {
                     const uptimeData = systemStats.os?.uptime;
                     if (!uptimeData) return 'N/A';
@@ -273,7 +273,7 @@ function UnraidContent() {
                     return `${days}d ${hours}h ${minutes}m`;
                   })()}
                 </Typography>
-                <Typography variant="caption" display="block">
+                <Typography variant="caption" sx={{ display: 'block' }}>
                   Platform: {systemStats.os?.platform || 'N/A'}
                 </Typography>
               </CardContent>
@@ -290,11 +290,11 @@ function UnraidContent() {
                 <Typography variant="body1" sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
                   {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
                 </Typography>
-                <Typography variant="caption">
+                <Typography variant="caption" sx={{ display: 'block' }}>
                   {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
                 </Typography>
                 {systemStats.cpu?.speed && (
-                  <Typography variant="caption" display="block">
+                  <Typography variant="caption" sx={{ display: 'block' }}>
                     {safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz
                   </Typography>
                 )}
@@ -375,8 +375,8 @@ function UnraidContent() {
                 ) : (
                   <>
                     <Typography variant="h4">{formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}</Typography>
-                    <Typography variant="caption" display="block">{Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules</Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                    <Typography variant="caption" sx={{ display: 'block' }}>{Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
                       Memory usage data not available
                     </Typography>
                   </>
