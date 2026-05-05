@@ -275,81 +275,83 @@ function Sonarr() {
 
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3} flexWrap="wrap" gap={2}>
+      {/* Row 1: Title + Add button */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
         <Typography variant="h4">
           TV Shows
         </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
-          {/* View Mode Toggle */}
-          <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-            <Button
-              size="small"
-              variant={viewMode === 'cards' ? 'contained' : 'text'}
-              onClick={() => setViewMode('cards')}
-              startIcon={<ViewModule />}
-            >
-              Cards
-            </Button>
-            <Button
-              size="small"
-              variant={viewMode === 'list' ? 'contained' : 'text'}
-              onClick={() => setViewMode('list')}
-              startIcon={<ViewList />}
-            >
-              List
-            </Button>
-          </Box>
-          
-          {/* Monitored Filter */}
-          <FormControl size="small" sx={{ minWidth: 140 }}>
-            <InputLabel>Monitor Status</InputLabel>
-            <Select
-              value={monitoredFilter}
-              label="Monitor Status"
-              onChange={(e) => setMonitoredFilter(e.target.value)}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="monitored">Monitored</MenuItem>
-              <MenuItem value="unmonitored">Unmonitored</MenuItem>
-            </Select>
-          </FormControl>
-          
-          {/* Downloaded Filter */}
-          <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Download Status</InputLabel>
-            <Select
-              value={downloadedFilter}
-              label="Download Status"
-              onChange={(e) => setDownloadedFilter(e.target.value)}
-            >
-              <MenuItem value="all">All</MenuItem>
-              <MenuItem value="downloaded">Downloaded</MenuItem>
-              <MenuItem value="not-downloaded">Not Downloaded</MenuItem>
-            </Select>
-          </FormControl>
-          
-          {/* Sort By */}
-          <FormControl size="small" sx={{ minWidth: 130 }}>
-            <InputLabel>Sort By</InputLabel>
-            <Select
-              value={sortBy}
-              label="Sort By"
-              onChange={(e) => setSortBy(e.target.value)}
-            >
-              <MenuItem value="alphabetical">Alphabetical</MenuItem>
-              <MenuItem value="newest">Newest First</MenuItem>
-              <MenuItem value="oldest">Oldest First</MenuItem>
-            </Select>
-          </FormControl>
-          
+        <Button
+          variant="contained"
+          startIcon={<Add />}
+          onClick={() => setSearchOpen(true)}
+        >
+          Add Series
+        </Button>
+      </Box>
+
+      {/* Row 2: View toggle + filters */}
+      <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" mb={3} sx={{ pt: 1 }}>
+        {/* View Mode Toggle */}
+        <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
           <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setSearchOpen(true)}
+            size="small"
+            variant={viewMode === 'cards' ? 'contained' : 'text'}
+            onClick={() => setViewMode('cards')}
+            startIcon={<ViewModule />}
           >
-            Add Series
+            Cards
+          </Button>
+          <Button
+            size="small"
+            variant={viewMode === 'list' ? 'contained' : 'text'}
+            onClick={() => setViewMode('list')}
+            startIcon={<ViewList />}
+          >
+            List
           </Button>
         </Box>
+        
+        {/* Monitored Filter */}
+        <FormControl size="small" sx={{ minWidth: 140 }}>
+          <InputLabel>Monitor Status</InputLabel>
+          <Select
+            value={monitoredFilter}
+            label="Monitor Status"
+            onChange={(e) => setMonitoredFilter(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="monitored">Monitored</MenuItem>
+            <MenuItem value="unmonitored">Unmonitored</MenuItem>
+          </Select>
+        </FormControl>
+        
+        {/* Downloaded Filter */}
+        <FormControl size="small" sx={{ minWidth: 150 }}>
+          <InputLabel>Download Status</InputLabel>
+          <Select
+            value={downloadedFilter}
+            label="Download Status"
+            onChange={(e) => setDownloadedFilter(e.target.value)}
+          >
+            <MenuItem value="all">All</MenuItem>
+            <MenuItem value="downloaded">Downloaded</MenuItem>
+            <MenuItem value="not-downloaded">Not Downloaded</MenuItem>
+          </Select>
+        </FormControl>
+        
+        {/* Sort By */}
+        <FormControl size="small" sx={{ minWidth: 130 }}>
+          <InputLabel>Sort By</InputLabel>
+          <Select
+            value={sortBy}
+            label="Sort By"
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <MenuItem value="alphabetical">Alphabetical</MenuItem>
+            <MenuItem value="newest">Newest First</MenuItem>
+            <MenuItem value="oldest">Oldest First</MenuItem>
+          </Select>
+        </FormControl>
       </Box>
 
       <Box mb={3}>
