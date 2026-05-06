@@ -284,15 +284,15 @@ function Radarr() {
   return (
     <Container maxWidth="xl" sx={{ overflowX: 'hidden' }}>
       {/* Row 1: Title + Add button */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
         <Typography variant="h4">Movies</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => setAddDialogOpen(true)}>
           Add Movie
         </Button>
       </Box>
 
-      {/* Row 2: View toggle + filters — mt:3 gives floating InputLabels room above */}
-      <Box display="flex" gap={1} flexWrap="wrap" alignItems="center" sx={{ mt: 3, mb: 3 }}>
+      {/* Row 2: View toggle + filters — pt gives floating InputLabels room above */}
+      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'flex-end', mt: 1, pt: 2, mb: 3 }}>
           {/* View Mode Toggle */}
           <Box sx={{ display: 'flex', gap: 0.5, border: 1, borderColor: 'divider', borderRadius: 1 }}>
             <Button
