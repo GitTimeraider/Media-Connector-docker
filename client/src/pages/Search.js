@@ -479,11 +479,11 @@ function Search() {
                       )}
                     </Box>
                     <Box display="flex" gap={1} flexWrap="wrap" mb={2}>
-                      {result.categoryDisplay && (
-                        <Chip 
+                      {result.categoryDisplay && result.categoryDisplay !== 'Unknown' && (
+                        <Chip
                           icon={<CategoryIcon />}
-                          label={result.categoryDisplay} 
-                          size="small" 
+                          label={result.categoryDisplay}
+                          size="small"
                           color="secondary"
                           sx={{ fontWeight: 600 }}
                         />
