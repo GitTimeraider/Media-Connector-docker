@@ -1,5 +1,5 @@
 # Build stage for React frontend (only on amd64)
-FROM --platform=$BUILDPLATFORM node:25-alpine AS frontend-build
+FROM --platform=$BUILDPLATFORM node:26-alpine AS frontend-build
 ARG TARGETPLATFORM
 WORKDIR /app/client
 COPY client/package*.json ./
@@ -13,14 +13,14 @@ RUN if [ "$TARGETPLATFORM" = "linux/amd64" ]; then \
     fi
 
 # Build stage for backend
-FROM node:25-alpine AS backend-build
+FROM node:26-alpine AS backend-build
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --omit=dev
 COPY server/ ./server/
 
 # Production stage
-FROM node:25-alpine
+FROM node:26-alpine
 WORKDIR /app
 
 # Install dumb-init, shadow for user management, and su-exec for user switching
