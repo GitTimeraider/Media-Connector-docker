@@ -72,7 +72,9 @@ router.post('/test/:type', async (req, res) => {
     // Read from body to keep sensitive data out of URL/logs
     const { url, apiKey, password } = req.body;
     
-    if (!url || !apiKey) {
+    // Deluge authenticates with a password, not an API key
+    const passwordOnlyTypes = ['deluge'];
+    if (!url || (!apiKey && !passwordOnlyTypes.includes(req.params.type))) {
       return res.status(400).json({ success: false, error: 'Missing url or apiKey' });
     }
     
