@@ -329,7 +329,8 @@ function Search() {
       }
     } catch (error) {
       console.error('Error downloading:', error);
-      setSnackbar({ open: true, message: 'Failed to add download: ' + error.message, severity: 'error' });
+      const serverMsg = error.response?.data?.error || error.response?.data?.detail || error.message;
+      setSnackbar({ open: true, message: 'Failed to add download: ' + serverMsg, severity: 'error' });
     }
   };
 

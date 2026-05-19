@@ -209,7 +209,8 @@ router.get('/add/:instanceId', async (req, res) => {
 
     res.json({ success: true, data: addResponse.data });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('[deluge /add] Error:', error.message, error.response?.data || '');
+    res.status(500).json({ error: error.message, detail: error.response?.data ?? null });
   }
 });
 
