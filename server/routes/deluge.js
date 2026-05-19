@@ -169,6 +169,40 @@ router.get('/add/:instanceId', async (req, res) => {
           'Cookie': sessionCookie
         }
       });
+    } else if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+      // Raw HTTP URL — find the matching Prowlarr instance by origin for SSRF protection
+      const urlValidator = require('../utils/urlValidator');
+      const validation = urlValidator.validateServiceUrl(url);
+      if (!validation.valid) {
+        return res.status(400).json({ error: 'Invalid download URL: ' + validation.error });
+      }
+      const prowlarrInstances = await configManager.getServices('prowlarr');
+      const incomingOrigin = new URL(url).origin;
+      const matchedProwlarr = prowlarrInstances.find(i => {
+        try { return new URL(i.url).origin === incomingOrigin; } catch (e) { return false; }
+      });
+      if (!matchedProwlarr) {
+        return res.status(400).json({ error: 'Download URL does not match any configured Prowlarr instance' });
+      }
+      const fileResponse = await axios.get(url, {
+        headers: { 'X-Api-Key': matchedProwlarr.apiKey },
+        responseType: 'arraybuffer',
+        timeout: 30000
+      });
+      const rawFilenameMatch = url.match(/[?&]file=([^&]+)/);
+      const rawFilename = rawFilenameMatch ? decodeURIComponent(rawFilenameMatch[1]) : 'download.torrent';
+      filename = rawFilename.endsWith('.torrent') ? rawFilename : rawFilename + '.torrent';
+      torrentData = Buffer.from(fileResponse.data).toString('base64');
+      addResponse = await axios.post(`${instance.url}/json`, {
+        method: 'core.add_torrent_file',
+        params: [filename, torrentData, {}],
+        id: 2
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Cookie': sessionCookie
+        }
+      });
     } else {
       return res.status(400).json({ error: 'No torrent data could be resolved from the provided URL' });
     }
