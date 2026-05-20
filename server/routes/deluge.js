@@ -74,8 +74,9 @@ router.get('/add/:instanceId', async (req, res) => {
     const cookies = authResponse.headers['set-cookie'];
     const sessionCookie = cookies ? cookies[0].split(';')[0] : '';
 
-    // If URL is a proxied download path, fetch the torrent file first
+    // Fetch torrent data from whatever source the URL points to
     let torrentData = null;
+    let magnetUrl = null;
     let filename = 'download.torrent';
     if (url && url.startsWith('/api/prowlarr/download/')) {
       // Extract the prowlarr instance ID and original URL using safer parsing
@@ -114,63 +115,40 @@ router.get('/add/:instanceId', async (req, res) => {
         return res.status(400).json({ error: 'Download URL does not match configured Prowlarr instance' });
       }
 
-      // Fetch the torrent file content from Prowlarr
+      // Fetch the torrent file — disable auto-redirect so magnet: redirects can be caught
       const fileResponse = await axios.get(originalUrl, {
         headers: { 'X-Api-Key': prowlarrInstance.apiKey },
         responseType: 'arraybuffer',
+        maxRedirects: 0,
+        validateStatus: s => s < 400,
         timeout: 30000
       });
 
-      // Extract filename from Content-Disposition header or URL
-      const contentDisposition = fileResponse.headers['content-disposition'];
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
+      if (fileResponse.status >= 300) {
+        // Redirect — common when indexer only provides a magnet link
+        const location = fileResponse.headers['location'] || '';
+        if (location.startsWith('magnet:')) {
+          magnetUrl = location;
+        } else {
+          return res.status(502).json({ error: 'Unexpected redirect from Prowlarr: ' + location });
         }
       } else {
-        // Try to extract from URL file parameter
-        const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
-        if (urlMatch) {
-          filename = decodeURIComponent(urlMatch[1]);
-          if (!filename.endsWith('.torrent')) {
-            filename += '.torrent';
+        // Extract filename from Content-Disposition header or URL
+        const contentDisposition = fileResponse.headers['content-disposition'];
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+          if (filenameMatch) filename = filenameMatch[1];
+        } else {
+          const urlMatch = originalUrl.match(/[?&]file=([^&]+)/);
+          if (urlMatch) {
+            filename = decodeURIComponent(urlMatch[1]);
+            if (!filename.endsWith('.torrent')) filename += '.torrent';
           }
         }
+        torrentData = Buffer.from(fileResponse.data).toString('base64');
       }
-
-      // Convert to base64 for Deluge
-      torrentData = Buffer.from(fileResponse.data).toString('base64');
-    }
-
-    // Add torrent by file data, magnet link, or error
-    let addResponse;
-    if (torrentData) {
-      // Add by file data with proper filename
-      addResponse = await axios.post(`${instance.url}/json`, {
-        method: 'core.add_torrent_file',
-        params: [filename, torrentData, {}],
-        id: 2
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': sessionCookie
-        }
-      });
-    } else if (url && url.startsWith('magnet:')) {
-      // Add magnet link directly — core.add_torrent_magnet accepts a URI string
-      addResponse = await axios.post(`${instance.url}/json`, {
-        method: 'core.add_torrent_magnet',
-        params: [url, {}],
-        id: 2
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': sessionCookie
-        }
-      });
     } else if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-      // Raw HTTP URL — find the matching Prowlarr instance by origin for SSRF protection
+      // Raw HTTP Prowlarr URL — validate and fetch directly
       const urlValidator = require('../utils/urlValidator');
       const validation = urlValidator.validateServiceUrl(url);
       if (!validation.valid) {
@@ -184,24 +162,47 @@ router.get('/add/:instanceId', async (req, res) => {
       if (!matchedProwlarr) {
         return res.status(400).json({ error: 'Download URL does not match any configured Prowlarr instance' });
       }
-      const fileResponse = await axios.get(url, {
+      const rawFileResponse = await axios.get(url, {
         headers: { 'X-Api-Key': matchedProwlarr.apiKey },
         responseType: 'arraybuffer',
+        maxRedirects: 0,
+        validateStatus: s => s < 400,
         timeout: 30000
       });
-      const rawFilenameMatch = url.match(/[?&]file=([^&]+)/);
-      const rawFilename = rawFilenameMatch ? decodeURIComponent(rawFilenameMatch[1]) : 'download.torrent';
-      filename = rawFilename.endsWith('.torrent') ? rawFilename : rawFilename + '.torrent';
-      torrentData = Buffer.from(fileResponse.data).toString('base64');
+      if (rawFileResponse.status >= 300) {
+        const location = rawFileResponse.headers['location'] || '';
+        if (location.startsWith('magnet:')) {
+          magnetUrl = location;
+        } else {
+          return res.status(502).json({ error: 'Unexpected redirect from Prowlarr: ' + location });
+        }
+      } else {
+        const rawFilenameMatch = url.match(/[?&]file=([^&]+)/);
+        const rawFilename = rawFilenameMatch ? decodeURIComponent(rawFilenameMatch[1]) : 'download.torrent';
+        filename = rawFilename.endsWith('.torrent') ? rawFilename : rawFilename + '.torrent';
+        torrentData = Buffer.from(rawFileResponse.data).toString('base64');
+      }
+    } else if (url && url.startsWith('magnet:')) {
+      magnetUrl = url;
+    }
+
+    // Add torrent to Deluge
+    let addResponse;
+    if (torrentData) {
       addResponse = await axios.post(`${instance.url}/json`, {
         method: 'core.add_torrent_file',
         params: [filename, torrentData, {}],
         id: 2
       }, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Cookie': sessionCookie
-        }
+        headers: { 'Content-Type': 'application/json', 'Cookie': sessionCookie }
+      });
+    } else if (magnetUrl) {
+      addResponse = await axios.post(`${instance.url}/json`, {
+        method: 'core.add_torrent_magnet',
+        params: [magnetUrl, {}],
+        id: 2
+      }, {
+        headers: { 'Content-Type': 'application/json', 'Cookie': sessionCookie }
       });
     } else {
       return res.status(400).json({ error: 'No torrent data could be resolved from the provided URL' });
