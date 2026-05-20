@@ -128,9 +128,10 @@ router.get('/search/:instanceId', async (req, res) => {
       }
       
       // Replace internal Prowlarr URLs with proxied URLs that the backend can access
-      let downloadUrl = result.downloadUrl;
+      // Fall back to magnetUrl if downloadUrl is absent (magnet-only indexers)
+      let downloadUrl = result.downloadUrl || result.magnetUrl || null;
       const originalDownloadUrl = result.downloadUrl;
-      if (downloadUrl && !downloadUrl.startsWith('magnet:')) {
+      if (downloadUrl && !downloadUrl.startsWith('magnet:') && originalDownloadUrl) {
         downloadUrl = `/api/prowlarr/download/${req.params.instanceId}?url=${encodeURIComponent(originalDownloadUrl)}`;
       }
 
