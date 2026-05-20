@@ -526,14 +526,6 @@ function Search() {
                     >
                       Add to Client
                     </Button>
-                    <Button
-                      size="small"
-                      href={result.downloadUrl}
-                      target="_blank"
-                      disabled={!result.downloadUrl}
-                    >
-                      Manual Download
-                    </Button>
                   </CardActions>
                 </Box>
               </Card>
