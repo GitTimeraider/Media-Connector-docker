@@ -119,7 +119,7 @@ function Dashboard() {
   const [monitored, setMonitored] = useState(true);
   const [searchOnAdd, setSearchOnAdd] = useState(true);
   const [showAllMatches, setShowAllMatches] = useState(false);
-  const [minimumAvailability, setMinimumAvailability] = useState('released');
+  const [minimumAvailability, setMinimumAvailability] = useState('announced');
   
   // Ref to track if component is mounted (for cancelling background operations)
   const isMountedRef = useRef(true);
@@ -222,7 +222,7 @@ function Dashboard() {
     console.log('Opening add dialog:', { item, mediaType, services });
     setItemToAdd({ ...item, mediaType });
     setAddDialogOpen(true);
-    setMinimumAvailability('released');
+    setMinimumAvailability('announced');
     
     // Load profiles and folders from Radarr/Sonarr
     try {
