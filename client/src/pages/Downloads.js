@@ -11,12 +11,25 @@ import {
   Alert,
   IconButton
 } from '@mui/material';
-import { Pause, Delete } from '@mui/icons-material';
+import { Pause, PlayArrow, Delete } from '@mui/icons-material';
 import api from '../services/api';
 
 function Downloads() {
   const [loading, setLoading] = useState(true);
   const [downloads, setDownloads] = useState([]);
+
+  const formatEta = (seconds) => {
+    const eta = Number(seconds);
+    if (!Number.isFinite(eta) || eta <= 0) return null;
+
+    const hours = Math.floor(eta / 3600);
+    const minutes = Math.floor((eta % 3600) / 60);
+    const secs = Math.floor(eta % 60);
+
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m ${secs}s`;
+    return `${secs}s`;
+  };
 
   useEffect(() => {
     loadDownloads();
@@ -50,6 +63,31 @@ function Downloads() {
         }
       }
 
+      // Load Deluge queue
+      if (servicesData.deluge?.length > 0) {
+        for (const instance of servicesData.deluge) {
+          try {
+            const queue = await api.getDelugeQueue(instance.id);
+            const torrents = queue?.torrents || {};
+
+            allDownloads.push(...Object.entries(torrents).map(([torrentId, torrent]) => ({
+              id: torrentId,
+              name: torrent.name,
+              status: torrent.state,
+              progress: torrent.progress,
+              size: torrent.total_size,
+              timeleft: formatEta(torrent.eta),
+              speed: torrent.download_payload_rate,
+              service: 'Deluge',
+              instanceId: instance.id,
+              instanceName: instance.name
+            })));
+          } catch (error) {
+            console.error(`Error loading Deluge queue:`, error);
+          }
+        }
+      }
+
       setDownloads(allDownloads);
     } catch (error) {
       console.error('Error loading downloads:', error);
@@ -62,11 +100,19 @@ function Downloads() {
     try {
       if (item.service === 'SABnzbd') {
         await api.pauseSabnzbd(item.instanceId, item.id);
+      } else if (item.service === 'Deluge') {
+        const state = String(item.status || '').toLowerCase();
+        const isPaused = state.includes('paused');
+        if (isPaused) {
+          await api.resumeDeluge(item.instanceId, item.id);
+        } else {
+          await api.pauseDeluge(item.instanceId, item.id);
+        }
       }
       loadDownloads();
     } catch (error) {
       console.error('Error pausing download:', error);
-      alert('Failed to pause download');
+      alert('Failed to update download state');
     }
   };
 
@@ -76,6 +122,8 @@ function Downloads() {
     try {
       if (item.service === 'SABnzbd') {
         await api.deleteSabnzbd(item.instanceId, item.id);
+      } else if (item.service === 'Deluge') {
+        await api.deleteDeluge(item.instanceId, item.id);
       }
       loadDownloads();
     } catch (error) {
@@ -141,10 +189,17 @@ function Downloads() {
                   </Box>
                 </Box>
                 <Box display="flex" gap={1} sx={{ flexShrink: 0 }}>
-                  <IconButton size="small" onClick={() => handlePause(item)}>
-                    <Pause />
+                  <IconButton
+                    size="small"
+                    onClick={() => handlePause(item)}
+                  >
+                    {item.service === 'Deluge' && String(item.status || '').toLowerCase().includes('paused') ? <PlayArrow /> : <Pause />}
                   </IconButton>
-                  <IconButton size="small" color="error" onClick={() => handleDelete(item)}>
+                  <IconButton
+                    size="small"
+                    color="error"
+                    onClick={() => handleDelete(item)}
+                  >
                     <Delete />
                   </IconButton>
                 </Box>
