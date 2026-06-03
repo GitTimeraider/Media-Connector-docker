@@ -320,6 +320,28 @@ class ApiService {
     return response.data;
   }
 
+  async getDelugeQueue(instanceId) {
+    const response = await this.client.get(`/deluge/queue/${instanceId}`);
+    return response.data;
+  }
+
+  async pauseDeluge(instanceId, torrentId) {
+    const response = await this.client.post(`/deluge/pause/${instanceId}/${torrentId}`);
+    return response.data;
+  }
+
+  async resumeDeluge(instanceId, torrentId) {
+    const response = await this.client.post(`/deluge/resume/${instanceId}/${torrentId}`);
+    return response.data;
+  }
+
+  async deleteDeluge(instanceId, torrentId, removeData = false) {
+    const response = await this.client.delete(`/deluge/torrent/${instanceId}/${torrentId}`, {
+      params: { removeData }
+    });
+    return response.data;
+  }
+
   async addToDeluge(instanceId, url) {
     // Use GET with query params to avoid proxy POST restrictions
     const response = await this.client.get(`/deluge/add/${instanceId}`, { params: { url } });

@@ -2,6 +2,37 @@ const express = require('express');
 const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
+const axios = require('axios');
+
+async function getDelugeSessionCookie(instance) {
+  const authResponse = await axios.post(`${instance.url}/json`, {
+    method: 'auth.login',
+    params: [instance.password],
+    id: 1
+  }, {
+    headers: { 'Content-Type': 'application/json' },
+    timeout: 10000
+  });
+
+  const cookies = authResponse.headers['set-cookie'];
+  return cookies ? cookies[0].split(';')[0] : '';
+}
+
+async function callDelugeRpc(instance, sessionCookie, method, params = [], id = 2) {
+  const response = await axios.post(`${instance.url}/json`, {
+    method,
+    params,
+    id
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Cookie': sessionCookie
+    },
+    timeout: 30000
+  });
+
+  return response.data;
+}
 
 router.get('/instances', async (req, res) => {
   const instances = await configManager.getServices('deluge');
@@ -14,8 +45,6 @@ router.get('/status/:instanceId', async (req, res) => {
     const instance = instances.find(i => i.id === req.params.instanceId);
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
-    const axios = require('axios');
-    
     // Try to authenticate to check if service is online
     const authResponse = await axios.post(`${instance.url}/json`, {
       method: 'auth.check_session',
@@ -29,6 +58,80 @@ router.get('/status/:instanceId', async (req, res) => {
     res.json({ connected: true, authenticated: authResponse.data.result });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/queue/:instanceId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('deluge');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const sessionCookie = await getDelugeSessionCookie(instance);
+
+    const response = await callDelugeRpc(instance, sessionCookie, 'core.get_torrents_status', [{}, [
+      'name',
+      'state',
+      'progress',
+      'total_size',
+      'eta',
+      'download_payload_rate'
+    ]]);
+
+    res.json({ torrents: response?.result || {} });
+  } catch (error) {
+    res.status(500).json({ error: error.message, detail: error.response?.data ?? null });
+  }
+});
+
+router.post('/pause/:instanceId/:torrentId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('deluge');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const sessionCookie = await getDelugeSessionCookie(instance);
+    const response = await callDelugeRpc(instance, sessionCookie, 'core.pause_torrent', [[req.params.torrentId]]);
+
+    res.json({ success: true, data: response });
+  } catch (error) {
+    res.status(500).json({ error: error.message, detail: error.response?.data ?? null });
+  }
+});
+
+router.post('/resume/:instanceId/:torrentId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('deluge');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const sessionCookie = await getDelugeSessionCookie(instance);
+    const response = await callDelugeRpc(instance, sessionCookie, 'core.resume_torrent', [[req.params.torrentId]]);
+
+    res.json({ success: true, data: response });
+  } catch (error) {
+    res.status(500).json({ error: error.message, detail: error.response?.data ?? null });
+  }
+});
+
+router.delete('/torrent/:instanceId/:torrentId', async (req, res) => {
+  try {
+    const instances = await configManager.getServices('deluge');
+    const instance = instances.find(i => i.id === req.params.instanceId);
+    if (!instance) return res.status(404).json({ error: 'Instance not found' });
+
+    const removeData = String(req.query.removeData || 'false').toLowerCase() === 'true';
+    const sessionCookie = await getDelugeSessionCookie(instance);
+    const response = await callDelugeRpc(
+      instance,
+      sessionCookie,
+      'core.remove_torrent',
+      [req.params.torrentId, removeData]
+    );
+
+    res.json({ success: true, data: response });
+  } catch (error) {
+    res.status(500).json({ error: error.message, detail: error.response?.data ?? null });
   }
 });
 
@@ -60,19 +163,8 @@ router.get('/add/:instanceId', async (req, res) => {
 
     let { url } = req.query;
     
-    const axios = require('axios');
-    
     // Authenticate first to get session
-    const authResponse = await axios.post(`${instance.url}/json`, {
-      method: 'auth.login',
-      params: [instance.password],
-      id: 1
-    }, {
-      headers: { 'Content-Type': 'application/json' }
-    });
-
-    const cookies = authResponse.headers['set-cookie'];
-    const sessionCookie = cookies ? cookies[0].split(';')[0] : '';
+    const sessionCookie = await getDelugeSessionCookie(instance);
 
     // Fetch torrent data from whatever source the URL points to
     let torrentData = null;
