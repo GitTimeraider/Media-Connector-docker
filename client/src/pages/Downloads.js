@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Typography,
@@ -14,30 +14,24 @@ import {
 import { Pause, PlayArrow, Delete } from '@mui/icons-material';
 import api from '../services/api';
 
+const formatEta = (seconds) => {
+  const eta = Number(seconds);
+  if (!Number.isFinite(eta) || eta <= 0) return null;
+
+  const hours = Math.floor(eta / 3600);
+  const minutes = Math.floor((eta % 3600) / 60);
+  const secs = Math.floor(eta % 60);
+
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m ${secs}s`;
+  return `${secs}s`;
+};
+
 function Downloads() {
   const [loading, setLoading] = useState(true);
   const [downloads, setDownloads] = useState([]);
 
-  const formatEta = (seconds) => {
-    const eta = Number(seconds);
-    if (!Number.isFinite(eta) || eta <= 0) return null;
-
-    const hours = Math.floor(eta / 3600);
-    const minutes = Math.floor((eta % 3600) / 60);
-    const secs = Math.floor(eta % 60);
-
-    if (hours > 0) return `${hours}h ${minutes}m`;
-    if (minutes > 0) return `${minutes}m ${secs}s`;
-    return `${secs}s`;
-  };
-
-  useEffect(() => {
-    loadDownloads();
-    const interval = setInterval(loadDownloads, 5000); // Refresh every 5 seconds
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDownloads = async () => {
+  const loadDownloads = useCallback(async () => {
     try {
       const servicesData = await api.getServices();
 
@@ -94,7 +88,13 @@ function Downloads() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadDownloads();
+    const interval = setInterval(loadDownloads, 5000); // Refresh every 5 seconds
+    return () => clearInterval(interval);
+  }, [loadDownloads]);
 
   const handlePause = async (item) => {
     try {
