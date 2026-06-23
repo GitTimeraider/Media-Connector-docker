@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const ApiClient = require('../utils/apiClient');
 const configManager = require('../config/services');
+const User = require('../models/User');
 
 router.get('/instances', async (req, res) => {
   const instances = await configManager.getServices('prowlarr');
@@ -43,6 +44,20 @@ router.get('/search/:instanceId', async (req, res) => {
     if (!instance) return res.status(404).json({ error: 'Instance not found' });
 
     const client = new ApiClient(instance.url, instance.apiKey);
+
+    // Use per-user preference for minimum torrent seeders (defaults to 0).
+    let minTorrentSeeders = 0;
+    if (req.user?.id) {
+      try {
+        const preferences = await User.getPreferences(req.user.id);
+        const parsed = Number(preferences?.minTorrentSeeders);
+        if (Number.isFinite(parsed) && parsed > 0) {
+          minTorrentSeeders = Math.floor(parsed);
+        }
+      } catch (prefError) {
+        console.error('Failed to load user preferences for seeder filter:', prefError.message);
+      }
+    }
     
     // Build query params with proper limits to get more results
     let queryString = `/api/v1/search?query=${encodeURIComponent(req.query.query)}&type=search`;
@@ -143,7 +158,25 @@ router.get('/search/:instanceId', async (req, res) => {
       };
     });
 
-    res.json(enrichedResults);
+    const filteredResults = enrichedResults.filter((result) => {
+      if (minTorrentSeeders <= 0) {
+        return true;
+      }
+
+      const protocol = String(result.protocol || '').toLowerCase();
+      if (protocol !== 'torrent') {
+        return true;
+      }
+
+      const seeders = Number(result.seeders);
+      if (!Number.isFinite(seeders)) {
+        return false;
+      }
+
+      return seeders >= minTorrentSeeders;
+    });
+
+    res.json(filteredResults);
   } catch (error) {
     console.error('Prowlarr search error:', error.response?.data || error.message);
     res.status(500).json({ error: error.message, details: error.response?.data });

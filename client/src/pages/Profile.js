@@ -33,6 +33,7 @@ function Profile() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [defaultViewMode, setDefaultViewMode] = useState('cards');
+  const [minTorrentSeeders, setMinTorrentSeeders] = useState(0);
   const [preferencesLoading, setPreferencesLoading] = useState(false);
 
   useEffect(() => {
@@ -44,6 +45,10 @@ function Profile() {
       const prefs = await api.getPreferences();
       if (prefs.defaultViewMode) {
         setDefaultViewMode(prefs.defaultViewMode);
+      }
+      const parsedMinSeeders = Number(prefs.minTorrentSeeders);
+      if (Number.isFinite(parsedMinSeeders) && parsedMinSeeders >= 0) {
+        setMinTorrentSeeders(Math.floor(parsedMinSeeders));
       }
     } catch (err) {
       console.error('Failed to load preferences:', err);
@@ -57,7 +62,12 @@ function Profile() {
     setPreferencesLoading(true);
 
     try {
-      await api.updatePreferences({ defaultViewMode });
+      const normalizedMinSeeders = Math.max(0, Math.floor(Number(minTorrentSeeders) || 0));
+      setMinTorrentSeeders(normalizedMinSeeders);
+      await api.updatePreferences({
+        defaultViewMode,
+        minTorrentSeeders: normalizedMinSeeders
+      });
       setSuccess('Preferences updated successfully');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to update preferences');
@@ -157,6 +167,18 @@ function Profile() {
                 </MenuItem>
               </Select>
             </FormControl>
+
+            <TextField
+              fullWidth
+              sx={{ mb: 3 }}
+              type="number"
+              label="Minimum Torrent Seeders"
+              value={minTorrentSeeders}
+              onChange={(e) => setMinTorrentSeeders(e.target.value)}
+              disabled={preferencesLoading}
+              inputProps={{ min: 0, step: 1 }}
+              helperText="Torrent search results with fewer seeders than this value are filtered out. Set to 0 to disable."
+            />
 
             <Button
               type="submit"
