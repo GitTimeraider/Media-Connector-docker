@@ -1,9 +1,6 @@
 import React, { useState, useEffect, Component } from 'react';
 import {
   Container,
-  Grid,
-  Card,
-  CardContent,
   Typography,
   Box,
   Chip,
@@ -12,7 +9,14 @@ import {
   LinearProgress,
   IconButton,
   Tooltip,
-  Button
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import {
   PlayArrow,
@@ -227,260 +231,333 @@ function UnraidContent() {
         </IconButton>
       </Box>
 
-      {/* System Stats */}
+      {/* System Stats Table */}
       {systemStats && (
-        <Grid container spacing={3} sx={{ mb: 3 }}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <Computer sx={{ mr: 1, color: 'info.main' }} />
-                  <Typography variant="h6">System</Typography>
-                </Box>
-                <Typography variant="body2" fontWeight={500}>
-                  {systemStats.os?.hostname || 'Unknown'}
-                </Typography>
-                {(systemStats.system?.manufacturer || systemStats.system?.model) && (
-                  <Typography variant="body2" color="text.secondary">
-                    {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
-                  </Typography>
-                )}
-                <Typography variant="body2" color="text.secondary">
-                  {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', mt: 1 }}>
-                  Uptime: {(() => {
-                    const uptimeData = systemStats.os?.uptime;
-                    if (!uptimeData) return 'N/A';
-                    // Unraid returns uptime as an ISO datetime string (boot time)
-                    let uptimeSeconds;
-                    if (typeof uptimeData === 'string') {
-                      // Parse ISO datetime and calculate seconds since boot
-                      const bootTime = new Date(uptimeData);
-                      if (!isNaN(bootTime.getTime())) {
-                        uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
-                      } else {
-                        return uptimeData; // Return as-is if not valid date
-                      }
-                    } else if (typeof uptimeData === 'number') {
-                      uptimeSeconds = uptimeData;
-                    } else {
-                      return 'N/A';
-                    }
-                    const days = Math.floor(uptimeSeconds / 86400);
-                    const hours = Math.floor((uptimeSeconds % 86400) / 3600);
-                    const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-                    return `${days}d ${hours}h ${minutes}m`;
-                  })()}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  Platform: {systemStats.os?.platform || 'N/A'}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <Memory sx={{ mr: 1, color: 'primary.main' }} />
-                  <Typography variant="h6">CPU</Typography>
-                </Box>
-                <Typography variant="body1" sx={{ fontSize: '0.9rem', fontWeight: 500 }}>
-                  {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block' }}>
-                  {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
-                </Typography>
-                {systemStats.cpu?.speed && (
-                  <Typography variant="caption" sx={{ display: 'block' }}>
-                    {safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz
-                  </Typography>
-                )}
-                {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined) ? (
-                  <Box sx={{ mt: 2 }}>
-                    <Typography variant="h4" color="primary">
-                      {safeNumber(
-                        systemStats.cpu?.usage ??
-                        systemStats.cpu?.currentLoad
-                      ).toFixed(1)}%
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={Math.min(safeNumber(
-                        systemStats.cpu?.usage ??
-                        systemStats.cpu?.currentLoad
-                      ), 100)} 
-                      sx={{ mt: 1 }}
-                    />
+        <TableContainer component={Paper} sx={{ mb: 4, overflowX: 'auto' }}>
+          <Table size="small" sx={{ minWidth: 650 }}>
+            <TableHead>
+              <TableRow sx={{ bgcolor: 'action.hover' }}>
+                <TableCell sx={{ width: '20%', fontWeight: 'bold', py: 1.5 }}>Component</TableCell>
+                <TableCell sx={{ width: '45%', fontWeight: 'bold', py: 1.5 }}>Details</TableCell>
+                <TableCell sx={{ width: '35%', fontWeight: 'bold', py: 1.5 }}>Status / Usage</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {/* System Row */}
+              <TableRow hover>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <Computer sx={{ mr: 1.5, color: 'info.main' }} />
+                    <Typography variant="body2" fontWeight={600}>System</Typography>
                   </Box>
-                ) : (
-                  <Box sx={{ mt: 2 }}>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
+                    {systemStats.os?.hostname || 'Unknown'}
+                  </Typography>
+                  {(systemStats.system?.manufacturer || systemStats.system?.model) && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
+                    </Typography>
+                  )}
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''} (Platform: {systemStats.os?.platform || 'N/A'})
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2">
+                    <strong>Uptime:</strong> {(() => {
+                      const uptimeData = systemStats.os?.uptime;
+                      if (!uptimeData) return 'N/A';
+                      let uptimeSeconds;
+                      if (typeof uptimeData === 'string') {
+                        const bootTime = new Date(uptimeData);
+                        if (!isNaN(bootTime.getTime())) {
+                          uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
+                        } else {
+                          return uptimeData;
+                        }
+                      } else if (typeof uptimeData === 'number') {
+                        uptimeSeconds = uptimeData;
+                      } else {
+                        return 'N/A';
+                      }
+                      const days = Math.floor(uptimeSeconds / 86400);
+                      const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+                      const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                      return `${days}d ${hours}h ${minutes}m`;
+                    })()}
+                  </Typography>
+                </TableCell>
+              </TableRow>
+
+              {/* CPU Row */}
+              <TableRow hover>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <Memory sx={{ mr: 1.5, color: 'primary.main' }} />
+                    <Typography variant="body2" fontWeight={600}>CPU</Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>
+                    {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
+                    {systemStats.cpu?.speed && ` @ ${safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz`}
+                  </Typography>
+                </TableCell>
+                <TableCell>
+                  {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined) ? (
+                    <Box sx={{ pr: 2 }}>
+                      <Box display="flex" justifyContent="space-between" mb={0.5}>
+                        <Typography variant="body2" fontWeight={500} color="primary">
+                          {safeNumber(
+                            systemStats.cpu?.usage ??
+                            systemStats.cpu?.currentLoad
+                          ).toFixed(1)}%
+                        </Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={Math.min(safeNumber(
+                          systemStats.cpu?.usage ??
+                          systemStats.cpu?.currentLoad
+                        ), 100)} 
+                        sx={{ height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  ) : (
                     <Typography variant="caption" color="text.secondary">
                       CPU usage data not available
                     </Typography>
+                  )}
+                </TableCell>
+              </TableRow>
+
+              {/* Memory Row */}
+              <TableRow hover>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <Storage sx={{ mr: 1.5, color: 'success.main' }} />
+                    <Typography variant="body2" fontWeight={600}>Memory</Typography>
                   </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <Storage sx={{ mr: 1, color: 'success.main' }} />
-                  <Typography variant="h6">Memory</Typography>
-                </Box>
-                {(systemStats.memory?.used && systemStats.memory?.total) ? (
-                  <>
-                    <Typography variant="h4">
-                      {(() => {
-                        // Use Unraid's provided percentTotal if available, otherwise calculate
-                        // Unraid includes System + ZFS cache + Docker in usage calculation
-                        if (systemStats.memory?.percentTotal !== undefined) {
-                          return safeNumber(systemStats.memory.percentTotal).toFixed(1);
-                        }
-                        // Fallback: Calculate using free memory: (total - free) / total
-                        // This matches Unraid's calculation (System + ZFS + Docker)
-                        const total = safeNumber(systemStats.memory?.total) || 1;
-                        const free = safeNumber(systemStats.memory?.free);
-                        const used = total - free;
-                        return ((used / total) * 100).toFixed(1);
-                      })()}%
-                    </Typography>
-                    <Typography variant="caption">
-                      {(() => {
-                        const total = safeNumber(systemStats.memory?.total) || 1;
-                        const free = safeNumber(systemStats.memory?.free);
-                        const used = total - free;
-                        return formatBytes(used);
-                      })()} / {formatBytes(safeNumber(systemStats.memory?.total))}
-                    </Typography>
-                    <LinearProgress 
-                      variant="determinate" 
-                      value={(() => {
-                        if (systemStats.memory?.percentTotal !== undefined) {
-                          return Math.min(safeNumber(systemStats.memory.percentTotal), 100);
-                        }
-                        const total = safeNumber(systemStats.memory?.total) || 1;
-                        const free = safeNumber(systemStats.memory?.free);
-                        const used = total - free;
-                        return Math.min((used / total) * 100, 100);
-                      })()} 
-                      sx={{ mt: 1 }}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Typography variant="h4">{formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}</Typography>
-                    <Typography variant="caption" sx={{ display: 'block' }}>{Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                      Memory usage data not available
-                    </Typography>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={1}>
-                  <Storage sx={{ mr: 1, color: 'info.main' }} />
-                  <Typography variant="h6">Array</Typography>
-                </Box>
-                <Chip 
-                  label={arrayStatus?.state || 'Unknown'} 
-                  color={arrayStatus?.state === 'STARTED' ? 'success' : 'default'}
-                  size="small"
-                />
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-      )}
-
-      {/* Docker Containers */}
-      <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-        Docker Containers
-      </Typography>
-      <Grid container spacing={2}>
-        {dockerContainers.map((container, index) => (
-          <Grid item xs={12} sm={6} md={4} key={container.id || index}>
-            <Card>
-              <CardContent>
-                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                  <Typography variant="h6">
-                    {(container.names?.[0] || container.name || container.Names?.[0] || 'Unknown').replace(/^\//g, '')}
-                  </Typography>
-                  <Chip
-                    icon={(container.state || container.State) === 'running' ? <CheckCircle /> : <ErrorIcon />}
-                    label={container.state || container.State || container.status || container.Status || 'unknown'}
-                    color={(container.state || container.State) === 'running' ? 'success' : 'default'}
-                    size="small"
-                  />
-                </Box>
-
-                <Typography variant="body2" color="text.secondary">
-                  {container.status || container.Status || 'No status'}
-                </Typography>
-                
-                {/* Memory usage */}
-                {container.stats?.memory && (
-                  <Box sx={{ mt: 1 }}>
-                    <Typography variant="caption" color="text.secondary">
-                      Memory: {formatBytes(container.stats.memory.usage)} / {formatBytes(container.stats.memory.limit)}
-                      {container.stats.memory.percent !== undefined && ` (${container.stats.memory.percent.toFixed(1)}%)`}
-                    </Typography>
-                    {container.stats.memory.percent !== undefined && (
+                </TableCell>
+                <TableCell>
+                  {(systemStats.memory?.used && systemStats.memory?.total) ? (
+                    <>
+                      <Typography variant="body2" fontWeight={500}>
+                        {(() => {
+                          const total = safeNumber(systemStats.memory?.total) || 1;
+                          const free = safeNumber(systemStats.memory?.free);
+                          const used = total - free;
+                          return `${formatBytes(used)} / ${formatBytes(safeNumber(systemStats.memory?.total))}`;
+                        })()}
+                      </Typography>
+                      {Array.isArray(systemStats.memory?.layout) && systemStats.memory.layout.length > 0 && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {systemStats.memory.layout.length} modules
+                        </Typography>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Typography variant="body2" fontWeight={500}>
+                        {formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules
+                      </Typography>
+                    </>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {(systemStats.memory?.used && systemStats.memory?.total) ? (
+                    <Box sx={{ pr: 2 }}>
+                      <Box display="flex" justifyContent="space-between" mb={0.5}>
+                        <Typography variant="body2" fontWeight={500} color="success.main">
+                          {(() => {
+                            if (systemStats.memory?.percentTotal !== undefined) {
+                              return `${safeNumber(systemStats.memory.percentTotal).toFixed(1)}%`;
+                            }
+                            const total = safeNumber(systemStats.memory?.total) || 1;
+                            const free = safeNumber(systemStats.memory?.free);
+                            const used = total - free;
+                            return `${((used / total) * 100).toFixed(1)}%`;
+                          })()}
+                        </Typography>
+                      </Box>
                       <LinearProgress 
                         variant="determinate" 
-                        value={container.stats.memory.percent} 
-                        sx={{ mt: 0.5, height: 4 }}
-                      />
-                    )}
-                  </Box>
-                )}
-                
-                {container.autoStart !== undefined && (
-                  <Chip 
-                    label={container.autoStart ? 'Auto-start' : 'Manual start'} 
-                    size="small" 
-                    sx={{ mt: 1 }}
-                  />
-                )}
-
-                <Box display="flex" gap={1} mt={2}>
-                  {(container.state || container.State)?.toLowerCase() === 'running' ? (
-                    <Tooltip title="Stop">
-                      <IconButton 
-                        size="small" 
-                        color="error"
-                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'stop')}
-                      >
-                        <Stop />
-                      </IconButton>
-                    </Tooltip>
-                  ) : (
-                    <Tooltip title="Start">
-                      <IconButton 
-                        size="small" 
+                        value={(() => {
+                          if (systemStats.memory?.percentTotal !== undefined) {
+                            return Math.min(safeNumber(systemStats.memory.percentTotal), 100);
+                          }
+                          const total = safeNumber(systemStats.memory?.total) || 1;
+                          const free = safeNumber(systemStats.memory?.free);
+                          const used = total - free;
+                          return Math.min((used / total) * 100, 100);
+                        })()} 
                         color="success"
-                        onClick={() => handleDockerAction(container.id || container.Id || container.name, 'start')}
-                      >
-                        <PlayArrow />
-                      </IconButton>
-                    </Tooltip>
+                        sx={{ height: 6, borderRadius: 3 }}
+                      />
+                    </Box>
+                  ) : (
+                    <Typography variant="caption" color="text.secondary">
+                      Memory usage data not available
+                    </Typography>
                   )}
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                </TableCell>
+              </TableRow>
+
+              {/* Array Row */}
+              <TableRow hover>
+                <TableCell>
+                  <Box display="flex" alignItems="center">
+                    <Storage sx={{ mr: 1.5, color: 'info.main' }} />
+                    <Typography variant="body2" fontWeight={600}>Array</Typography>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  <Typography variant="body2" fontWeight={500}>Unraid Storage Array</Typography>
+                </TableCell>
+                <TableCell>
+                  <Chip 
+                    label={arrayStatus?.state || 'Unknown'} 
+                    color={arrayStatus?.state === 'STARTED' ? 'success' : 'default'}
+                    size="small"
+                  />
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+
+      {/* Docker Containers Table */}
+      <Typography variant="h5" gutterBottom sx={{ mt: 2, mb: 2 }}>
+        Docker Containers ({dockerContainers.length})
+      </Typography>
+      <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+        <Table size="small" sx={{ minWidth: 700 }}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'action.hover' }}>
+              <TableCell sx={{ width: '25%', fontWeight: 'bold', py: 1.5 }}>Name</TableCell>
+              <TableCell sx={{ width: '30%', fontWeight: 'bold', py: 1.5 }}>State / Status</TableCell>
+              <TableCell sx={{ width: '25%', fontWeight: 'bold', py: 1.5 }}>Memory Usage</TableCell>
+              <TableCell sx={{ width: '10%', fontWeight: 'bold', py: 1.5 }}>Auto-Start</TableCell>
+              <TableCell align="right" sx={{ width: '10%', fontWeight: 'bold', py: 1.5 }}>Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {dockerContainers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No Docker containers found
+                  </Typography>
+                </TableCell>
+              </TableRow>
+            ) : (
+              dockerContainers.map((container, index) => {
+                const isRunning = (container.state || container.State)?.toLowerCase() === 'running';
+                const containerId = container.id || container.Id || container.name;
+                const containerName = (container.names?.[0] || container.name || container.Names?.[0] || 'Unknown').replace(/^\//g, '');
+
+                return (
+                  <TableRow key={containerId || index} hover>
+                    <TableCell>
+                      <Typography variant="body2" fontWeight={600}>
+                        {containerName}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+                        <Chip
+                          icon={isRunning ? <CheckCircle /> : <ErrorIcon />}
+                          label={container.state || container.State || container.status || container.Status || 'unknown'}
+                          color={isRunning ? 'success' : 'default'}
+                          size="small"
+                        />
+                        {(container.status || container.Status) && (
+                          <Typography variant="caption" color="text.secondary">
+                            {container.status || container.Status}
+                          </Typography>
+                        )}
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      {container.stats?.memory ? (
+                        <Box sx={{ pr: 2 }}>
+                          <Box display="flex" justifyContent="space-between">
+                            <Typography variant="caption" color="text.secondary">
+                              {formatBytes(container.stats.memory.usage)} / {formatBytes(container.stats.memory.limit)}
+                            </Typography>
+                            {container.stats.memory.percent !== undefined && (
+                              <Typography variant="caption" fontWeight={500}>
+                                {container.stats.memory.percent.toFixed(1)}%
+                              </Typography>
+                            )}
+                          </Box>
+                          {container.stats.memory.percent !== undefined && (
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={Math.min(container.stats.memory.percent, 100)} 
+                              sx={{ mt: 0.5, height: 5, borderRadius: 2.5 }}
+                            />
+                          )}
+                        </Box>
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          -
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {container.autoStart !== undefined ? (
+                        <Chip 
+                          label={container.autoStart ? 'Auto-start' : 'Manual start'} 
+                          size="small" 
+                          variant="outlined"
+                          color={container.autoStart ? 'primary' : 'default'}
+                        />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">
+                          -
+                        </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell align="right">
+                      {isRunning ? (
+                        <Tooltip title="Stop">
+                          <IconButton 
+                            size="small" 
+                            color="error"
+                            onClick={() => handleDockerAction(containerId, 'stop')}
+                          >
+                            <Stop />
+                          </IconButton>
+                        </Tooltip>
+                      ) : (
+                        <Tooltip title="Start">
+                          <IconButton 
+                            size="small" 
+                            color="success"
+                            onClick={() => handleDockerAction(containerId, 'start')}
+                          >
+                            <PlayArrow />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Container>
   );
 }
