@@ -16,7 +16,8 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Paper
+  Paper,
+  Divider
 } from '@mui/material';
 import {
   PlayArrow,
@@ -231,208 +232,167 @@ function UnraidContent() {
         </IconButton>
       </Box>
 
-      {/* System Stats Table */}
+      {/* System Stats List */}
       {systemStats && (
-        <TableContainer component={Paper} sx={{ mb: 4, overflowX: 'auto' }}>
-          <Table size="small" sx={{ minWidth: 650 }}>
-            <TableHead>
-              <TableRow sx={{ bgcolor: 'action.hover' }}>
-                <TableCell sx={{ width: '20%', fontWeight: 'bold', py: 1.5 }}>Component</TableCell>
-                <TableCell sx={{ width: '45%', fontWeight: 'bold', py: 1.5 }}>Details</TableCell>
-                <TableCell sx={{ width: '35%', fontWeight: 'bold', py: 1.5 }}>Status / Usage</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {/* System Row */}
-              <TableRow hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Computer sx={{ mr: 1.5, color: 'info.main' }} />
-                    <Typography variant="body2" fontWeight={600}>System</Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {systemStats.os?.hostname || 'Unknown'}
-                  </Typography>
-                  {(systemStats.system?.manufacturer || systemStats.system?.model) && (
-                    <Typography variant="caption" color="text.secondary" display="block">
-                      {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
-                    </Typography>
-                  )}
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''} (Platform: {systemStats.os?.platform || 'N/A'})
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2">
-                    <strong>Uptime:</strong> {(() => {
-                      const uptimeData = systemStats.os?.uptime;
-                      if (!uptimeData) return 'N/A';
-                      let uptimeSeconds;
-                      if (typeof uptimeData === 'string') {
-                        const bootTime = new Date(uptimeData);
-                        if (!isNaN(bootTime.getTime())) {
-                          uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
-                        } else {
-                          return uptimeData;
-                        }
-                      } else if (typeof uptimeData === 'number') {
-                        uptimeSeconds = uptimeData;
-                      } else {
-                        return 'N/A';
-                      }
-                      const days = Math.floor(uptimeSeconds / 86400);
-                      const hours = Math.floor((uptimeSeconds % 86400) / 3600);
-                      const minutes = Math.floor((uptimeSeconds % 3600) / 60);
-                      return `${days}d ${hours}h ${minutes}m`;
-                    })()}
-                  </Typography>
-                </TableCell>
-              </TableRow>
+        <Paper sx={{ mb: 4, overflow: 'hidden' }}>
+          {/* System Row */}
+          <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+            <Box display="flex" alignItems="center" sx={{ minWidth: { md: 160 } }}>
+              <Computer sx={{ mr: 1.5, color: 'info.main' }} />
+              <Typography variant="body1" fontWeight={600}>System</Typography>
+            </Box>
+            <Box sx={{ flex: 1, wordBreak: 'break-word' }}>
+              <Typography variant="body2" fontWeight={500}>
+                {systemStats.os?.hostname || 'Unknown'}
+              </Typography>
+              {(systemStats.system?.manufacturer || systemStats.system?.model) && (
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {[systemStats.system?.manufacturer, systemStats.system?.model].filter(Boolean).join(' ')}
+                </Typography>
+              )}
+              <Typography variant="caption" color="text.secondary" display="block">
+                {systemStats.os?.distro || 'Unraid'} {systemStats.os?.release || ''} (Platform: {systemStats.os?.platform || 'N/A'})
+              </Typography>
+            </Box>
+            <Box sx={{ minWidth: { md: 180 }, textAlign: { xs: 'left', md: 'right' } }}>
+              <Typography variant="body2">
+                <strong>Uptime:</strong> {(() => {
+                  const uptimeData = systemStats.os?.uptime;
+                  if (!uptimeData) return 'N/A';
+                  let uptimeSeconds;
+                  if (typeof uptimeData === 'string') {
+                    const bootTime = new Date(uptimeData);
+                    if (!isNaN(bootTime.getTime())) {
+                      uptimeSeconds = Math.floor((Date.now() - bootTime.getTime()) / 1000);
+                    } else {
+                      return uptimeData;
+                    }
+                  } else if (typeof uptimeData === 'number') {
+                    uptimeSeconds = uptimeData;
+                  } else {
+                    return 'N/A';
+                  }
+                  const days = Math.floor(uptimeSeconds / 86400);
+                  const hours = Math.floor((uptimeSeconds % 86400) / 3600);
+                  const minutes = Math.floor((uptimeSeconds % 3600) / 60);
+                  return `${days}d ${hours}h ${minutes}m`;
+                })()}
+              </Typography>
+            </Box>
+          </Box>
+          <Divider />
 
-              {/* CPU Row */}
-              <TableRow hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Memory sx={{ mr: 1.5, color: 'primary.main' }} />
-                    <Typography variant="body2" fontWeight={600}>CPU</Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
-                    {systemStats.cpu?.speed && ` @ ${safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz`}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined) ? (
-                    <Box sx={{ pr: 2 }}>
-                      <Box display="flex" justifyContent="space-between" mb={0.5}>
-                        <Typography variant="body2" fontWeight={500} color="primary">
-                          {safeNumber(
-                            systemStats.cpu?.usage ??
-                            systemStats.cpu?.currentLoad
-                          ).toFixed(1)}%
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={Math.min(safeNumber(
-                          systemStats.cpu?.usage ??
-                          systemStats.cpu?.currentLoad
-                        ), 100)} 
-                        sx={{ height: 6, borderRadius: 3 }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography variant="caption" color="text.secondary">
-                      CPU usage data not available
+          {/* CPU Row */}
+          <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+            <Box display="flex" alignItems="center" sx={{ minWidth: { md: 160 } }}>
+              <Memory sx={{ mr: 1.5, color: 'primary.main' }} />
+              <Typography variant="body1" fontWeight={600}>CPU</Typography>
+            </Box>
+            <Box sx={{ flex: 1, wordBreak: 'break-word' }}>
+              <Typography variant="body2" fontWeight={500}>
+                {systemStats.cpu?.brand || systemStats.cpu?.manufacturer || 'N/A'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" display="block">
+                {safeNumber(systemStats.cpu?.cores)} cores, {safeNumber(systemStats.cpu?.threads)} threads
+                {systemStats.cpu?.speed && ` @ ${safeNumber(systemStats.cpu.speed) >= 10 ? (safeNumber(systemStats.cpu.speed) / 1000).toFixed(2) : safeNumber(systemStats.cpu.speed).toFixed(2)} GHz`}
+              </Typography>
+            </Box>
+            <Box sx={{ width: { xs: '100%', md: 220 } }}>
+              {(systemStats.cpu?.usage !== undefined || systemStats.cpu?.currentLoad !== undefined) ? (
+                <>
+                  <Box display="flex" justifyContent="space-between" mb={0.5}>
+                    <Typography variant="caption" color="text.secondary">Load</Typography>
+                    <Typography variant="body2" fontWeight={600} color="primary">
+                      {safeNumber(systemStats.cpu?.usage ?? systemStats.cpu?.currentLoad).toFixed(1)}%
                     </Typography>
-                  )}
-                </TableCell>
-              </TableRow>
-
-              {/* Memory Row */}
-              <TableRow hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Storage sx={{ mr: 1.5, color: 'success.main' }} />
-                    <Typography variant="body2" fontWeight={600}>Memory</Typography>
                   </Box>
-                </TableCell>
-                <TableCell>
-                  {(systemStats.memory?.used && systemStats.memory?.total) ? (
-                    <>
-                      <Typography variant="body2" fontWeight={500}>
-                        {(() => {
-                          const total = safeNumber(systemStats.memory?.total) || 1;
-                          const free = safeNumber(systemStats.memory?.free);
-                          const used = total - free;
-                          return `${formatBytes(used)} / ${formatBytes(safeNumber(systemStats.memory?.total))}`;
-                        })()}
-                      </Typography>
-                      {Array.isArray(systemStats.memory?.layout) && systemStats.memory.layout.length > 0 && (
-                        <Typography variant="caption" color="text.secondary" display="block">
-                          {systemStats.memory.layout.length} modules
-                        </Typography>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Typography variant="body2" fontWeight={500}>
-                        {formatBytes(Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        {Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.length : 0} modules
-                      </Typography>
-                    </>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {(systemStats.memory?.used && systemStats.memory?.total) ? (
-                    <Box sx={{ pr: 2 }}>
-                      <Box display="flex" justifyContent="space-between" mb={0.5}>
-                        <Typography variant="body2" fontWeight={500} color="success.main">
-                          {(() => {
-                            if (systemStats.memory?.percentTotal !== undefined) {
-                              return `${safeNumber(systemStats.memory.percentTotal).toFixed(1)}%`;
-                            }
-                            const total = safeNumber(systemStats.memory?.total) || 1;
-                            const free = safeNumber(systemStats.memory?.free);
-                            const used = total - free;
-                            return `${((used / total) * 100).toFixed(1)}%`;
-                          })()}
-                        </Typography>
-                      </Box>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={(() => {
-                          if (systemStats.memory?.percentTotal !== undefined) {
-                            return Math.min(safeNumber(systemStats.memory.percentTotal), 100);
-                          }
-                          const total = safeNumber(systemStats.memory?.total) || 1;
-                          const free = safeNumber(systemStats.memory?.free);
-                          const used = total - free;
-                          return Math.min((used / total) * 100, 100);
-                        })()} 
-                        color="success"
-                        sx={{ height: 6, borderRadius: 3 }}
-                      />
-                    </Box>
-                  ) : (
-                    <Typography variant="caption" color="text.secondary">
-                      Memory usage data not available
-                    </Typography>
-                  )}
-                </TableCell>
-              </TableRow>
-
-              {/* Array Row */}
-              <TableRow hover>
-                <TableCell>
-                  <Box display="flex" alignItems="center">
-                    <Storage sx={{ mr: 1.5, color: 'info.main' }} />
-                    <Typography variant="body2" fontWeight={600}>Array</Typography>
-                  </Box>
-                </TableCell>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>Unraid Storage Array</Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip 
-                    label={arrayStatus?.state || 'Unknown'} 
-                    color={arrayStatus?.state === 'STARTED' ? 'success' : 'default'}
-                    size="small"
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={Math.min(safeNumber(systemStats.cpu?.usage ?? systemStats.cpu?.currentLoad), 100)} 
+                    sx={{ height: 6, borderRadius: 3 }}
                   />
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
+                </>
+              ) : (
+                <Typography variant="caption" color="text.secondary">
+                  CPU usage data not available
+                </Typography>
+              )}
+            </Box>
+          </Box>
+          <Divider />
+
+          {/* Memory Row */}
+          <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+            <Box display="flex" alignItems="center" sx={{ minWidth: { md: 160 } }}>
+              <Storage sx={{ mr: 1.5, color: 'success.main' }} />
+              <Typography variant="body1" fontWeight={600}>Memory</Typography>
+            </Box>
+            <Box sx={{ flex: 1, wordBreak: 'break-word' }}>
+              {(() => {
+                const total = safeNumber(systemStats.memory?.total) || (Array.isArray(systemStats.memory?.layout) ? systemStats.memory.layout.reduce((sum, m) => sum + safeNumber(m?.size), 0) : 0);
+                const percent = systemStats.memory?.percentTotal !== undefined
+                  ? safeNumber(systemStats.memory.percentTotal)
+                  : (total > 0 && systemStats.memory?.free !== undefined ? ((total - safeNumber(systemStats.memory.free)) / total) * 100 : 0);
+                const used = total * (percent / 100);
+                return (
+                  <>
+                    <Typography variant="body2" fontWeight={500}>
+                      {total > 0 ? `${formatBytes(used)} / ${formatBytes(total)} (${percent.toFixed(1)}%)` : 'N/A'}
+                    </Typography>
+                    {Array.isArray(systemStats.memory?.layout) && systemStats.memory.layout.length > 0 && (
+                      <Typography variant="caption" color="text.secondary" display="block">
+                        {systemStats.memory.layout.length} modules
+                      </Typography>
+                    )}
+                  </>
+                );
+              })()}
+            </Box>
+            <Box sx={{ width: { xs: '100%', md: 220 } }}>
+              {(() => {
+                const total = safeNumber(systemStats.memory?.total) || 1;
+                const percent = systemStats.memory?.percentTotal !== undefined
+                  ? safeNumber(systemStats.memory.percentTotal)
+                  : (total > 0 && systemStats.memory?.free !== undefined ? ((total - safeNumber(systemStats.memory.free)) / total) * 100 : 0);
+                return (
+                  <>
+                    <Box display="flex" justifyContent="space-between" mb={0.5}>
+                      <Typography variant="caption" color="text.secondary">Usage</Typography>
+                      <Typography variant="body2" fontWeight={600} color="success.main">
+                        {percent.toFixed(1)}%
+                      </Typography>
+                    </Box>
+                    <LinearProgress 
+                      variant="determinate" 
+                      value={Math.min(percent, 100)} 
+                      color="success"
+                      sx={{ height: 6, borderRadius: 3 }}
+                    />
+                  </>
+                );
+              })()}
+            </Box>
+          </Box>
+          <Divider />
+
+          {/* Array Row */}
+          <Box sx={{ p: 2, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: { xs: 'flex-start', md: 'center' }, justifyContent: 'space-between', gap: 2 }}>
+            <Box display="flex" alignItems="center" sx={{ minWidth: { md: 160 } }}>
+              <Storage sx={{ mr: 1.5, color: 'info.main' }} />
+              <Typography variant="body1" fontWeight={600}>Array</Typography>
+            </Box>
+            <Box sx={{ flex: 1, wordBreak: 'break-word' }}>
+              <Typography variant="body2" fontWeight={500}>Unraid Storage Array</Typography>
+            </Box>
+            <Box sx={{ minWidth: { md: 180 }, textAlign: { xs: 'left', md: 'right' } }}>
+              <Chip 
+                label={arrayStatus?.state || 'Unknown'} 
+                color={arrayStatus?.state === 'STARTED' ? 'success' : 'default'}
+                size="small"
+              />
+            </Box>
+          </Box>
+        </Paper>
       )}
 
       {/* Docker Containers Table */}
@@ -440,20 +400,19 @@ function UnraidContent() {
         Docker Containers ({dockerContainers.length})
       </Typography>
       <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-        <Table size="small" sx={{ minWidth: 700 }}>
+        <Table size="small">
           <TableHead>
             <TableRow sx={{ bgcolor: 'action.hover' }}>
-              <TableCell sx={{ width: '25%', fontWeight: 'bold', py: 1.5 }}>Name</TableCell>
-              <TableCell sx={{ width: '30%', fontWeight: 'bold', py: 1.5 }}>State / Status</TableCell>
-              <TableCell sx={{ width: '25%', fontWeight: 'bold', py: 1.5 }}>Memory Usage</TableCell>
-              <TableCell sx={{ width: '10%', fontWeight: 'bold', py: 1.5 }}>Auto-Start</TableCell>
+              <TableCell sx={{ width: '40%', fontWeight: 'bold', py: 1.5 }}>Name</TableCell>
+              <TableCell sx={{ width: '35%', fontWeight: 'bold', py: 1.5 }}>State / Status</TableCell>
+              <TableCell sx={{ width: '15%', fontWeight: 'bold', py: 1.5 }}>Auto-Start</TableCell>
               <TableCell align="right" sx={{ width: '10%', fontWeight: 'bold', py: 1.5 }}>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {dockerContainers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} align="center" sx={{ py: 3 }}>
+                <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
                   <Typography variant="body2" color="text.secondary">
                     No Docker containers found
                   </Typography>
@@ -467,13 +426,13 @@ function UnraidContent() {
 
                 return (
                   <TableRow key={containerId || index} hover>
-                    <TableCell>
+                    <TableCell sx={{ wordBreak: 'break-word' }}>
                       <Typography variant="body2" fontWeight={600}>
                         {containerName}
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Box display="flex" alignItems="center" flexWrap="wrap" gap={1}>
+                      <Box display="flex" alignItems="center" flexWrap="wrap" gap={2.5}>
                         <Chip
                           icon={isRunning ? <CheckCircle /> : <ErrorIcon />}
                           label={container.state || container.State || container.status || container.Status || 'unknown'}
@@ -486,33 +445,6 @@ function UnraidContent() {
                           </Typography>
                         )}
                       </Box>
-                    </TableCell>
-                    <TableCell>
-                      {container.stats?.memory ? (
-                        <Box sx={{ pr: 2 }}>
-                          <Box display="flex" justifyContent="space-between">
-                            <Typography variant="caption" color="text.secondary">
-                              {formatBytes(container.stats.memory.usage)} / {formatBytes(container.stats.memory.limit)}
-                            </Typography>
-                            {container.stats.memory.percent !== undefined && (
-                              <Typography variant="caption" fontWeight={500}>
-                                {container.stats.memory.percent.toFixed(1)}%
-                              </Typography>
-                            )}
-                          </Box>
-                          {container.stats.memory.percent !== undefined && (
-                            <LinearProgress 
-                              variant="determinate" 
-                              value={Math.min(container.stats.memory.percent, 100)} 
-                              sx={{ mt: 0.5, height: 5, borderRadius: 2.5 }}
-                            />
-                          )}
-                        </Box>
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          -
-                        </Typography>
-                      )}
                     </TableCell>
                     <TableCell>
                       {container.autoStart !== undefined ? (
