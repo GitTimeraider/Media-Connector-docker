@@ -9,7 +9,7 @@
 ![License](https://img.shields.io/github/license/GitTimeraider/media-connector-docker)
 
 ### Disclaimers: 
-#### AI is responsible for over half of the coding. Also keep in mind that this software is mostly developed for personal use by myself and thus might not receive all feature requests desired.
+#### Even though guided and checked, AI is responsible for over half of the coding. Also keep in mind that this software is mostly developed for personal use by myself and thus might not receive all feature requests desired.
 ##################################################
 
 **A comprehensive web-based media server manager**
