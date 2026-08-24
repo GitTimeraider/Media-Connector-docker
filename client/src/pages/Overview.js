@@ -310,7 +310,7 @@ function Overview() {
             icon={<LiveTv sx={{ color: 'white' }} />}
             value={stats.sonarr.total}
             subtitle={`${stats.sonarr.monitored} monitored`}
-            color="#1976d2"
+            color="#6366f1"
           />
         </Grid>
         

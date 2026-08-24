@@ -660,7 +660,7 @@ function Dashboard() {
                     size="small" 
                     sx={{ 
                       fontWeight: 600,
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                       boxShadow: '0 2px 8px rgba(102,126,234,0.3)'
                     }} 
                   />
@@ -756,7 +756,7 @@ function Dashboard() {
           flexDirection: { xs: 'column', sm: 'row' },
           alignItems: 'center',
           gap: { xs: 1.5, sm: 0 },
-          background: 'linear-gradient(135deg, rgba(156,39,176,0.15) 0%, rgba(33,150,243,0.1) 100%)',
+          background: 'linear-gradient(135deg, rgba(168, 85, 247,0.15) 0%, rgba(33,150,243,0.1) 100%)',
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.2)',
           borderRadius: 3,
@@ -1053,16 +1053,16 @@ function Dashboard() {
           alignItems="center" 
           mb={3}
           sx={{
-            background: 'linear-gradient(135deg, rgba(156,39,176,0.2) 0%, rgba(103,58,183,0.1) 100%)',
+            background: 'linear-gradient(135deg, rgba(168, 85, 247,0.2) 0%, rgba(103,58,183,0.1) 100%)',
             backdropFilter: 'blur(10px)',
             p: 2.5,
             borderRadius: 3,
             borderLeft: '6px solid',
-            borderImage: 'linear-gradient(to bottom, #9c27b0, #673ab7) 1',
-            boxShadow: '0 4px 20px rgba(156,39,176,0.2)'
+            borderImage: 'linear-gradient(to bottom, #a855f7, #673ab7) 1',
+            boxShadow: '0 4px 20px rgba(168, 85, 247,0.2)'
           }}
         >
-          <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main', filter: 'drop-shadow(0 2px 4px rgba(156,39,176,0.5))' }} />
+          <LiveTv sx={{ mr: 1.5, fontSize: 32, color: 'secondary.main', filter: 'drop-shadow(0 2px 4px rgba(168, 85, 247,0.5))' }} />
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 700, letterSpacing: 0.5 }}>Trending TV Shows</Typography>
             <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.85rem' }}>Most popular series this week</Typography>

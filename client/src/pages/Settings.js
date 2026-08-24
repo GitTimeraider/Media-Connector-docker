@@ -167,7 +167,7 @@ function Settings() {
       <Card 
         sx={{ 
           mb: 3,
-            background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)',
             backdropFilter: 'blur(10px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
             transition: 'transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease',
@@ -196,7 +196,7 @@ function Settings() {
                     width: 48,
                     height: 48,
                     borderRadius: 2,
-                    background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -218,9 +218,9 @@ function Settings() {
                 startIcon={<Add />}
                 onClick={() => handleAddService(serviceType)}
                 sx={{
-                  background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                    background: 'linear-gradient(135deg, #4f46e5 0%, #9333ea 100%)',
                     transform: 'scale(1.05)',
                   },
                   transition: 'all 0.2s ease'
@@ -258,10 +258,10 @@ function Settings() {
                         sx={{
                           p: 2,
                           background: hoveredCard === instance.id 
-                            ? 'linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(156, 39, 176, 0.1) 100%)'
+                            ? 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)'
                             : 'rgba(255, 255, 255, 0.05)',
                           border: hoveredCard === instance.id
-                            ? '1px solid rgba(25, 118, 210, 0.5)'
+                            ? '1px solid rgba(99, 102, 241, 0.5)'
                             : '1px solid rgba(255, 255, 255, 0.1)',
                           transition: 'all 0.3s ease',
                           cursor: 'pointer',
@@ -303,9 +303,9 @@ function Settings() {
                               <IconButton
                                 onClick={() => handleEditService(serviceType, instance)}
                                 sx={{
-                                  background: 'rgba(25, 118, 210, 0.1)',
+                                  background: 'rgba(99, 102, 241, 0.1)',
                                   '&:hover': {
-                                    background: 'rgba(25, 118, 210, 0.2)',
+                                    background: 'rgba(99, 102, 241, 0.2)',
                                     transform: 'rotate(90deg)',
                                   },
                                   transition: 'all 0.3s ease'
@@ -353,7 +353,7 @@ function Settings() {
                 width: 56,
                 height: 56,
                 borderRadius: 3,
-                background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -367,7 +367,7 @@ function Settings() {
                 variant="h3" 
                 fontWeight="bold"
                 sx={{
-                  background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                  background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text'
@@ -406,15 +406,15 @@ function Settings() {
               fontWeight: 'bold',
               transition: 'all 0.3s ease',
               '&:hover': {
-                background: 'rgba(25, 118, 210, 0.1)',
+                background: 'rgba(99, 102, 241, 0.1)',
               },
               '&.Mui-selected': {
-                background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.15) 0%, rgba(156, 39, 176, 0.15) 100%)',
+                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)',
               }
             },
             '& .MuiTabs-indicator': {
               height: 3,
-              background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
             },
             '& .MuiSvgIcon-root': {
               fontSize: { xs: '1rem', sm: '1.25rem' }
@@ -454,7 +454,7 @@ function Settings() {
         fullWidth
         PaperProps={{
           sx: {
-            background: 'linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(156, 39, 176, 0.05) 100%)',
+            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%)',
             backdropFilter: 'blur(20px)',
             border: '1px solid rgba(255, 255, 255, 0.1)',
           }
@@ -467,7 +467,7 @@ function Settings() {
                 width: 48,
                 height: 48,
                 borderRadius: 2,
-                background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -600,7 +600,7 @@ function Settings() {
                   borderWidth: 2,
                   '&:hover': {
                     borderWidth: 2,
-                    background: 'rgba(25, 118, 210, 0.1)',
+                    background: 'rgba(99, 102, 241, 0.1)',
                   }
                 }}
               >
@@ -653,9 +653,9 @@ function Settings() {
             size="large"
             sx={{
               px: 4,
-              background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #9333ea 100%)',
                 transform: 'scale(1.02)',
               },
               transition: 'all 0.2s ease'

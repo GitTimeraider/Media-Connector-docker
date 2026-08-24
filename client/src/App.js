@@ -99,7 +99,7 @@ function AppLayout() {
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'linear-gradient(180deg, rgba(18,18,18,1) 0%, rgba(30,30,30,1) 100%)' }}>
       <Toolbar sx={{ 
-        background: 'linear-gradient(135deg, rgba(25,118,210,0.2) 0%, rgba(156,39,176,0.2) 100%)',
+        background: 'linear-gradient(135deg, rgba(99, 102, 241,0.2) 0%, rgba(168, 85, 247,0.2) 100%)',
         borderBottom: '1px solid rgba(255,255,255,0.1)',
         minHeight: { xs: 56, sm: 64 }
       }}>
@@ -112,7 +112,7 @@ function AppLayout() {
             fontWeight: 700,
             fontSize: '1.1rem',
             letterSpacing: 1,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
             textShadow: '0 2px 4px rgba(0,0,0,0.1)',
@@ -143,16 +143,16 @@ function AppLayout() {
                   mx: 0.5,
                   transition: 'all 0.3s',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, rgba(25,118,210,0.15) 0%, rgba(156,39,176,0.15) 100%)',
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241,0.15) 0%, rgba(168, 85, 247,0.15) 100%)',
                     transform: 'translateX(8px)',
-                    boxShadow: '0 4px 12px rgba(25,118,210,0.2)'
+                    boxShadow: '0 4px 12px rgba(99, 102, 241,0.2)'
                   },
                   '&.Mui-selected': {
-                    background: 'linear-gradient(135deg, rgba(25,118,210,0.25) 0%, rgba(156,39,176,0.25) 100%)',
+                    background: 'linear-gradient(135deg, rgba(99, 102, 241,0.25) 0%, rgba(168, 85, 247,0.25) 100%)',
                     borderLeft: '3px solid',
-                    borderImage: 'linear-gradient(to bottom, #1976d2, #9c27b0) 1',
+                    borderImage: 'linear-gradient(to bottom, #6366f1, #a855f7) 1',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, rgba(25,118,210,0.3) 0%, rgba(156,39,176,0.3) 100%)'
+                      background: 'linear-gradient(135deg, rgba(99, 102, 241,0.3) 0%, rgba(168, 85, 247,0.3) 100%)'
                     }
                   }
                 }}
@@ -162,7 +162,7 @@ function AppLayout() {
                   minWidth: 40,
                   transition: 'all 0.3s',
                   '& .MuiSvgIcon-root': {
-                    filter: location.pathname === item.path ? 'drop-shadow(0 2px 4px rgba(25,118,210,0.5))' : 'none'
+                    filter: location.pathname === item.path ? 'drop-shadow(0 2px 4px rgba(99, 102, 241,0.5))' : 'none'
                   }
                 }}>
                   {item.icon}
@@ -194,9 +194,9 @@ function AppLayout() {
                 mx: 0.5,
                 transition: 'all 0.3s',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, rgba(25,118,210,0.15) 0%, rgba(156,39,176,0.15) 100%)',
+                  background: 'linear-gradient(135deg, rgba(99, 102, 241,0.15) 0%, rgba(168, 85, 247,0.15) 100%)',
                   transform: 'translateX(8px)',
-                  boxShadow: '0 4px 12px rgba(25,118,210,0.2)'
+                  boxShadow: '0 4px 12px rgba(99, 102, 241,0.2)'
                 }
               }}
             >
@@ -224,7 +224,7 @@ function AppLayout() {
                 mx: 0.5,
                 transition: 'all 0.3s',
                 '&:hover': {
-                  background: 'linear-gradient(135deg, rgba(244,67,54,0.15) 0%, rgba(156,39,176,0.15) 100%)',
+                  background: 'linear-gradient(135deg, rgba(244,67,54,0.15) 0%, rgba(168, 85, 247,0.15) 100%)',
                   transform: 'translateX(8px)',
                   boxShadow: '0 4px 12px rgba(244,67,54,0.2)'
                 }
@@ -266,7 +266,7 @@ function AppLayout() {
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.1)',
           '&:hover': {
-            background: 'rgba(25,118,210,0.3)',
+            background: 'rgba(99, 102, 241,0.3)',
             transform: 'scale(1.05)'
           },
           transition: 'all 0.2s'
