@@ -81,7 +81,7 @@ function Login() {
           position: 'absolute',
           width: '200%',
           height: '200%',
-          background: 'radial-gradient(circle, rgba(25, 118, 210, 0.05) 1px, transparent 1px)',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 1px, transparent 1px)',
           backgroundSize: '50px 50px',
           animation: 'drift 20s linear infinite',
         },
@@ -106,13 +106,13 @@ function Login() {
             sx={{
               backdropFilter: 'blur(20px)',
               background: 'rgba(18, 18, 18, 0.95)',
-              border: '1px solid rgba(25, 118, 210, 0.3)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
               borderRadius: 4,
               transition: 'all 0.3s ease',
               '&:hover': {
                 transform: 'translateY(-8px)',
-                boxShadow: '0 20px 60px rgba(25, 118, 210, 0.3)',
-                border: '1px solid rgba(25, 118, 210, 0.5)',
+                boxShadow: '0 20px 60px rgba(99, 102, 241, 0.3)',
+                border: '1px solid rgba(99, 102, 241, 0.5)',
               }
             }}
           >
@@ -120,11 +120,11 @@ function Login() {
               <Box display="flex" flexDirection="column" alignItems="center" mb={4}>
                 <Box
                   sx={{
-                    background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                     borderRadius: 4,
                     p: 3,
                     mb: 3,
-                    boxShadow: '0 8px 32px rgba(25, 118, 210, 0.4)',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
                     animation: 'pulse 2s ease-in-out infinite',
                     '@keyframes pulse': {
                       '0%, 100%': { transform: 'scale(1)' },
@@ -193,20 +193,20 @@ function Login() {
                       '&:hover': {
                         background: 'rgba(255, 255, 255, 0.08)',
                         '& fieldset': {
-                          borderColor: 'rgba(25, 118, 210, 0.5)',
+                          borderColor: 'rgba(99, 102, 241, 0.5)',
                         },
                       },
                       '&.Mui-focused': {
                         background: 'rgba(255, 255, 255, 0.08)',
                         '& fieldset': {
-                          borderColor: '#1976d2',
+                          borderColor: '#6366f1',
                         },
                       },
                     },
                     '& .MuiInputLabel-root': {
                       color: 'rgba(255, 255, 255, 0.7)',
                       '&.Mui-focused': {
-                        color: '#1976d2',
+                        color: '#6366f1',
                       },
                     },
                     '& .MuiInputBase-input': {
@@ -236,20 +236,20 @@ function Login() {
                       '&:hover': {
                         background: 'rgba(255, 255, 255, 0.08)',
                         '& fieldset': {
-                          borderColor: 'rgba(25, 118, 210, 0.5)',
+                          borderColor: 'rgba(99, 102, 241, 0.5)',
                         },
                       },
                       '&.Mui-focused': {
                         background: 'rgba(255, 255, 255, 0.08)',
                         '& fieldset': {
-                          borderColor: '#1976d2',
+                          borderColor: '#6366f1',
                         },
                       },
                     },
                     '& .MuiInputLabel-root': {
                       color: 'rgba(255, 255, 255, 0.7)',
                       '&.Mui-focused': {
-                        color: '#1976d2',
+                        color: '#6366f1',
                       },
                     },
                     '& .MuiInputBase-input': {
@@ -300,17 +300,17 @@ function Login() {
                   disabled={loading || !username || !password}
                   startIcon={loading ? null : <LoginIcon />}
                   sx={{
-                    background: 'linear-gradient(135deg, #1976d2 0%, #9c27b0 100%)',
+                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
                     height: 56,
                     fontSize: 18,
                     fontWeight: 700,
                     borderRadius: 2,
-                    boxShadow: '0 8px 32px rgba(25, 118, 210, 0.4)',
+                    boxShadow: '0 8px 32px rgba(99, 102, 241, 0.4)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      background: 'linear-gradient(135deg, #1565c0 0%, #7b1fa2 100%)',
+                      background: 'linear-gradient(135deg, #4f46e5 0%, #9333ea 100%)',
                       transform: 'translateY(-2px)',
-                      boxShadow: '0 12px 40px rgba(25, 118, 210, 0.5)',
+                      boxShadow: '0 12px 40px rgba(99, 102, 241, 0.5)',
                     },
                     '&:disabled': {
                       background: 'rgba(255, 255, 255, 0.2)',
