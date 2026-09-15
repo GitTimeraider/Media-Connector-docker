@@ -440,7 +440,7 @@ function UnraidContent() {
                           size="small"
                         />
                         {(container.status || container.Status) && (
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                             {container.status || container.Status}
                           </Typography>
                         )}
