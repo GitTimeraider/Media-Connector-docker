@@ -266,6 +266,20 @@ Then use those values in your docker run command or docker-compose.yml:
 ```bash
 -e PUID=1000 -e PGID=100
 ```
+
+**Running with dropped capabilities (`--cap-drop=ALL`):**
+
+Switching to PUID/PGID requires the `SETUID` and `SETGID` capabilities (and `CHOWN` to fix data folder ownership). Pick one of these:
+
+```bash
+# Option A: keep PUID/PGID, add back only what is needed
+--cap-drop=ALL --cap-add=SETUID --cap-add=SETGID --cap-add=CHOWN -e PUID=99 -e PGID=100
+
+# Option B: start directly as the user (PUID/PGID are ignored, no capabilities needed)
+--cap-drop=ALL --user 99:100
+```
+
+With option B (or when `CHOWN` is not added) the data folder on the host must already be owned by that user, e.g. `chown -R 99:100 /path/to/data`.
 ---
 
 ## Automatic Docker Builds
