@@ -42,6 +42,27 @@ app.use(helmet({
   crossOriginOpenerPolicy: false,
   originAgentCluster: false,
 }));
+// Release memory once the server goes idle. V8 only collects garbage under
+// allocation pressure, so without this the leftovers of large responses
+// (e.g. full Radarr/Sonarr libraries) stay resident while nothing is happening.
+// Requires node to be started with --expose-gc (see Dockerfile CMD).
+const IDLE_GC_DELAY_MS = 15000;
+if (typeof global.gc === 'function') {
+  let idleGcTimer = null;
+  app.use((req, res, next) => {
+    // Health checks run every 30s and must not keep postponing the collection
+    if (req.path !== '/health') {
+      clearTimeout(idleGcTimer);
+      res.on('close', () => {
+        clearTimeout(idleGcTimer);
+        idleGcTimer = setTimeout(global.gc, IDLE_GC_DELAY_MS);
+        idleGcTimer.unref();
+      });
+    }
+    next();
+  });
+}
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));

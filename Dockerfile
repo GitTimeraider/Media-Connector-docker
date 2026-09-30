@@ -54,11 +54,13 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 EXPOSE 3001
 
 # Health check
+# Uses busybox wget instead of spawning a second Node.js process (~40MB) every 30s
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
+  CMD wget -q -O /dev/null http://localhost:3001/health || exit 1
 
 # Use entrypoint script to handle user switching
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Start the application
-CMD ["node", "server/index.js"]
+# --expose-gc lets the server free memory once it goes idle (see server/index.js)
+CMD ["node", "--expose-gc", "server/index.js"]
