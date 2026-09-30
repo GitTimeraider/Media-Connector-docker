@@ -8,7 +8,7 @@
     "server": "nodemon server/index.js",
     "client": "cd client && npm start",
     "build": "cd client && npm run build",
-    "start": "node server/index.js",
+    "start": "node --expose-gc server/index.js",
     "install-all": "npm install && cd client && npm install"
   },
   "keywords": ["media", "sonarr", "radarr", "sabnzbd", "torrent", "usenet"],
